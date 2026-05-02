@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
-const API_REGISTER_VENDOR = "http://localhost:8000/api/vendors/register";
+const API_REGISTER_VENDOR = "https://ratilalsons-backend-api.onrender.com/api/vendors/register";
 
 export default function VendorRegister() {
   const [form, setForm] = useState({

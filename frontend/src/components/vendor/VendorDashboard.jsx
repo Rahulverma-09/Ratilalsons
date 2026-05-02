@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Package, DollarSign, TrendingUp, ShoppingCart, Eye, Plus, BarChart3, Star, Calendar, Award } from "lucide-react";
 
-const API_BASE = "http://localhost:8000/api/stock";
+const API_BASE = "https://ratilalsons-backend-api.onrender.com/api/stock";
 
 export default function VendorDashboard() {
   const [products, setProducts] = useState([]);

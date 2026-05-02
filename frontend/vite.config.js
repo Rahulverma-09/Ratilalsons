@@ -32,7 +32,7 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://ratilalsons-backend-api.onrender.com',
         changeOrigin: true,
         secure: false,
       }

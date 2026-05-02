@@ -125,7 +125,7 @@ const HRStaffModuleComplete = () => {
         setLoading(false);
         return;
       }
-      const response = await fetch("http://localhost:8000/api/auth/me", {
+      const response = await fetch("https://ratilalsons-backend-api.onrender.com/api/auth/me", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -176,7 +176,7 @@ const HRStaffModuleComplete = () => {
       const token = localStorage.getItem('access_token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:8000/api/employees/dashboard-stats', {
+      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employees/dashboard-stats', {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
       if (response.ok) {
@@ -199,7 +199,7 @@ const HRStaffModuleComplete = () => {
       const token = localStorage.getItem('access_token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:8000/api/employees?page=1&limit=50', {
+      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employees?page=1&limit=50', {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
 
@@ -223,7 +223,7 @@ const HRStaffModuleComplete = () => {
       const token = localStorage.getItem('access_token');
       if (!token) return;
 
-      const response = await fetch(`http://localhost:8000/api/employees/${currentUser.user_id}/attendance`, {
+      const response = await fetch(`https://ratilalsons-backend-api.onrender.com/api/employees/${currentUser.user_id}/attendance`, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
       });
 
@@ -262,7 +262,7 @@ const HRStaffModuleComplete = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:8000/api/employees/${currentUser.user_id}/attendance/${action}`, {
+      const response = await fetch(`https://ratilalsons-backend-api.onrender.com/api/employees/${currentUser.user_id}/attendance/${action}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -300,7 +300,7 @@ const HRStaffModuleComplete = () => {
     try {
       const token = localStorage.getItem('access_token');
       const response = await fetch(
-        `http://localhost:8000/api/employees/${currentUser.user_id}/attendance/checkin`,
+        `https://ratilalsons-backend-api.onrender.com/api/employees/${currentUser.user_id}/attendance/checkin`,
         {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -573,7 +573,7 @@ const HRStaffModuleComplete = () => {
       try {
         const token = localStorage.getItem("access_token");
         const response = await fetch(
-          `http://localhost:8000/api/employees/${currentUser.user_id || currentUser.id}/profile`,
+          `https://ratilalsons-backend-api.onrender.com/api/employees/${currentUser.user_id || currentUser.id}/profile`,
           {
             method: "PUT",
             headers: {
@@ -607,7 +607,7 @@ const HRStaffModuleComplete = () => {
         const formData = new FormData();
         formData.append("file", file);
         const response = await fetch(
-          `http://localhost:8000/api/employees/upload-document?document_type=document`,
+          `https://ratilalsons-backend-api.onrender.com/api/employees/upload-document?document_type=document`,
           {
             method: "POST",
             headers: {
@@ -641,7 +641,7 @@ const HRStaffModuleComplete = () => {
       try {
         const token = localStorage.getItem("access_token");
         const response = await fetch(
-          `http://localhost:8000/api/attendance/leave/admin/all?page=1&limit=20`,
+          `https://ratilalsons-backend-api.onrender.com/api/attendance/leave/admin/all?page=1&limit=20`,
           {
             method: "POST",
             headers: {

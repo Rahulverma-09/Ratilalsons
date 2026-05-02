@@ -81,7 +81,7 @@ const HierarchyAssignment = () => {
         dateRange: ''
     });
 
-    const API_BASE_URL = 'http://localhost:8000';
+    const API_BASE_URL = 'https://ratilalsons-backend-api.onrender.com';
 
     useEffect(() => {
         const user = getCurrentUser();

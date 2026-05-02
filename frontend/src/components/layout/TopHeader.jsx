@@ -183,7 +183,7 @@ const TopHeader = ({
     if (!roleId) return;
     const fetchRoleName = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/roles/${roleId}`);
+        const res = await fetch(`https://ratilalsons-backend-api.onrender.com/api/roles/${roleId}`);
         if (!res.ok) throw new Error('Failed to fetch role');
         const data = await res.json();
         if (data && data.role_name) {
@@ -219,7 +219,7 @@ const TopHeader = ({
     setShowProfileCard(true);
     try {
       const token = localStorage.getItem("access_token");
-      const res = await fetch("http://localhost:8000/api/auth/me", {
+      const res = await fetch("https://ratilalsons-backend-api.onrender.com/api/auth/me", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -595,7 +595,7 @@ const TopHeader = ({
                 setEditProfileLoading(true);
                 try {
                   const token = localStorage.getItem('access_token');
-                  const res = await fetch('http://localhost:8000/api/auth/update', {
+                  const res = await fetch('https://ratilalsons-backend-api.onrender.com/api/auth/update', {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',

@@ -83,7 +83,7 @@ const UserProfiles = () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("http://localhost:8000/api/auth/users", {
+      const res = await fetch("https://ratilalsons-backend-api.onrender.com/api/auth/users", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token") || ""}`
         }
@@ -101,7 +101,7 @@ const UserProfiles = () => {
 
   const fetchRoles = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/roles/", {
+      const res = await fetch("https://ratilalsons-backend-api.onrender.com/api/roles/", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token") || ""}`
         }
@@ -165,7 +165,7 @@ const UserProfiles = () => {
         role_ids: newUser.roles,
       };
       delete payload.roles;
-      const res = await fetch("http://localhost:8000/api/auth/register", {
+      const res = await fetch("https://ratilalsons-backend-api.onrender.com/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -201,7 +201,7 @@ const UserProfiles = () => {
     try {
       const payload = { is_active: false };
       const res = await fetch(
-        `http://localhost:8000/api/auth/users/${user.id}`,
+        `https://ratilalsons-backend-api.onrender.com/api/auth/users/${user.id}`,
         {
           method: "PUT",
           headers: {
@@ -232,7 +232,7 @@ const UserProfiles = () => {
     try {
       const payload = { is_active: true };
       const res = await fetch(
-        `http://localhost:8000/api/auth/users/${user.id}`,
+        `https://ratilalsons-backend-api.onrender.com/api/auth/users/${user.id}`,
         {
           method: "PUT",
           headers: {
@@ -266,7 +266,7 @@ const UserProfiles = () => {
     setError("");
     try {
       const res = await fetch(
-        `http://localhost:8000/api/auth/users/${user.id}`,
+        `https://ratilalsons-backend-api.onrender.com/api/auth/users/${user.id}`,
         {
           method: "DELETE",
           headers: {
@@ -370,7 +370,7 @@ const UserProfiles = () => {
 
       console.log("Final payload being sent:", payload);
 
-      const res = await fetch(`http://localhost:8000/api/auth/users/${userId}`, {
+      const res = await fetch(`https://ratilalsons-backend-api.onrender.com/api/auth/users/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

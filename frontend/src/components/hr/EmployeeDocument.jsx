@@ -34,8 +34,8 @@ const HRDocumentReview = () => {
       
       // Fetch documents based on filter
       const url = filterStatus === 'all'
-        ? 'http://localhost:8000/api/documents'
-        : `http://localhost:8000/api/documents?status=${filterStatus}`;
+        ? 'https://ratilalsons-backend-api.onrender.com/api/documents'
+        : `https://ratilalsons-backend-api.onrender.com/api/documents?status=${filterStatus}`;
       
       const response = await fetch(url, {
         headers: {
@@ -92,7 +92,7 @@ const HRDocumentReview = () => {
       formData.append('hr_comments', reviewForm.hr_comments);
       formData.append('reviewed_by', user.full_name || user.username || 'HR');
 
-      const response = await fetch(`http://localhost:8000/api/documents/review/${selectedDocument.id}`, {
+      const response = await fetch(`https://ratilalsons-backend-api.onrender.com/api/documents/review/${selectedDocument.id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -340,7 +340,7 @@ const HRDocumentReview = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <a
-                          href={`http://localhost:8000${doc.pdf_url}`}
+                          href={`https://ratilalsons-backend-api.onrender.com${doc.pdf_url}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors duration-200 text-sm font-medium"
@@ -449,7 +449,7 @@ const HRDocumentReview = () => {
                 {/* Document Preview Link */}
                 <div className="mb-6">
                   <a
-                    href={`http://localhost:8000${selectedDocument.pdf_url}`}
+                    href={`https://ratilalsons-backend-api.onrender.com${selectedDocument.pdf_url}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block w-full px-4 py-3 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors duration-200 text-center font-medium"

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { FaSave, FaPlus, FaTrash, FaEdit, FaCheck, FaTimes, FaRupeeSign, FaPercent } from 'react-icons/fa';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'https://ratilalsons-backend-api.onrender.com';
 
 const PayrollAdmin = () => {
   const [loading, setLoading] = useState(true);

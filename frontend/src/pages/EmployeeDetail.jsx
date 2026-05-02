@@ -114,7 +114,7 @@ export default function EmployeeDetail() {
 
   const navigate = useNavigate();
   const { id } = useParams();
-  const API_BASE_URL = "http://localhost:8000";
+  const API_BASE_URL = "https://ratilalsons-backend-api.onrender.com";
 
   useEffect(() => {
     const fetchEmployee = async () => {

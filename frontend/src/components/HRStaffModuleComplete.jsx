@@ -103,7 +103,7 @@ const EmployeeManagementModule = () => {
       const token = localStorage.getItem('access_token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:8000/api/employees?page=1&limit=50', {
+      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employees?page=1&limit=50', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

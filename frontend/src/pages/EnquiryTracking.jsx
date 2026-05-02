@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 // API base
-const API_BASE = "http://localhost:8000/api/franchises";
+const API_BASE = "https://ratilalsons-backend-api.onrender.com/api/franchises";
 
 // Utility to get Enquiry ID
 function getEnquiryId(enq) {

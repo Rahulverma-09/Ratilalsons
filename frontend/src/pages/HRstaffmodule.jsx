@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'https://ratilalsons-backend-api.onrender.com';
 
 const HRStaffModule = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -255,9 +255,9 @@ const HRStaffModule = () => {
 
     try {
       const endpoints = [
-        'http://localhost:8000/api/auth/login',
-        'http://localhost:8000/auth/login',
-        'http://localhost:8000/login'
+        'https://ratilalsons-backend-api.onrender.com/api/auth/login',
+        'https://ratilalsons-backend-api.onrender.com/auth/login',
+        'https://ratilalsons-backend-api.onrender.com/login'
       ];
 
       let loginSuccess = false;

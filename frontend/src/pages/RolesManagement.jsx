@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const API_URL = "http://localhost:8000/api/roles/";
+const API_URL = "https://ratilalsons-backend-api.onrender.com/api/roles/";
 
 const ALL_PERMISSIONS = [
   { key: "dashboard", label: "Dashboard", icon: "📊" },

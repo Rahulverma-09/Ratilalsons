@@ -1,5 +1,5 @@
 // API Configuration
-        const API_URL = 'http://localhost:8000';
+        const API_URL = 'https://ratilalsons-backend-api.onrender.com';
 
         // DOM Elements
         const sections = document.querySelectorAll('.section');

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://ratilalsons-backend-api.onrender.com";
 
 // Helper: determine if user has HR or admin role
 function checkIsHRAdmin(user) {

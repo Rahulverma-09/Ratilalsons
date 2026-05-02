@@ -5,7 +5,7 @@
 
 // Test configuration
 const TEST_CONFIG = {
-  API_BASE_URL: 'http://localhost:8000',
+  API_BASE_URL: 'https://ratilalsons-backend-api.onrender.com',
   DEMO_EMPLOYEE: {
     name: 'John Doe',
     email: 'john.doe@test.com',

@@ -11,7 +11,7 @@ const NAV_SECTIONS = [
 
 import { STOCK_API } from "../config.js";
 
-const API_BASE = "http://localhost:8000/api/stock";
+const API_BASE = "https://ratilalsons-backend-api.onrender.com/api/stock";
 const PAGE_SIZE = 10;
 
 // --- COMPONENTS ---

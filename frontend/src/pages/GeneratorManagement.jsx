@@ -9,9 +9,9 @@ const NAV_SECTIONS = [
   { key: "maintenance", name: "Maintenance Logs" },
 ];
 
-const API_BASE = "http://localhost:8000/api/generators-utilities";
-const USERS_API = "http://localhost:8000/api/auth/users";
-const SITES_API = "http://localhost:8000/api/sites";
+const API_BASE = "https://ratilalsons-backend-api.onrender.com/api/generators-utilities";
+const USERS_API = "https://ratilalsons-backend-api.onrender.com/api/auth/users";
+const SITES_API = "https://ratilalsons-backend-api.onrender.com/api/sites";
 const PAGE_SIZE = 10;
 
 // --- Mapping helpers ---

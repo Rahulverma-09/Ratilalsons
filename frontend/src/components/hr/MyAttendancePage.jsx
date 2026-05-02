@@ -485,7 +485,7 @@ const MyAttendancePage = () => {
   const fetchHREmployees = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const res = await fetch('http://localhost:8000/api/auth/users?limit=200', {
+      const res = await fetch('https://ratilalsons-backend-api.onrender.com/api/auth/users?limit=200', {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -504,7 +504,7 @@ const MyAttendancePage = () => {
       if (adminFilter.start_date) params.append('start_date', adminFilter.start_date);
       if (adminFilter.end_date) params.append('end_date', adminFilter.end_date);
       if (adminFilter.status) params.append('status', adminFilter.status);
-      const res = await fetch(`http://localhost:8000/api/attendance/admin/all?${params}`, {
+      const res = await fetch(`https://ratilalsons-backend-api.onrender.com/api/attendance/admin/all?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -536,7 +536,7 @@ const MyAttendancePage = () => {
         payload.checkin_time = `${markForm.attendance_date}T${cin}:00`;
         payload.checkout_time = `${markForm.attendance_date}T${cout}:00`;
       }
-      const res = await fetch('http://localhost:8000/api/attendance/admin/mark-attendance', {
+      const res = await fetch('https://ratilalsons-backend-api.onrender.com/api/attendance/admin/mark-attendance', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

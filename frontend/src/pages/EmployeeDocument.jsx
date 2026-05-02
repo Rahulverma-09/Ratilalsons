@@ -62,7 +62,7 @@ const UserDocumentUpload = () => {
       try {
         console.log('Fetching from my-documents endpoint...');
         
-        const response = await fetch('http://localhost:8000/api/employee-docs/employee/my-documents', {
+        const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employee-docs/employee/my-documents', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -122,9 +122,9 @@ const UserDocumentUpload = () => {
       
       // If primary endpoint failed, try fallback endpoints
       const endpoints = [
-        `http://localhost:8000/api/employee-docs/employees/${user.id || user.user_id || user.username}/documents`,
-        `http://localhost:8000/api/api/employees/${user.id || user.user_id || user.username}/documents`,
-        `http://localhost:8000/api/documents?generated_for=${user.id || user.user_id || user.username}`
+        `https://ratilalsons-backend-api.onrender.com/api/employee-docs/employees/${user.id || user.user_id || user.username}/documents`,
+        `https://ratilalsons-backend-api.onrender.com/api/api/employees/${user.id || user.user_id || user.username}/documents`,
+        `https://ratilalsons-backend-api.onrender.com/api/documents?generated_for=${user.id || user.user_id || user.username}`
       ];
       
       console.log('Trying fallback endpoints:', endpoints);
@@ -266,7 +266,7 @@ const UserDocumentUpload = () => {
       formData.append('file', selectedFile);
       
       // Create URL with query parameters for the new endpoint
-      const uploadUrl = new URL('http://localhost:8000/api/employee-docs/employee/upload-document');
+      const uploadUrl = new URL('https://ratilalsons-backend-api.onrender.com/api/employee-docs/employee/upload-document');
       uploadUrl.searchParams.append('document_type', documentType);
       if (description) {
         uploadUrl.searchParams.append('description', description);
@@ -580,16 +580,16 @@ const UserDocumentUpload = () => {
                         console.log('Final filename:', filename);
                         
                         // Construct URL with just the filename
-                        documentUrl = `http://localhost:8000/employee_document/${filename}`;
+                        documentUrl = `https://ratilalsons-backend-api.onrender.com/employee_document/${filename}`;
                         
                         console.log('Final document URL:', documentUrl);
                       } else if (doc.stored_filename) {
-                        documentUrl = `http://localhost:8000/employee_document/${doc.stored_filename}`;
+                        documentUrl = `https://ratilalsons-backend-api.onrender.com/employee_document/${doc.stored_filename}`;
                       } else if (doc.pdf_url) {
                         // Ensure pdf_url starts with /
-                        documentUrl = `http://localhost:8000${doc.pdf_url.startsWith('/') ? doc.pdf_url : '/' + doc.pdf_url}`;
+                        documentUrl = `https://ratilalsons-backend-api.onrender.com${doc.pdf_url.startsWith('/') ? doc.pdf_url : '/' + doc.pdf_url}`;
                       } else if (doc.document_name || doc.filename) {
-                        documentUrl = `http://localhost:8000/employee_document/${doc.document_name || doc.filename}`;
+                        documentUrl = `https://ratilalsons-backend-api.onrender.com/employee_document/${doc.document_name || doc.filename}`;
                       }
 
                       if (!documentUrl || documentUrl.endsWith('#')) {
@@ -614,7 +614,7 @@ const UserDocumentUpload = () => {
                               
                               // First check if backend is running and serving static files
                               try {
-                                const backendCheck = await fetch('http://localhost:8000/', { method: 'HEAD' });
+                                const backendCheck = await fetch('https://ratilalsons-backend-api.onrender.com/', { method: 'HEAD' });
                                 console.log('Backend status:', backendCheck.status);
                               } catch (err) {
                                 console.error('Backend not accessible:', err);
@@ -625,8 +625,8 @@ const UserDocumentUpload = () => {
                               
                               // Test a known file to see if static serving works
                               const testUrls = [
-                                'http://localhost:8000/employee_document/USR-000001_Screenshot%202025-10-28%20112536.png',
-                                'http://localhost:8000/employee_document/USR-000001_Screenshot 2025-10-28 112536.png',
+                                'https://ratilalsons-backend-api.onrender.com/employee_document/USR-000001_Screenshot%202025-10-28%20112536.png',
+                                'https://ratilalsons-backend-api.onrender.com/employee_document/USR-000001_Screenshot 2025-10-28 112536.png',
                                 documentUrl
                               ];
                               

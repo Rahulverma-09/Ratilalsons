@@ -502,8 +502,8 @@ async def generate_customer_invoice(
             "issue_date": datetime.now().isoformat(),
             "due_date": data.get("due_date", datetime.now().isoformat()),
             "items": data.get("items", []),
-            "pdf_url": f"http://localhost:8000/api/invoices/{invoice_id}/download",
-            "download_url": f"http://localhost:8000/api/customer/invoice/{invoice_id}/download"
+            "pdf_url": f"https://ratilalsons-backend-api.onrender.com/api/invoices/{invoice_id}/download",
+            "download_url": f"https://ratilalsons-backend-api.onrender.com/api/customer/invoice/{invoice_id}/download"
         }
         
         return invoice_response

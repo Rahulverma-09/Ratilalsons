@@ -5,11 +5,11 @@ import {
   PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, CartesianGrid
 } from 'recharts';
 
-const SITE_API_BASE = "http://localhost:8000/api/sites";
-const GENERATOR_API_BASE = "http://localhost:8000/api/generators-utilities/generators";
-const VEHICLE_API_BASE = "http://localhost:8000/api/generators-utilities/vehicles";
-const EMPLOYEE_API_BASE = "http://localhost:8000/api/auth/users?skip=0&limit=100";
-const REPORTS_API_BASE = "http://localhost:8000/api/generators-utilities/reports";
+const SITE_API_BASE = "https://ratilalsons-backend-api.onrender.com/api/sites";
+const GENERATOR_API_BASE = "https://ratilalsons-backend-api.onrender.com/api/generators-utilities/generators";
+const VEHICLE_API_BASE = "https://ratilalsons-backend-api.onrender.com/api/generators-utilities/vehicles";
+const EMPLOYEE_API_BASE = "https://ratilalsons-backend-api.onrender.com/api/auth/users?skip=0&limit=100";
+const REPORTS_API_BASE = "https://ratilalsons-backend-api.onrender.com/api/generators-utilities/reports";
 const PAGE_SIZE = 10;
 const CHART_COLORS = {
   primary: "#3B82F6",

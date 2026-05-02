@@ -66,9 +66,9 @@ const HRStaffModuleComplete = () => {
     try {
       // Try multiple login endpoints
       const endpoints = [
-        'http://localhost:8000/api/auth/login',
-        'http://localhost:8000/auth/login',
-        'http://localhost:8000/login'
+        'https://ratilalsons-backend-api.onrender.com/api/auth/login',
+        'https://ratilalsons-backend-api.onrender.com/auth/login',
+        'https://ratilalsons-backend-api.onrender.com/login'
       ];
 
       let loginSuccess = false;
@@ -151,7 +151,7 @@ const HRStaffModuleComplete = () => {
       const token = localStorage.getItem('access_token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:8000/api/employees/roles', {
+      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employees/roles', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -189,7 +189,7 @@ const HRStaffModuleComplete = () => {
       }
 
       // Try to get current user from users API
-      const response = await fetch('http://localhost:8000/api/users/me', {
+      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/users/me', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -279,7 +279,7 @@ const HRStaffModuleComplete = () => {
       if (!token) return;
 
       // Get employees list to calculate basic stats
-      const employeesResponse = await fetch('http://localhost:8000/api/employees?page=1&limit=100', {
+      const employeesResponse = await fetch('https://ratilalsons-backend-api.onrender.com/api/employees?page=1&limit=100', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -355,7 +355,7 @@ const HRStaffModuleComplete = () => {
       if (!token) return;
 
       // Use the employees endpoint from your backend
-      const response = await fetch('http://localhost:8000/api/employees?page=1&limit=50', {
+      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employees?page=1&limit=50', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -393,7 +393,7 @@ const HRStaffModuleComplete = () => {
       if (!token) return;
 
       // Use the my-attendance endpoint with user_id query parameter
-      const response = await fetch(`http://localhost:8000/api/employees/my-attendance?user_id=${currentUser.id}`, {
+      const response = await fetch(`https://ratilalsons-backend-api.onrender.com/api/employees/my-attendance?user_id=${currentUser.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -464,7 +464,7 @@ const HRStaffModuleComplete = () => {
     try {
       const token = localStorage.getItem('access_token');
       
-      const response = await fetch(`http://localhost:8000/api/attendance/leave/admin/action/${requestId}`, {
+      const response = await fetch(`https://ratilalsons-backend-api.onrender.com/api/attendance/leave/admin/action/${requestId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -501,7 +501,7 @@ const HRStaffModuleComplete = () => {
     setFormLoading(true);
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:8000/api/employees/', {
+      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employees/', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -557,7 +557,7 @@ const HRStaffModuleComplete = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:8000/api/employees/${employeeId}`, {
+      const response = await fetch(`https://ratilalsons-backend-api.onrender.com/api/employees/${employeeId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -596,7 +596,7 @@ const HRStaffModuleComplete = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:8000/api/employees/${employeeId}/deactivate`, {
+      const response = await fetch(`https://ratilalsons-backend-api.onrender.com/api/employees/${employeeId}/deactivate`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -625,7 +625,7 @@ const HRStaffModuleComplete = () => {
     try {
       const token = localStorage.getItem('access_token');
       // Use the centralized checkin endpoint
-      const response = await fetch('http://localhost:8000/api/employees/attendance/checkin', {
+      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employees/attendance/checkin', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -660,7 +660,7 @@ const HRStaffModuleComplete = () => {
     try {
       const token = localStorage.getItem('access_token');
       // Use the centralized checkin endpoint for other employees
-      const response = await fetch('http://localhost:8000/api/employees/attendance/checkin', {
+      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employees/attendance/checkin', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -692,7 +692,7 @@ const HRStaffModuleComplete = () => {
   const uploadEmployeeDocument = async (employeeId, documentName, documentUrl) => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:8000/api/employees/${employeeId}/documents`, {
+      const response = await fetch(`https://ratilalsons-backend-api.onrender.com/api/employees/${employeeId}/documents`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -772,7 +772,7 @@ const HRStaffModuleComplete = () => {
     setFormLoading(true);
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:8000/api/employees/attendance/checkin', {
+      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employees/attendance/checkin', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -823,7 +823,7 @@ const HRStaffModuleComplete = () => {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - 30);
       
-      const response = await fetch(`http://localhost:8000/api/employees/attendance/export?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}`, {
+      const response = await fetch(`https://ratilalsons-backend-api.onrender.com/api/employees/attendance/export?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -884,7 +884,7 @@ const HRStaffModuleComplete = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:8000/api/employees/sync-collections', {
+      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employees/sync-collections', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

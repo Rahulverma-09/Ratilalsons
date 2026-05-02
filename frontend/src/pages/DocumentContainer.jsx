@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import EmployeeDocument from './EmployeeDocument';
 import DocumentManagement from './DocumentManagement';
 
-const PERMISSIONS_API = "http://localhost:8000/api/permissions/my";
+const PERMISSIONS_API = "https://ratilalsons-backend-api.onrender.com/api/permissions/my";
 
 // List the codes that allow document access
 const DOCUMENT_PERMISSION_CODES = ["document:read", "document:view", "document:manage"];

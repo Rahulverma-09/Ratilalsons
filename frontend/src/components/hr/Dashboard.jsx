@@ -41,9 +41,9 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
   const fetchLeaveRequests = async () => {
     // Try multiple endpoints for leave requests
     const endpoints = [
-      'http://localhost:8000/api/attendance/leave/admin/all?page=1&limit=20',
-      'http://localhost:8000/api/leave-requests/all',
-      'http://localhost:8000/leave-requests/all'
+      'https://ratilalsons-backend-api.onrender.com/api/attendance/leave/admin/all?page=1&limit=20',
+      'https://ratilalsons-backend-api.onrender.com/api/leave-requests/all',
+      'https://ratilalsons-backend-api.onrender.com/leave-requests/all'
     ];
 
     let lastError = null;
@@ -83,7 +83,7 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
 
   const fetchAttendanceData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/attendance/admin/all', {
+      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/attendance/admin/all', {
         headers: getAuthHeaders()
       });
 

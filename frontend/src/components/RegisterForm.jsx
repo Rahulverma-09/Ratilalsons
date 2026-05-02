@@ -27,7 +27,7 @@ export default function RegisterForm({ onShowLogin }) {
       formData.append("fullname", form.fullname);
       formData.append("password", form.password);
 
-      const response = await fetch("http://localhost:8000/api/auth/register", {
+      const response = await fetch("https://ratilalsons-backend-api.onrender.com/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded"

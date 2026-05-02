@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import HRLeaveManagement from '../components/hr/LeaveManagement';
 import MyLeaveRequestsPage from '../components/hr/LeaveRequestsPage';
 
-const PERMISSIONS_API = "http://localhost:8000/api/permissions/my";
+const PERMISSIONS_API = "https://ratilalsons-backend-api.onrender.com/api/permissions/my";
 
 // List the codes that allow leave access
 const LEAVE_PERMISSION_CODES = ["leave:read", "leave:view", "leave:manage"];

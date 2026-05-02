@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
-const API_BASE = "http://localhost:8000/api/franchises/enquiries";
-const BACKEND_BASE = "http://localhost:8000";
+const API_BASE = "https://ratilalsons-backend-api.onrender.com/api/franchises/enquiries";
+const BACKEND_BASE = "https://ratilalsons-backend-api.onrender.com";
 
 const sectionCard =
   "bg-gray-100 rounded-xl shadow border p-5 mb-4 flex flex-col gap-5";

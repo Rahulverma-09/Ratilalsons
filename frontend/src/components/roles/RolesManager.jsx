@@ -6,7 +6,7 @@ import CreateRoleModal from "./CreateRoleModal";
 const API_URL = import.meta.env.VITE_API_BASE_URL || 
                (window.location.hostname === 'localhost' ? 
                'https://localhost:8004' : 
-               'http://localhost:8000');
+               'https://ratilalsons-backend-api.onrender.com');
 
 function RolesManager() {
   const [roles, setRoles] = useState([]);

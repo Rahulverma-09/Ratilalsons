@@ -52,7 +52,7 @@ const EmployeeCreateForm = ({ isOpen, onClose, onSuccess }) => {
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
 
-  const API_BASE = 'http://localhost:8000/api/employees';
+  const API_BASE = 'https://ratilalsons-backend-api.onrender.com/api/employees';
 
   useEffect(() => {
     if (isOpen) {

@@ -3,7 +3,7 @@ import { Chart, registerables } from "chart.js";
 import { useNavigate } from "react-router-dom";
 Chart.register(...registerables);
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = "https://ratilalsons-backend-api.onrender.com/api";
 
 function calcTrend(current, previous) {
   if (typeof current !== "number" || typeof previous !== "number" || previous === 0)

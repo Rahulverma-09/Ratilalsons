@@ -53,7 +53,7 @@ export default function Admin() {
   const [becomeResult, setBecomeResult] = useState("");
   const [becomeLoading, setBecomeLoading] = useState(false);
 
-  const API_BASE = "http://localhost:8000/api/admin"; // Replace with your actual API base URL 
+  const API_BASE = "https://ratilalsons-backend-api.onrender.com/api/admin"; // Replace with your actual API base URL 
 
   // Handler for grant-admin (by username)
   const handleGrantAdmin = async (e) => {

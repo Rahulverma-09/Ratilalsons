@@ -11,7 +11,7 @@ import {
 // ErrorBoundary should NOT be rendered inside PayrollDashboard!
 import ErrorBoundary from '../components/ErrorBoundary';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'https://ratilalsons-backend-api.onrender.com';
 
 const PayrollDashboard = () => {
   const navigate = useNavigate();

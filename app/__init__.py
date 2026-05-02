@@ -49,14 +49,14 @@ app = FastAPI(
 origins = [
     # Primary Live Frontend URL
     "https://ratilalandsonscrm.onrender.com",
-    "http://localhost:8000",
+    "https://ratilalsons-backend-api.onrender.com",
 
     # Local development URLs
     "http://localhost:4000",
     "http://127.0.0.1:4000",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://localhost:8000",
+    "https://ratilalsons-backend-api.onrender.com",
     "http://localhost:5173",  # Vite default
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3005",

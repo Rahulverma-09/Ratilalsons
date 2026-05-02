@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import employeeAPI from '../../utils/employeeAPI';
 import ErrorBoundary from '../ErrorBoundary';
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://ratilalsons-backend-api.onrender.com";
 
 // Add Employee Form Component
 const AddEmployeeForm = ({ onClose, onSuccess }) => {
