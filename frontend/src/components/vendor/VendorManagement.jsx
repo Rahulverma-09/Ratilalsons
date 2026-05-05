@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { User2, Star, TrendingUp, ChevronUp, Mail, Phone, MapPin, Calendar, Search, Edit, Trash2, Plus, ShoppingCart, FileText, X, Eye, Printer, Download } from "lucide-react";
 import CreatableSelect from 'react-select/creatable';
 import { API_URL } from '../../config';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // Comprehensive Vendor Registration Modal for Admin
 const AddVendorModal = ({ open, onClose, onAdd, loading, vendors, editMode = false, existingVendor = null }) => {
@@ -985,7 +987,380 @@ const AddVendorModal = ({ open, onClose, onAdd, loading, vendors, editMode = fal
 };
 
 
-// ─── Place Purchase Order Modal ───────────────────────────────────────────────
+// ─── Purchase Order Modal (Multi-select from Catalog) ───────────────────────────────────────────────
+const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
+  const [vendorId, setVendorId] = useState("");
+  const [products, setProducts] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [manualItems, setManualItems] = useState([]);
+  const [notes, setNotes] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showManualEntry, setShowManualEntry] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setVendorId("");
+      setSelectedProducts([]);
+      setManualItems([]);
+      setNotes("");
+      setError("");
+      setShowManualEntry(false);
+      setSearchTerm("");
+      fetchProducts();
+    }
+  }, [open]);
+
+  const fetchProducts = async () => {
+    setProductsLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_URL}/api/stock/products`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProducts(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch products:", err);
+    }
+    setProductsLoading(false);
+  };
+
+  const toggleProductSelection = (product) => {
+    const exists = selectedProducts.find(p => p.product_id === product.product_id);
+    if (exists) {
+      setSelectedProducts(prev => prev.filter(p => p.product_id !== product.product_id));
+    } else {
+      setSelectedProducts(prev => [...prev, { ...product, qty: 1, unit_price: product.price || 0 }]);
+    }
+  };
+
+  const updateSelectedProduct = (productId, field, value) => {
+    setSelectedProducts(prev => prev.map(p => 
+      p.product_id === productId ? { ...p, [field]: value } : p
+    ));
+  };
+
+  const addManualItem = () => {
+    setManualItems(prev => [...prev, { name: "", qty: 1 }]);
+  };
+
+  const updateManualItem = (idx, field, value) => {
+    setManualItems(prev => prev.map((item, i) => 
+      i === idx ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const removeManualItem = (idx) => {
+    setManualItems(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const filteredProducts = products.filter(p => 
+    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const allItems = [
+    ...selectedProducts.map(p => ({
+      name: p.name,
+      qty: parseFloat(p.qty) || 0
+    })),
+    ...manualItems.filter(m => m.name.trim()).map(m => ({
+      name: m.name.trim(),
+      qty: parseFloat(m.qty) || 0
+    }))
+  ];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!vendorId) { setError("Please select a vendor."); return; }
+    if (allItems.length === 0) {
+      setError("Please select at least one product or add a manual item.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_URL}/api/vendors/purchase-orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          vendor_id: vendorId,
+          items: allItems,
+          notes: notes.trim() || null
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Failed to create purchase order");
+      }
+      const invoice = await res.json();
+      onOrderPlaced(invoice);
+    } catch (err) {
+      setError(err.message || "Failed to create purchase order");
+    }
+    setLoading(false);
+  };
+
+  if (!open) return null;
+  const selectedVendor = vendors.find(v => v.id === vendorId);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-8 py-5 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+              <ShoppingCart className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">Create Purchase Order</h2>
+              <p className="text-purple-100 text-sm">Select products from catalog or add manually</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-white hover:text-red-300 w-9 h-9 rounded-full bg-white bg-opacity-20 flex items-center justify-center transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden flex-1">
+          <div className="overflow-y-auto p-8 flex-1">
+            {/* Vendor Selector */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Select Vendor <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={vendorId}
+                onChange={e => setVendorId(e.target.value)}
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                required
+              >
+                <option value="">-- Choose a Vendor --</option>
+                {vendors.filter(v => v.status === "active").map(v => (
+                  <option key={v.id} value={v.id}>{v.name} ({v.company || v.id})</option>
+                ))}
+              </select>
+              {selectedVendor && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {selectedVendor.email}&nbsp;&nbsp;|&nbsp;&nbsp;Type: <span className="capitalize">{selectedVendor.vendor_type}</span>
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Product Catalog Selection */}
+              <div className="border border-gray-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-800">Product Catalog</h3>
+                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                    {selectedProducts.length} selected
+                  </span>
+                </div>
+                
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-400"
+                  />
+                </div>
+
+                <div className="max-h-96 overflow-y-auto space-y-2">
+                  {productsLoading ? (
+                    <div className="text-center py-8 text-gray-500">Loading products...</div>
+                  ) : filteredProducts.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">No products found</div>
+                  ) : (
+                    filteredProducts.map(product => {
+                      const isSelected = selectedProducts.find(p => p.product_id === product.product_id);
+                      return (
+                        <div
+                          key={product.product_id}
+                          onClick={() => toggleProductSelection(product)}
+                          className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                            isSelected 
+                              ? 'border-purple-500 bg-purple-50' 
+                              : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="font-medium text-sm text-gray-800">{product.name}</div>
+                              <div className="text-xs text-gray-500">
+                                SKU: {product.sku} | Stock: {product.warehouse_qty || 0}
+                              </div>
+                            </div>
+                            <div className="text-right ml-3">
+                              {isSelected && (
+                                <div className="w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-xs">✓</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Selected Items & Manual Entry */}
+              <div className="border border-gray-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-800">Selected Items</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowManualEntry(!showManualEntry)}
+                    className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition-colors flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" /> Add Manual Item
+                  </button>
+                </div>
+
+                <div className="max-h-96 overflow-y-auto space-y-3">
+                  {/* Selected Products from Catalog */}
+                  {selectedProducts.map(product => (
+                    <div key={product.product_id} className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm text-gray-800">{product.name}</div>
+                          <div className="text-xs text-gray-500">SKU: {product.sku}</div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleProductSelection(product)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600">Quantity</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={product.qty}
+                          onChange={e => updateSelectedProduct(product.product_id, 'qty', e.target.value)}
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          onClick={e => e.stopPropagation()}
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Manual Items */}
+                  {showManualEntry && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">Manual Entry</span>
+                        <button
+                          type="button"
+                          onClick={addManualItem}
+                          className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                        >
+                          + Add Row
+                        </button>
+                      </div>
+                      {manualItems.map((item, idx) => (
+                        <div key={idx} className="bg-white border border-gray-200 rounded p-2 mb-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <input
+                              type="text"
+                              placeholder="Item name"
+                              value={item.name}
+                              onChange={e => updateManualItem(idx, 'name', e.target.value)}
+                              className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm mr-2"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeManualItem(idx)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-600">Quantity</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.qty}
+                              onChange={e => updateManualItem(idx, 'qty', e.target.value)}
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedProducts.length === 0 && manualItems.length === 0 && (
+                    <div className="text-center py-8 text-gray-400">
+                      <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No items selected</p>
+                      <p className="text-xs">Select from catalog or add manually</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="mt-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Notes (Optional)</label>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                rows={2}
+                placeholder="Additional notes for this purchase order..."
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              />
+            </div>
+
+            {error && (
+              <p className="text-red-600 text-sm mt-4 bg-red-50 px-4 py-3 rounded-xl border border-red-200">{error}</p>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-gray-200 px-8 py-5 flex justify-end gap-4 flex-shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2.5 rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-100 font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || allItems.length === 0}
+              className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 text-white font-semibold hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all flex items-center gap-2"
+            >
+              {loading ? (
+                <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> Creating Order...</>
+              ) : (
+                <><FileText className="w-4 h-4" /> Create Purchase Order</>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// ─── Place Purchase Order Modal (Simple Entry) ───────────────────────────────────────────────
 const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
   const [vendorId, setVendorId] = useState("");
   const [items, setItems] = useState([{ name: "", qty: "1", unit_price: "" }]);
@@ -1294,11 +1669,9 @@ const InvoiceModal = ({ invoice, onClose }) => {
   const buildPrintContent = () => {
     const itemsHtml = (invoice.items || []).map((item, idx) => `
       <tr>
-        <td>${idx + 1}</td>
+        <td style="text-align:center;font-weight:bold;">${idx + 1}</td>
         <td><strong>${item.name || item.description || ''}</strong></td>
         <td class="r">${item.qty || item.quantity || 0}</td>
-        <td class="r">₹${parseFloat(item.unit_price || 0).toFixed(2)}</td>
-        <td class="r"><strong>₹${parseFloat(item.total || (item.qty || item.quantity || 0) * (item.unit_price || 0)).toFixed(2)}</strong></td>
       </tr>
     `).join('');
 
@@ -1306,86 +1679,113 @@ const InvoiceModal = ({ invoice, onClose }) => {
       <div class="header">
         <div>
           <div class="company-name">RATILAL &amp; SONS</div>
-          <div class="company-sub">Govt. Approved Contractor &amp; Engineers</div>
+          <div class="company-sub">Retail Approved Distributor Of Petroleum</div>
           <div class="address">
-            <em>&quot; Ratilal &amp; Sons House &quot;</em><br/>
-            Plot No. 49, Opp. Hanuman Temple, G.I.D.C., Anjar - Kutch. (Gujarat) 370110<br/>
-            Email: rsinfraprojects2014@gmail.com
+            <strong>Regd. Office:</strong><br/>
+            Survey No. 166, Opp. Maruti Weigh Bridge, N.H.-8, Near Arpan, Shapar-360024<br/>
+            Email: ratilalandsons786@gmail.com
           </div>
-          <div class="gst-row">Gujarat GST: 24BFIPS0859D1ZF &nbsp;&nbsp; Maharastra GST: 27BFIPS0859D1Z9</div>
+          <div class="gst-row">PAN: AAUFR2909Q | CIN: U51909GJ2019PTC110073<br/>State Code: 24 (Gujarat) | GSTIN: 24AAUFR2909Q1ZT</div>
         </div>
         <div class="contact">
           <div class="contact-name">Ramesh Sorathiya</div>
-          <div class="contact-phone">Mo. 81601 19891</div>
+          <div class="contact-phone">Mo. 8160110831</div>
           <div class="inv-meta">
-            <div class="inv-label">Tax Invoice</div>
+            <div class="inv-label">Purchase Order</div>
             <div class="inv-number">${invoice.invoice_number}</div>
-            <div class="inv-dates">Date: ${dateStr}<br/>Order: ${invoice.order_number || ''}</div>
+            <div class="inv-dates">Date: ${dateStr}</div>
           </div>
         </div>
       </div>
       <div class="billing-grid">
         <div class="bill-box">
-          <div class="bill-label">Bill From (Vendor):</div>
+          <div class="bill-label">Vendor Details:</div>
           <div class="bill-name">${invoice.vendor_name || ''}</div>
           ${invoice.vendor_company ? `<div class="bill-sub">${invoice.vendor_company}</div>` : ''}
           ${invoice.vendor_email ? `<div class="bill-sub">${invoice.vendor_email}</div>` : ''}
-        </div>
-        <div class="bill-box" style="display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end">
-          <div class="bill-label">Payment Status:</div>
-          <div class="status-badge">${invoice.status || 'Pending'}</div>
-          <div style="margin-top:10px;font-size:11px;color:#64748b;font-weight:600">GST Rate: ${invoice.gst_percent || 18}%</div>
+          ${invoice.vendor_phone ? `<div class="bill-sub">${invoice.vendor_phone}</div>` : ''}
         </div>
       </div>
-      <h3 style="font-size:14px;font-weight:900;color:#1e293b;text-transform:uppercase;letter-spacing:0.15em;border-bottom:2px solid #1e293b;display:inline-block;padding-bottom:3px;margin-bottom:14px">Invoice Items</h3>
+      <h3 style="font-size:14px;font-weight:900;color:#1e293b;text-transform:uppercase;letter-spacing:0.15em;border-bottom:2px solid #1e293b;display:inline-block;padding-bottom:3px;margin-bottom:14px">Purchase Order Items</h3>
       <table>
         <thead><tr>
-          <th>#</th><th>Description</th><th class="r">Qty</th><th class="r">Unit Price</th><th class="r">Total</th>
+          <th style="width:60px;text-align:center;">Sr. No.</th><th>Item Description</th><th class="r" style="width:100px;">Quantity</th>
         </tr></thead>
         <tbody>${itemsHtml}</tbody>
       </table>
-      <div class="tots-wrap">
-        <div class="tots">
-          <div class="tot-row"><span>Subtotal:</span><span>₹${parseFloat(invoice.subtotal || 0).toFixed(2)}</span></div>
-          <div class="tot-row"><span>Tax (${invoice.gst_percent || 18}%):</span><span>₹${parseFloat(invoice.gst_amount || 0).toFixed(2)}</span></div>
-          <div class="tot-grand"><span>Total:</span><span>${fmtCurrency(invoice.grand_total)}</span></div>
-        </div>
-      </div>
-      ${invoice.notes ? `<div class="notes"><strong>Notes:</strong> ${invoice.notes}</div>` : ''}
-      <div class="footer">This is a computer-generated invoice. &nbsp;|&nbsp; Thank you for your business!</div>
+      ${invoice.notes ? `<div class="notes"><strong>Special Instructions / Notes:</strong> ${invoice.notes}</div>` : ''}
+      <div class="footer">This is a computer-generated purchase order. &nbsp;|&nbsp; For queries: ratilalandsons786@gmail.com or call 8160110831</div>
     `;
   };
 
-  const handlePrint = () => {
-    const pw = window.open('', '', 'height=900,width=860');
-    pw.document.write(`<!DOCTYPE html><html><head><title>Invoice ${invoice.invoice_number}</title><style>${printStyles}</style></head><body>${buildPrintContent()}</body></html>`);
-    pw.document.close();
-    pw.focus();
-    setTimeout(() => pw.print(), 400);
-  };
-
-  const handleDownload = () => {
-    const pw = window.open('', '', 'height=900,width=860');
-    pw.document.write(`<!DOCTYPE html><html><head><title>Invoice ${invoice.invoice_number}</title><style>${printStyles}</style></head><body>${buildPrintContent()}</body></html>`);
-    pw.document.close();
-    pw.focus();
-    setTimeout(() => {
-      pw.print();
-    }, 400);
+  const handleDownload = async () => {
+    try {
+      // Create a temporary container for the PDF content
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.width = '210mm'; // A4 width
+      tempContainer.style.padding = '20mm';
+      tempContainer.style.backgroundColor = '#ffffff';
+      tempContainer.style.fontFamily = 'Arial, sans-serif';
+      
+      // Build the HTML content
+      tempContainer.innerHTML = `
+        <div style="max-width: 800px; margin: 0 auto;">
+          ${buildPrintContent()}
+        </div>
+      `;
+      
+      // Add styles
+      const styleElement = document.createElement('style');
+      styleElement.textContent = printStyles;
+      tempContainer.appendChild(styleElement);
+      
+      document.body.appendChild(tempContainer);
+      
+      // Generate canvas from HTML
+      const canvas = await html2canvas(tempContainer, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      // Remove temporary container
+      document.body.removeChild(tempContainer);
+      
+      // Calculate PDF dimensions
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Add image to PDF
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      
+      // Download the PDF
+      pdf.save(`Purchase_Order_${invoice.invoice_number}.pdf`);
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-emerald-700 px-8 py-5 flex items-center justify-between flex-shrink-0">
+        <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-8 py-5 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Purchase Invoice</h2>
-              <p className="text-green-100 text-sm">{invoice.invoice_number} &mdash; {invoice.vendor_name}</p>
+              <h2 className="text-2xl font-bold text-white">Purchase Order</h2>
+              <p className="text-purple-100 text-sm">{invoice.invoice_number} &mdash; {invoice.vendor_name}</p>
             </div>
           </div>
           <button onClick={onClose} className="text-white hover:text-red-300 w-9 h-9 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
@@ -1398,87 +1798,63 @@ const InvoiceModal = ({ invoice, onClose }) => {
           {/* Company Header */}
           <div className="flex flex-col md:flex-row justify-between items-start gap-6 pb-8 border-b-2 border-slate-100 mb-8">
             <div className="flex-1">
-              <img src="/Ratilal & Sons Logo.png" alt="Ratilal & Sons" className="w-44 mb-3 h-auto object-contain" />
               <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight leading-none">RATILAL &amp; SONS</h2>
-              <p className="text-slate-600 font-semibold italic mt-1">Govt. Approved Contractor &amp; Engineers</p>
+              <p className="text-slate-600 font-semibold italic mt-1">Retail Approved Distributor Of Petroleum</p>
               <div className="mt-4 space-y-0.5 text-slate-500 text-sm">
-                <p className="font-medium italic text-slate-600">&ldquo; Ratilal &amp; Sons House &rdquo;</p>
-                <p>Plot No. 49, Opp. Hanuman Temple, G.I.D.C., Anjar - Kutch. (Gujarat) 370110</p>
-                <p>Email: rsinfraprojects2014@gmail.com</p>
-                <div className="pt-1 flex flex-wrap gap-x-4 gap-y-0.5 font-semibold text-slate-700">
-                  <span>Gujarat GST: 24BFIPS0859D1ZF</span>
-                  <span>Maharastra GST: 27BFIPS0859D1Z9</span>
+                <p className="font-semibold text-slate-700">Regd. Office:</p>
+                <p>Survey No. 166, Opp. Maruti Weigh Bridge, N.H.-8, Near Arpan, Shapar-360024</p>
+                <p>Email: ratilalandsons786@gmail.com</p>
+                <div className="pt-1 flex flex-wrap gap-x-4 gap-y-0.5 font-semibold text-slate-700 text-xs">
+                  <span>PAN: AAUFR2909Q</span>
+                  <span>CIN: U51909GJ2019PTC110073</span>
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 font-semibold text-slate-700 text-xs">
+                  <span>State Code: 24 (Gujarat)</span>
+                  <span>GSTIN: 24AAUFR2909Q1ZT</span>
                 </div>
               </div>
             </div>
-            <div className="text-right min-w-[180px]">
-              <p className="font-bold text-slate-900 text-xl leading-tight">Ramesh Sorathiya</p>
-              <p className="font-bold text-blue-600 text-lg">Mo. 81601 19891</p>
-              <div className="mt-8">
-                <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Tax Invoice</p>
-                <p className="text-3xl font-black text-slate-900 leading-none">{invoice.invoice_number}</p>
-                <div className="mt-2 text-sm font-bold text-slate-500 space-y-0.5">
-                  <p>Date: <span className="text-slate-800">{dateStr}</span></p>
-                  <p>Order: <span className="text-slate-800">{invoice.order_number || '—'}</span></p>
-                </div>
+            <div className="text-right min-w-[200px] border-2 border-slate-200 rounded-xl p-4 bg-slate-50">
+              <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Purchase Order</p>
+              <p className="text-2xl font-black text-slate-900 leading-none mb-3">{invoice.invoice_number}</p>
+              <div className="text-sm font-bold text-slate-500 space-y-1 mb-4">
+                <p>Date: <span className="text-slate-800">{dateStr}</span></p>
+              </div>
+              <div className="border-t border-slate-300 pt-3 mt-3">
+                <p className="text-xs font-semibold text-slate-500 mb-1">Contact Person:</p>
+                <p className="font-bold text-slate-900">Ramesh Sorathiya</p>
+                <p className="font-bold text-purple-600">Mo: 8160110831</p>
               </div>
             </div>
           </div>
 
           {/* Billing row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 gap-6 mb-8">
             <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Bill From (Vendor):</p>
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Vendor Details:</p>
               <p className="font-extrabold text-slate-900 text-xl">{invoice.vendor_name}</p>
               {invoice.vendor_company && <p className="text-slate-600 text-sm mt-0.5">{invoice.vendor_company}</p>}
               {invoice.vendor_email && <p className="text-slate-400 text-sm mt-0.5">{invoice.vendor_email}</p>}
-            </div>
-            <div className="flex flex-col justify-end items-end">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Payment Status:</p>
-              <span className={`inline-flex px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border-2 shadow-sm ${
-                (invoice.status || '').toLowerCase() === 'paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                (invoice.status || '').toLowerCase() === 'overdue' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                'bg-blue-50 text-blue-700 border-blue-200'
-              }`}>
-                {invoice.status || 'Pending'}
-              </span>
+              {invoice.vendor_phone && <p className="text-slate-400 text-sm mt-0.5">{invoice.vendor_phone}</p>}
             </div>
           </div>
 
           {/* Items */}
-          <h3 className="text-base font-black text-slate-800 uppercase tracking-widest border-b-2 border-slate-800 inline-block pb-1 mb-5">Invoice Items</h3>
+          <h3 className="text-base font-black text-slate-800 uppercase tracking-widest border-b-2 border-slate-800 inline-block pb-1 mb-5">Purchase Order Items</h3>
           <div className="space-y-0 mb-6">
             {(invoice.items || []).map((item, idx) => (
-              <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 border-b border-gray-100">
+              <div key={idx} className="flex items-center gap-4 py-4 border-b border-gray-100">
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-purple-700 font-bold text-sm">{idx + 1}</span>
+                </div>
                 <div className="flex-1">
-                  <p className="font-medium text-gray-900">{item.name || item.description}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide">
-                    QTY: {item.qty || item.quantity} &times; ₹{parseFloat(item.unit_price || 0).toFixed(0)}
+                  <p className="font-semibold text-gray-900 text-base">{item.name || item.description}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Quantity: <span className="font-medium text-gray-700">{item.qty || item.quantity}</span>
                   </p>
                 </div>
-                <p className="text-lg font-bold text-gray-900">
-                  {fmtCurrency(item.total || (item.qty || item.quantity || 0) * (item.unit_price || 0))}
-                </p>
               </div>
             ))}
-          </div>
-
-          {/* Totals */}
-          <div className="flex justify-end mb-6">
-            <div className="w-72">
-              <div className="flex justify-between items-center mb-3 text-sm">
-                <span className="font-semibold text-gray-700">Subtotal:</span>
-                <span className="font-bold text-gray-900">{fmtCurrency(invoice.subtotal)}</span>
-              </div>
-              <div className="flex justify-between items-center mb-5 text-sm">
-                <span className="font-semibold text-gray-700">Tax ({invoice.gst_percent || 18}%):</span>
-                <span className="font-bold text-gray-900">{fmtCurrency(invoice.gst_amount)}</span>
-              </div>
-              <div className="flex justify-between items-center p-5 bg-gray-50 rounded-xl border border-gray-100">
-                <span className="text-xl font-bold text-gray-900">Total:</span>
-                <span className="text-2xl font-bold text-teal-600">{fmtCurrency(invoice.grand_total)}</span>
-              </div>
-            </div>
           </div>
 
           {invoice.notes && (
@@ -1497,20 +1873,12 @@ const InvoiceModal = ({ invoice, onClose }) => {
           >
             Close
           </button>
-          <div className="flex gap-3">
-            <button
-              onClick={handleDownload}
-              className="px-6 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold shadow-md transition-colors flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" /> Download PDF
-            </button>
-            <button
-              onClick={handlePrint}
-              className="px-6 py-2.5 rounded-xl bg-slate-600 hover:bg-slate-700 text-white font-semibold shadow-md transition-colors flex items-center gap-2"
-            >
-              <Printer className="w-4 h-4" /> Print
-            </button>
-          </div>
+          <button
+            onClick={handleDownload}
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold shadow-lg transition-all transform hover:scale-105 flex items-center gap-2"
+          >
+            <Download className="w-5 h-5" /> Download PDF
+          </button>
         </div>
       </div>
     </div>
@@ -1698,8 +2066,12 @@ const VendorProfile = () => {
   const [adding, setAdding] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [orderModal, setOrderModal] = useState(false);
+  const [purchaseOrderModal, setPurchaseOrderModal] = useState(false);
   const [currentInvoice, setCurrentInvoice] = useState(null);
   const [invoiceLoading, setInvoiceLoading] = useState(null); // vendor id being loaded
+  const [activeTab, setActiveTab] = useState("vendors"); // "vendors" or "purchase-orders"
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [purchaseOrdersLoading, setPurchaseOrdersLoading] = useState(false);
 
   const handleViewVendorInvoice = async (vendor) => {
     setInvoiceLoading(vendor.id);
@@ -1730,6 +2102,57 @@ const VendorProfile = () => {
   useEffect(() => {
     fetchVendors();
   }, []);
+
+  const fetchPurchaseOrders = async () => {
+    setPurchaseOrdersLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_URL}/api/vendors/purchase-orders/all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPurchaseOrders(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch purchase orders:", err);
+    }
+    setPurchaseOrdersLoading(false);
+  };
+
+  const deletePurchaseOrder = async (orderNumber) => {
+    if (!confirm(`Are you sure you want to delete purchase order ${orderNumber}?`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_URL}/api/vendors/purchase-orders/${orderNumber}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        // Remove from local state
+        setPurchaseOrders(prev => prev.filter(order => 
+          (order.order_number || order.invoice_number) !== orderNumber
+        ));
+        alert('Purchase order deleted successfully');
+      } else {
+        const error = await res.json();
+        alert(`Failed to delete purchase order: ${error.detail || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error("Failed to delete purchase order:", err);
+      alert('Failed to delete purchase order. Please try again.');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "purchase-orders") {
+      fetchPurchaseOrders();
+    }
+  }, [activeTab]);
 
   const fetchVendors = async () => {
     setLoading(true);
@@ -1912,6 +2335,328 @@ const VendorProfile = () => {
     setFilteredVendors(filtered);
   };
 
+  const generatePurchaseOrderPDF = (order) => {
+    const printWindow = window.open('', '_blank');
+    
+    const orderDate = new Date(order.invoice_date || order.created_at).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+
+    const itemsHTML = (order.items || []).map((item, idx) => `
+      <tr>
+        <td style="padding: 12px 8px; border: 1px solid #000; text-align: center; font-size: 11px;">${idx + 1}</td>
+        <td style="padding: 12px 8px; border: 1px solid #000; font-size: 11px;">${item.name || ''}</td>
+        <td style="padding: 12px 8px; border: 1px solid #000; text-align: center; font-size: 11px;">${item.qty || 0}</td>
+      </tr>
+    `).join('');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Purchase Order ${order.order_number || order.invoice_number}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { 
+            font-family: 'Times New Roman', Times, serif; 
+            padding: 30px; 
+            color: #000; 
+            background: #fff; 
+            font-size: 12px; 
+            line-height: 1.4;
+          }
+          
+          .document-container { 
+            max-width: 210mm; 
+            margin: 0 auto; 
+            border: 2px solid #000; 
+            padding: 25px;
+            background: #fff;
+          }
+          
+          .header-section { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            margin-bottom: 25px; 
+            padding-bottom: 20px; 
+            border-bottom: 3px double #000; 
+          }
+          
+          .company-info { flex: 1; padding-right: 20px; }
+          .company-name { 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+            letter-spacing: 1px;
+            text-transform: uppercase;
+          }
+          .company-tagline { 
+            font-size: 11px; 
+            font-style: italic; 
+            margin-bottom: 12px; 
+            color: #333;
+          }
+          .company-address { 
+            font-size: 10px; 
+            line-height: 1.6; 
+            margin-bottom: 8px;
+          }
+          .company-details { 
+            font-size: 9px; 
+            line-height: 1.5; 
+            color: #444;
+          }
+          
+          .po-info { 
+            text-align: right; 
+            min-width: 200px;
+            border: 2px solid #000;
+            padding: 15px;
+            background: #f9f9f9;
+          }
+          .po-title { 
+            font-size: 18px; 
+            font-weight: bold; 
+            margin-bottom: 8px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+          }
+          .po-number { 
+            font-size: 16px; 
+            font-weight: bold; 
+            color: #000; 
+            margin-bottom: 8px; 
+            padding: 5px;
+            background: #fff;
+            border: 1px solid #000;
+          }
+          .po-date { 
+            font-size: 11px; 
+            margin-bottom: 10px;
+          }
+          .contact-person { 
+            font-size: 10px; 
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #ccc;
+          }
+          
+          .vendor-section { 
+            margin-bottom: 20px; 
+            padding: 15px;
+            border: 2px solid #000;
+            background: #f9f9f9;
+          }
+          .section-label { 
+            font-size: 12px; 
+            font-weight: bold; 
+            margin-bottom: 8px; 
+            text-transform: uppercase;
+            text-decoration: underline;
+          }
+          .vendor-name { 
+            font-size: 14px; 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+          }
+          .vendor-details { 
+            font-size: 11px; 
+            line-height: 1.6; 
+          }
+          
+          .items-section { 
+            margin-bottom: 20px; 
+          }
+          .items-heading { 
+            font-size: 14px; 
+            font-weight: bold; 
+            margin-bottom: 12px; 
+            text-transform: uppercase;
+            text-align: center;
+            padding: 8px;
+            background: #000;
+            color: #fff;
+            letter-spacing: 1px;
+          }
+          
+          .items-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 20px;
+          }
+          .items-table thead { 
+            background: #e0e0e0; 
+          }
+          .items-table th { 
+            padding: 12px 8px; 
+            text-align: left; 
+            font-size: 11px; 
+            font-weight: bold; 
+            border: 2px solid #000; 
+            text-transform: uppercase;
+          }
+          .items-table th.center { text-align: center; }
+          .items-table td { 
+            padding: 12px 8px; 
+            font-size: 11px; 
+            border: 1px solid #000; 
+          }
+          
+          .notes-section {
+            margin-top: 25px;
+            padding: 15px;
+            border: 2px solid #000;
+            background: #fffef0;
+          }
+          .notes-title {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 8px;
+            text-decoration: underline;
+          }
+          .notes-content {
+            font-size: 11px;
+            line-height: 1.6;
+          }
+          
+          .signature-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+          }
+          .signature-box {
+            width: 45%;
+            text-align: center;
+            padding-top: 50px;
+            border-top: 2px solid #000;
+          }
+          .signature-label {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+          }
+          
+          .footer-section { 
+            margin-top: 30px; 
+            padding-top: 15px; 
+            border-top: 2px solid #000; 
+            text-align: center; 
+            font-size: 9px; 
+            color: #666;
+            font-style: italic;
+          }
+          
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+            .document-container { border: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="document-container">
+          <!-- Header Section -->
+          <div class="header-section">
+            <div class="company-info">
+              <div class="company-name">RATILAL & SONS</div>
+              <div class="company-tagline">Retail Approved Distributor Of Petroleum</div>
+              <div class="company-address">
+                <strong>Regd. Office:</strong> Survey No. 166, Opp. Maruti Weigh Bridge,<br>
+                N.H.-8, Near Arpan, Shapar-360024
+              </div>
+              <div class="company-details">
+                <strong>Email:</strong> ratilalandsons786@gmail.com<br>
+                <strong>PAN:</strong> AAUFR2909Q | <strong>CIN:</strong> U51909GJ2019PTC110073<br>
+                <strong>State Code:</strong> 24 (Gujarat) | <strong>GSTIN:</strong> 24AAUFR2909Q1ZT
+              </div>
+            </div>
+            <div class="po-info">
+              <div class="po-title">Purchase Order</div>
+              <div class="po-number">${order.order_number || order.invoice_number}</div>
+              <div class="po-date">
+                <strong>Date:</strong> ${orderDate}
+              </div>
+              <div class="contact-person">
+                <strong>Contact Person:</strong><br>
+                Ramesh Sorathiya<br>
+                Mo: 8160110831
+              </div>
+            </div>
+          </div>
+
+          <!-- Vendor Section -->
+          <div class="vendor-section">
+            <div class="section-label">Vendor Details:</div>
+            <div class="vendor-name">${order.vendor_company || order.vendor_name || 'VENDOR NAME'}</div>
+            <div class="vendor-details">
+              ${order.vendor_name && order.vendor_company && order.vendor_name !== order.vendor_company ? '<strong>Contact:</strong> ' + order.vendor_name + '<br>' : ''}
+              ${order.vendor_email ? '<strong>Email:</strong> ' + order.vendor_email + '<br>' : ''}
+              ${order.vendor_phone ? '<strong>Phone:</strong> ' + order.vendor_phone : ''}
+            </div>
+          </div>
+
+          <!-- Items Section -->
+          <div class="items-section">
+            <div class="items-heading">Purchase Order Items</div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;" class="center">Sr. No.</th>
+                  <th>Item Description</th>
+                  <th style="width: 100px;" class="center">Quantity</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHTML}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Notes Section (if any) -->
+          ${order.notes ? `
+            <div class="notes-section">
+              <div class="notes-title">Special Instructions / Notes:</div>
+              <div class="notes-content">${order.notes}</div>
+            </div>
+          ` : ''}
+
+          <!-- Signature Section -->
+          <div class="signature-section">
+            <div class="signature-box">
+              <div class="signature-label">Vendor Signature</div>
+            </div>
+            <div class="signature-box">
+              <div class="signature-label">Authorized Signature<br>(Ratilal & Sons)</div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="footer-section">
+            This is a computer-generated purchase order and does not require a physical signature.<br>
+            For any queries, please contact us at ratilalandsons786@gmail.com or call 8160110831
+          </div>
+        </div>
+
+        <!-- Print Controls -->
+        <div class="no-print" style="margin-top: 30px; text-align: center; padding: 20px;">
+          <button onclick="window.print()" style="background: #7C3AED; color: white; padding: 14px 28px; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600; margin-right: 12px; box-shadow: 0 4px 6px rgba(124, 58, 237, 0.3);">
+            🖨️ Print / Save as PDF
+          </button>
+          <button onclick="window.close()" style="background: #6B7280; color: white; padding: 14px 28px; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600; box-shadow: 0 4px 6px rgba(107, 114, 128, 0.3);">
+            ✕ Close
+          </button>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
   // Metrics
   const totalVendors = vendors.length;
   const activeVendors = vendors.filter((v) => (v.status || "active").toLowerCase() === "active").length;
@@ -2000,6 +2745,30 @@ const VendorProfile = () => {
 
       {/* Search and Actions Section */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+        {/* Tabs */}
+        <div className="flex items-center gap-4 mb-6 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab("vendors")}
+            className={`px-6 py-3 font-semibold transition-all ${
+              activeTab === "vendors"
+                ? "text-green-600 border-b-2 border-green-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Vendors
+          </button>
+          <button
+            onClick={() => setActiveTab("purchase-orders")}
+            className={`px-6 py-3 font-semibold transition-all ${
+              activeTab === "purchase-orders"
+                ? "text-purple-600 border-b-2 border-purple-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Purchase Orders
+          </button>
+        </div>
+
         <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
           <div className="relative flex-1 max-w-lg">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -2012,6 +2781,12 @@ const VendorProfile = () => {
             />
           </div>
           <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => setPurchaseOrderModal(true)}
+              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
+            >
+              <ShoppingCart className="w-5 h-5" /> Purchase Order
+            </button>
             <button
               onClick={() => setOrderModal(true)}
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
@@ -2048,7 +2823,8 @@ const VendorProfile = () => {
         </div>
       </div>
 
-      {/* Modern Vendor Table */}
+      {/* Vendors Table */}
+      {activeTab === "vendors" && (
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -2191,6 +2967,107 @@ const VendorProfile = () => {
           </table>
         </div>
       </div>
+      )}
+
+      {/* Purchase Orders Table */}
+      {activeTab === "purchase-orders" && (
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">PO Number</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Vendor</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Items</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Date</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {purchaseOrdersLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                      <p className="text-gray-500 font-medium">Loading purchase orders...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : purchaseOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                        <FileText className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-gray-500 font-medium">No purchase orders found</p>
+                      <p className="text-gray-400 text-sm">Create your first purchase order to get started</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                purchaseOrders.map((order) => (
+                  <tr key={order.order_number || order.invoice_number} className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-200">
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        {order.order_number || order.invoice_number}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <div className="font-semibold text-gray-900">{order.vendor_name}</div>
+                        <div className="text-sm text-gray-500">{order.vendor_company}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">{order.items?.length || 0} items</div>
+                      <div className="text-xs text-gray-500">
+                        {order.items?.slice(0, 2).map(item => item.name).join(', ')}
+                        {order.items?.length > 2 && '...'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {new Date(order.invoice_date || order.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => setCurrentInvoice(order)}
+                          title="View Details"
+                          className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors"
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          onClick={() => generatePurchaseOrderPDF(order)}
+                          title="Download PDF"
+                          className="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors"
+                        >
+                          <Download size={16} />
+                        </button>
+                        <button
+                          onClick={() => deletePurchaseOrder(order.order_number || order.invoice_number)}
+                          title="Delete"
+                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      )}
 
       {/* Add Vendor Modal */}
       <AddVendorModal
@@ -2223,6 +3100,18 @@ const VendorProfile = () => {
           onClose={() => setDetailViewVendor(null)}
         />
       )}
+
+      <PurchaseOrderModal
+        open={purchaseOrderModal}
+        onClose={() => setPurchaseOrderModal(false)}
+        vendors={vendors}
+        onOrderPlaced={(invoice) => {
+          setPurchaseOrderModal(false);
+          setCurrentInvoice(invoice);
+          fetchPurchaseOrders(); // Refresh purchase orders list
+          setActiveTab("purchase-orders"); // Switch to purchase orders tab
+        }}
+      />
 
       <PlaceOrderModal
         open={orderModal}

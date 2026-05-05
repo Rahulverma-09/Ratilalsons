@@ -157,14 +157,14 @@ class VendorActivityLogModel(BaseModel):
 class PurchaseOrderItem(BaseModel):
     name: str
     qty: float
-    unit_price: float
+    unit_price: Optional[float] = 0.0
     total: Optional[float] = None
 
 class PurchaseOrderCreate(BaseModel):
     vendor_id: str
     items: List[PurchaseOrderItem]
     notes: Optional[str] = None
-    gst_percent: float = 18.0
+    gst_percent: Optional[float] = 0.0
 
 # Response Models
 class VendorListResponse(BaseModel):

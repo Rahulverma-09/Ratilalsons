@@ -45,7 +45,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS configuration
+# CORS configurationssss
 origins = [
     # Primary Live Frontend URL
     "https://ratilalandsonscrm.onrender.com",
@@ -57,7 +57,7 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://ratilalsons-backend-api.onrender.com",
-    "http://localhost:5173",  # Vite default
+    "http://localhost:5173",  
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3005",
     "http://127.0.0.1:8004",

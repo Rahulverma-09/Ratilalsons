@@ -210,21 +210,22 @@ async def create_purchase_order(
     if not vendor:
         raise HTTPException(status_code=404, detail="Vendor not found")
 
-    # Calculate line totals and subtotal
+    # Calculate line totals and subtotal (only if unit_price is provided)
     items_with_totals = []
     subtotal = 0.0
     for item in order_data.items:
-        line_total = round(item.qty * item.unit_price, 2)
+        unit_price = item.unit_price if item.unit_price is not None else 0.0
+        line_total = round(item.qty * unit_price, 2)
         subtotal += line_total
         items_with_totals.append({
             "name": item.name,
             "qty": item.qty,
-            "unit_price": item.unit_price,
+            "unit_price": unit_price,
             "total": line_total,
         })
     subtotal = round(subtotal, 2)
 
-    gst_percent = order_data.gst_percent
+    gst_percent = order_data.gst_percent if order_data.gst_percent is not None else 0.0
     gst_amount = round(subtotal * gst_percent / 100, 2)
     grand_total = round(subtotal + gst_amount, 2)
 
@@ -284,16 +285,22 @@ async def create_purchase_order(
 
     vendor_orders_collection().insert_one(order_doc)
 
-    # Update vendor metrics
-    vendors_collection().update_one(
-        {"id": order_data.vendor_id},
-        {"$inc": {"total_spend": grand_total, "orders_count": 1}},
-    )
+    # Update vendor metrics (only if there's a grand_total)
+    if grand_total > 0:
+        vendors_collection().update_one(
+            {"id": order_data.vendor_id},
+            {"$inc": {"total_spend": grand_total, "orders_count": 1}},
+        )
+    else:
+        vendors_collection().update_one(
+            {"id": order_data.vendor_id},
+            {"$inc": {"orders_count": 1}},
+        )
 
     log_vendor_activity(
         vendor_id=order_data.vendor_id,
         action="purchase_order_created",
-        description=f"Purchase order {invoice_number} created for \u20b9{grand_total:.2f}",
+        description=f"Purchase order {invoice_number} created" + (f" for \u20b9{grand_total:.2f}" if grand_total > 0 else ""),
         user_id=current_user.get("id"),
         metadata={"invoice_number": invoice_number, "grand_total": grand_total},
     )
@@ -313,6 +320,56 @@ async def create_purchase_order(
         "grand_total": grand_total,
         "status": "pending",
         "notes": order_data.notes,
+    }
+
+
+@vendor_router.get("/purchase-orders/all")
+async def get_all_purchase_orders(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all purchase orders"""
+    
+    orders = list(vendor_orders_collection().find(
+        {},
+        sort=[("created_at", -1)],
+        skip=skip,
+        limit=limit
+    ))
+    
+    # Convert ObjectId to string
+    for order in orders:
+        if "_id" in order:
+            order["id"] = str(order.pop("_id"))
+    
+    return orders
+
+
+@vendor_router.delete("/purchase-orders/{order_number}")
+async def delete_purchase_order(
+    order_number: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a purchase order by order number"""
+    
+    # Find and delete the purchase order
+    result = vendor_orders_collection().delete_one({
+        "$or": [
+            {"order_number": order_number},
+            {"invoice_number": order_number}
+        ]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Purchase order {order_number} not found"
+        )
+    
+    return {
+        "message": f"Purchase order {order_number} deleted successfully",
+        "deleted_count": result.deleted_count
     }
 
 
