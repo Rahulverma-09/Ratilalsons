@@ -400,8 +400,8 @@ const HierarchyAssignment = () => {
                                         <button
                                             onClick={handleToggleUnassigned}
                                             className={`flex items-center justify-center px-4 py-3 rounded-lg transition-colors ${showUnassigned
-                                                    ? 'bg-orange-600 text-white hover:bg-orange-700'
-                                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                ? 'bg-orange-600 text-white hover:bg-orange-700'
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                                 }`}
                                         >
                                             <MdVisibility className="mr-2" />
@@ -464,8 +464,8 @@ const HierarchyAssignment = () => {
                             {/* All Team Leads Option */}
                             <div
                                 className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${!selectedSubordinate && !showUnassigned
-                                        ? 'bg-blue-100 border-blue-500 shadow-md'
-                                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                                    ? 'bg-blue-100 border-blue-500 shadow-md'
+                                    : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                                     }`}
                                 onClick={() => {
                                     setSelectedSubordinate(null);
@@ -489,8 +489,8 @@ const HierarchyAssignment = () => {
                                 <div
                                     key={subordinate.user_id}
                                     className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${selectedSubordinate?.user_id === subordinate.user_id
-                                            ? 'bg-blue-100 border-blue-500 shadow-md'
-                                            : 'bg-white border-gray-200 hover:bg-gray-50'
+                                        ? 'bg-blue-100 border-blue-500 shadow-md'
+                                        : 'bg-white border-gray-200 hover:bg-gray-50'
                                         }`}
                                     onClick={() => handleSubordinateSelect(subordinate)}
                                 >

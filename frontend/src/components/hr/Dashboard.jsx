@@ -56,7 +56,7 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
         if (response.ok) {
           const data = await response.json();
           console.log('Leave requests loaded from:', endpoint, data);
-          
+
           // Handle different response formats
           if (Array.isArray(data)) {
             setLeaveRequests(data);
@@ -108,17 +108,17 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
   // Calculate derived statistics from actual data
   const calculateStats = () => {
     // Filter out any customers or inactive users from employees array
-    const activeEmployees = employees.filter(emp => 
-      emp.is_active !== false && 
+    const activeEmployees = employees.filter(emp =>
+      emp.is_active !== false &&
       (emp.role || '').toLowerCase() !== 'customer'
     );
-    
+
     const totalEmployees = activeEmployees.length;
     const pendingLeaves = leaveRequests.filter(req => req.status === 'pending').length;
     const approvedLeaves = leaveRequests.filter(req => req.status === 'approved').length;
-    
+
     const today = new Date().toISOString().split('T')[0];
-    const todayAttendance = attendance.filter(att => 
+    const todayAttendance = attendance.filter(att =>
       att.attendance_date === today || att.date === today
     );
     const presentToday = todayAttendance.filter(att => att.status === 'present').length;
@@ -142,7 +142,7 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
     console.log('Total employees from props:', employees.length);
     console.log('Active employees (filtered):', totalEmployees);
     console.log('Dashboard stats from backend:', dashboardStats);
-    
+
     // Use actual filtered employee count instead of backend stats
     return {
       totalEmployees: totalEmployees, // Use filtered count instead of dashboardStats.total_active_employees
@@ -151,7 +151,7 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
       pendingLeaves,
       approvedLeaves,
       departmentBreakdown,
-      attendanceRate: dashboardStats.attendance_percentage || 
+      attendanceRate: dashboardStats.attendance_percentage ||
         (totalEmployees > 0 ? ((presentToday / totalEmployees) * 100).toFixed(1) : 0)
     };
   };
@@ -175,7 +175,7 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
         <div className="text-center">
           <div className="text-red-500 text-xl mb-4">Error Loading Dashboard</div>
           <p className="text-gray-600 mb-4">{error}</p>
-          <button 
+          <button
             onClick={fetchAdditionalData}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
@@ -261,7 +261,7 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Department Breakdown</h3>
-              
+
               <div className="space-y-4">
                 {stats.departmentBreakdown.map((dept, index) => (
                   <div key={index}>
@@ -270,8 +270,8 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
                       <span className="text-sm font-bold text-gray-900">{dept.count} ({dept.percentage}%)</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
+                      <div
+                        className="bg-blue-600 h-2 rounded-full"
                         style={{ width: `${dept.percentage}%` }}
                       ></div>
                     </div>
@@ -288,7 +288,7 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
                   {leaveRequests.length} total
                 </span>
               </div>
-              
+
               <div className="space-y-4 max-h-64 overflow-y-auto">
                 {leaveRequests
                   .sort((a, b) => new Date(b.created_at || b.request_date || '').getTime() - new Date(a.created_at || a.request_date || '').getTime())
@@ -299,7 +299,7 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
                     const startDate = request.start_date || request.from_date || 'N/A';
                     const endDate = request.end_date || request.to_date || 'N/A';
                     const status = (request.status || 'pending').toLowerCase();
-                    
+
                     // Calculate duration if dates are available
                     let duration = '';
                     if (startDate !== 'N/A' && endDate !== 'N/A') {
@@ -309,7 +309,7 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
                       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
                       duration = `${diffDays} day${diffDays > 1 ? 's' : ''}`;
                     }
-                    
+
                     return (
                       <div key={request.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                         <div className="flex-1">
@@ -334,20 +334,19 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            status === 'approved' 
-                              ? 'bg-green-100 text-green-800' 
-                              : status === 'rejected'
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${status === 'approved'
+                            ? 'bg-green-100 text-green-800'
+                            : status === 'rejected'
                               ? 'bg-red-100 text-red-800'
                               : 'bg-yellow-100 text-yellow-800'
-                          }`}>
+                            }`}>
                             {status.charAt(0).toUpperCase() + status.slice(1)}
                           </span>
                         </div>
                       </div>
                     );
                   })}
-                
+
                 {leaveRequests.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -358,11 +357,11 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
                   </div>
                 )}
               </div>
-              
+
               {leaveRequests.length > 5 && (
                 <div className="mt-4 pt-4 border-t border-gray-200">
-                  <Link 
-                    to="/leave-management" 
+                  <Link
+                    to="/leave-management"
                     className="text-sm text-blue-600 hover:text-blue-800 font-medium"
                   >
                     View all {leaveRequests.length} requests →
@@ -377,8 +376,8 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
         <div className="mt-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Link 
-              to="/hr" 
+            <Link
+              to="/hr"
               className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center group"
             >
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-200 transition-colors">
@@ -388,8 +387,8 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
               <p className="text-xs text-gray-500 mt-1">{stats.totalEmployees} total</p>
             </Link>
 
-            <Link 
-              to="/my-attendance" 
+            <Link
+              to="/my-attendance"
               className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center group"
             >
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-green-200 transition-colors">
@@ -399,8 +398,8 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
               <p className="text-xs text-gray-500 mt-1">{stats.attendanceRate}% today</p>
             </Link>
 
-            <Link 
-              to="/leave-management" 
+            <Link
+              to="/leave-management"
               className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center group"
             >
               <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-yellow-200 transition-colors">
@@ -410,8 +409,8 @@ const HRDashboard = ({ dashboardStats = {}, employees = [], hasPermission }) => 
               <p className="text-xs text-gray-500 mt-1">{stats.pendingLeaves} pending</p>
             </Link>
 
-            <Link 
-              to="/tasks" 
+            <Link
+              to="/tasks"
               className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow text-center group"
             >
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:bg-purple-200 transition-colors">

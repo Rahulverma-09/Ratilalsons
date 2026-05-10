@@ -24,7 +24,7 @@ const ALL_PERMISSIONS = [
   { key: "tasks", label: "Tasks & Workflow (Assign/Track Work)", icon: "📝" },
   { key: "alerts", label: "Alerts & Notifications", icon: "🔔" },
   { key: "reports", label: "Manage Reports", icon: "📈" },
-  { key: "orders",  label: "Track Orders (Customer)", icon: "🧾" },
+  { key: "orders", label: "Track Orders (Customer)", icon: "🧾" },
   { key: "support", label: "Support (Help & Tickets)", icon: "🛟" },
   { key: "invoices", label: "Bills & Invoice", icon: "🧾" }
 ];
@@ -106,26 +106,26 @@ const RolePermissionsModal = ({ role, onClose, onSaved }) => {
       // Previously, admin:access was always added to admin role even if unchecked
       await fetch(`${API_URL}/${role.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("access_token")||""}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("access_token") || ""}` },
         body: JSON.stringify({ permissions: perms })
       }).then(res => { if (!res.ok) throw new Error("Failed to save permissions"); });
-      
+
       // ✅ CRITICAL FIX: Trigger permission refresh for all users
       // Force immediate refresh by updating localStorage timestamp
       localStorage.setItem('permissions_updated', Date.now().toString());
-      
+
       // Dispatch storage event for current tab
       window.dispatchEvent(new StorageEvent('storage', {
         key: 'permissions_updated',
         newValue: Date.now().toString(),
         url: window.location.href
       }));
-      
+
       // Trigger manual refresh if available
       if (window.PermissionsContextRefresh) {
         await window.PermissionsContextRefresh();
       }
-      
+
       onSaved && onSaved();
       onClose();
     } catch (err) {
@@ -351,8 +351,8 @@ const RoleHierarchyManager = () => {
       <AnimatePresence>
         {toast.show && (
           <motion.div className={`fixed top-2 sm:top-4 right-2 sm:right-4 z-[9999] p-3 sm:p-4 pr-7 rounded-xl shadow-2xl font-bold text-white transition-all flex items-center gap-2 ${toast.type === 'error' ? 'bg-red-600' : 'bg-green-600'}`}
-              initial={{ opacity: 0, x: 80 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 80 }}>
-              {toast.type === 'success' ? '👍' : '🚨'} {toast.message}
+            initial={{ opacity: 0, x: 80 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 80 }}>
+            {toast.type === 'success' ? '👍' : '🚨'} {toast.message}
           </motion.div>
         )}
       </AnimatePresence>
@@ -369,7 +369,7 @@ const RoleHierarchyManager = () => {
         </header>
         <section className="bg-white px-2 sm:px-7 pt-4 pb-8 rounded-2xl sm:rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.05)] max-w-8xl mx-auto">
           <h3 className="text-2xl font-semibold mb-5 text-purple-800 border-b pb-2 flex items-center gap-2">
-           Manage Roles and Permissions
+            Manage Roles and Permissions
           </h3>
           {roleTree.length > 0 ? (
             <div className="p-1 sm:p-2">

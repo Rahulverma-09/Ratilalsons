@@ -52,10 +52,10 @@ const HRLeaveManagement = () => {
           const userData = await response.json();
           console.log("User data received:", userData); // Debug log
           setCurrentUser(userData);
-          
+
           // Check if user is HR/Admin - more comprehensive role checking
           let userRoles = [];
-          
+
           // Handle multiple possible role formats
           if (Array.isArray(userData.roles)) {
             userRoles = userData.roles.map(r => {
@@ -70,37 +70,37 @@ const HRLeaveManagement = () => {
           } else if (userData.role) {
             userRoles = [String(userData.role).toLowerCase()];
           }
-          
+
           console.log("Processed user roles:", userRoles); // Debug log
-          
+
           // Check for HR or Admin roles with more flexible matching
-          const isHR = userRoles.some(role => 
-            role.includes('hr') || 
-            role.includes('human') || 
+          const isHR = userRoles.some(role =>
+            role.includes('hr') ||
+            role.includes('human') ||
             role.includes('human_resources') ||
             role.includes('human resource') ||
             role === 'hr_manager' ||
             role === 'hr_staff'
           );
-          const isAdmin = userRoles.some(role => 
-            role.includes('admin') || 
-            role.includes('administrator') || 
+          const isAdmin = userRoles.some(role =>
+            role.includes('admin') ||
+            role.includes('administrator') ||
             role.includes('superuser') ||
             role === 'admin'
           );
-          
+
           console.log("Role check results:", { isHR, isAdmin }); // Debug log
-          
+
           // Also check if user has empty reports_to (admin indicator)
           const isTopLevel = !userData.reports_to || userData.reports_to === "";
-          
+
           if (!isHR && !isAdmin && !isTopLevel) {
             toast.error("Access denied. HR or Admin role required.");
             console.log("Access denied for roles:", userRoles);
             setIsLoading(false);
             return;
           }
-          
+
           fetchAllData();
         } else {
           console.error("Failed to fetch user data, status:", response.status);
@@ -129,27 +129,27 @@ const HRLeaveManagement = () => {
       const token = localStorage.getItem("access_token");
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const userId = currentUser?.id || currentUser?.user_id || currentUser?._id || user.id || user.user_id;
-      
+
       // Get user roles for API call
       let userRoles = [];
       if (currentUser?.roles) {
-        userRoles = Array.isArray(currentUser.roles) 
+        userRoles = Array.isArray(currentUser.roles)
           ? currentUser.roles.map(r => typeof r === 'string' ? r : (r.name || String(r)))
           : [String(currentUser.roles)];
       }
-      
+
       console.log("Fetching leave requests for userId:", userId, "roles:", userRoles);
-      
+
       // Try multiple endpoints to find leave requests
       let response = null;
       let data = null;
-      
+
       // First try the HR staff route
       try {
         response = await fetch(`${API_BASE_URL}/api/attendance/leave/admin/all?page=1&limit=100`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         if (response.ok) {
           data = await response.json();
           console.log("HR API Response:", data);
@@ -157,7 +157,7 @@ const HRLeaveManagement = () => {
       } catch (err) {
         console.log("HR endpoint failed, trying alternative...");
       }
-      
+
       // If HR endpoint failed, try employees endpoint
       if (!data || !response?.ok) {
         try {
@@ -165,7 +165,7 @@ const HRLeaveManagement = () => {
           response = await fetch(`${API_BASE_URL}/api/attendance/leave/admin/all?page=1&limit=100`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          
+
           if (response.ok) {
             data = await response.json();
             console.log("Employees API Response:", data);
@@ -174,7 +174,7 @@ const HRLeaveManagement = () => {
           console.log("Employees endpoint also failed:", err);
         }
       }
-      
+
       if (response && response.ok && data) {
         // Handle various possible response formats
         let requests = [];
@@ -190,19 +190,19 @@ const HRLeaveManagement = () => {
             requests = data.data;
           }
         }
-        
+
         // Ensure we always have an array
         if (!Array.isArray(requests)) {
           requests = [];
         }
-        
+
         console.log("Processed leave requests:", requests.length, "requests");
         setLeaveRequests(requests);
         calculateStats(requests);
       } else {
         const statusCode = response?.status || 'unknown';
         console.error("Failed to fetch leave requests, status:", statusCode);
-        
+
         let errorMessage = "Failed to load leave requests";
         try {
           if (response && response.status !== 404) {
@@ -212,7 +212,7 @@ const HRLeaveManagement = () => {
         } catch (e) {
           // Ignore parsing error
         }
-        
+
         toast.error(errorMessage);
         setLeaveRequests([]);
         calculateStats([]);
@@ -228,31 +228,31 @@ const HRLeaveManagement = () => {
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem("access_token");
-      
+
       // Try multiple endpoints to get employee data
       let response = null;
       let data = null;
-      
+
       // First try HR employees endpoint
       try {
         response = await fetch(`${API_BASE_URL}/api/hr/employees`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         if (response.ok) {
           data = await response.json();
         }
       } catch (err) {
         console.log("HR employees endpoint failed, trying alternative...");
       }
-      
+
       // If HR endpoint failed, try general employees endpoint
       if (!data || !response?.ok) {
         try {
           response = await fetch(`${API_BASE_URL}/api/staff/employees?active_only=true&limit=100`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          
+
           if (response.ok) {
             data = await response.json();
           }
@@ -260,10 +260,10 @@ const HRLeaveManagement = () => {
           console.log("Alternative employees endpoint also failed:", err);
         }
       }
-      
+
       if (response && response.ok && data) {
         console.log("Employees API Response:", data); // Debug log
-        
+
         // Handle various possible response formats
         let employeesData = [];
         if (Array.isArray(data)) {
@@ -278,12 +278,12 @@ const HRLeaveManagement = () => {
             employeesData = data.data;
           }
         }
-        
+
         // Ensure we always have an array
         if (!Array.isArray(employeesData)) {
           employeesData = [];
         }
-        
+
         console.log("Processed employees:", employeesData.length, "employees");
         setEmployees(employeesData);
       }
@@ -304,7 +304,7 @@ const HRLeaveManagement = () => {
       });
       return;
     }
-    
+
     setStats({
       pending: requests.filter(r => r.status === 'pending').length,
       approved: requests.filter(r => r.status === 'approved').length,
@@ -319,17 +319,17 @@ const HRLeaveManagement = () => {
       console.error("getFilteredRequests called with non-array:", leaveRequests);
       return [];
     }
-    
+
     let filtered = [...leaveRequests];
-    
+
     if (filterStatus !== 'all') {
       filtered = filtered.filter(r => r.status === filterStatus);
     }
-    
+
     if (filterLeaveType !== 'all') {
       filtered = filtered.filter(r => r.leave_type === filterLeaveType);
     }
-    
+
     return filtered.sort((a, b) => {
       if (a.status === 'pending' && b.status !== 'pending') return -1;
       if (a.status !== 'pending' && b.status === 'pending') return 1;
@@ -356,11 +356,11 @@ const HRLeaveManagement = () => {
     try {
       const token = localStorage.getItem("access_token");
       const requestId = selectedRequest._id || selectedRequest.id;
-      
+
       // Try multiple API endpoints for action
       let response = null;
       let success = false;
-      
+
       // First try HR staff route
       try {
         response = await fetch(
@@ -378,14 +378,14 @@ const HRLeaveManagement = () => {
             })
           }
         );
-        
+
         if (response.ok) {
           success = true;
         }
       } catch (err) {
         console.log("HR endpoint failed, trying employees endpoint...");
       }
-      
+
       // If HR endpoint failed, try employees endpoint
       if (!success) {
         try {
@@ -404,7 +404,7 @@ const HRLeaveManagement = () => {
               })
             }
           );
-          
+
           if (response.ok) {
             success = true;
           }
@@ -445,11 +445,11 @@ const HRLeaveManagement = () => {
     setSubmitting(true);
     try {
       const token = localStorage.getItem("access_token");
-      
+
       // Try multiple endpoints for updating leave balance
       let response = null;
       let success = false;
-      
+
       // First try HR staff route
       try {
         response = await fetch(
@@ -467,14 +467,14 @@ const HRLeaveManagement = () => {
             })
           }
         );
-        
+
         if (response.ok) {
           success = true;
         }
       } catch (err) {
         console.log("HR balance endpoint failed, trying alternative...");
       }
-      
+
       // If HR endpoint failed, try employees endpoint
       if (!success) {
         try {
@@ -493,7 +493,7 @@ const HRLeaveManagement = () => {
               })
             }
           );
-          
+
           if (response.ok) {
             success = true;
           }
@@ -547,9 +547,9 @@ const HRLeaveManagement = () => {
       approved: { bg: 'bg-green-100', text: 'text-green-800', icon: 'check-circle', label: 'Approved' },
       rejected: { bg: 'bg-red-100', text: 'text-red-800', icon: 'times-circle', label: 'Rejected' }
     };
-    
+
     const { bg, text, icon, label } = config[status?.toLowerCase()] || config.pending;
-    
+
     return (
       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${bg} ${text}`}>
         <i className={`fas fa-${icon} mr-1.5`}></i>
@@ -565,10 +565,10 @@ const HRLeaveManagement = () => {
       'annual leave': { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
       'emergency leave': { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' }
     };
-    
+
     const normalized = type?.toLowerCase() || 'casual leave';
     const { bg, text, border } = config[normalized] || config['casual leave'];
-    
+
     return (
       <span className={`px-3 py-1 rounded-lg text-xs font-semibold border ${bg} ${text} ${border}`}>
         {type}
@@ -633,7 +633,7 @@ const HRLeaveManagement = () => {
               </div>
               <p className="text-xs font-medium text-yellow-700">Pending</p>
             </div>
-            
+
             <div className="bg-green-50 rounded-lg p-3 border border-green-200">
               <div className="flex items-center justify-between mb-1">
                 <i className="fas fa-check-circle text-lg text-green-500"></i>
@@ -641,7 +641,7 @@ const HRLeaveManagement = () => {
               </div>
               <p className="text-xs font-medium text-green-700">Approved</p>
             </div>
-            
+
             <div className="bg-red-50 rounded-lg p-3 border border-red-200">
               <div className="flex items-center justify-between mb-1">
                 <i className="fas fa-times-circle text-lg text-red-500"></i>
@@ -649,7 +649,7 @@ const HRLeaveManagement = () => {
               </div>
               <p className="text-xs font-medium text-red-700">Rejected</p>
             </div>
-            
+
             <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
               <div className="flex items-center justify-between mb-1">
                 <i className="fas fa-list text-lg text-indigo-500"></i>
@@ -672,7 +672,7 @@ const HRLeaveManagement = () => {
           <i className="fas fa-filter text-indigo-600 mr-2"></i>
           Filters
         </h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
@@ -687,7 +687,7 @@ const HRLeaveManagement = () => {
               <option value="rejected">Rejected</option>
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Leave Type</label>
             <select
@@ -717,7 +717,7 @@ const HRLeaveManagement = () => {
             <i className="fas fa-table text-indigo-600 mr-2"></i>
             Leave Requests ({filteredRequests.length})
           </h2>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -931,11 +931,10 @@ const HRLeaveManagement = () => {
                       <button
                         onClick={handleSubmitAction}
                         disabled={submitting || (actionForm.action === 'reject' && !actionForm.remarks)}
-                        className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed ${
-                          actionForm.action === 'approve'
-                            ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700'
-                            : 'bg-gradient-to-r from-red-600 to-rose-600 text-white hover:from-red-700 hover:to-rose-700'
-                        }`}
+                        className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed ${actionForm.action === 'approve'
+                          ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700'
+                          : 'bg-gradient-to-r from-red-600 to-rose-600 text-white hover:from-red-700 hover:to-rose-700'
+                          }`}
                       >
                         {submitting ? (
                           <>

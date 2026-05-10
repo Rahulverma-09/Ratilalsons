@@ -111,7 +111,7 @@ const EmployeeCreateForm = ({ isOpen, onClose, onSuccess }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.full_name.trim()) newErrors.full_name = 'Full name is required';
     if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
     if (!formData.password.trim()) newErrors.password = 'Password is required';
@@ -127,7 +127,7 @@ const EmployeeCreateForm = ({ isOpen, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setLoading(true);
@@ -145,7 +145,7 @@ const EmployeeCreateForm = ({ isOpen, onClose, onSuccess }) => {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setSuccess(true);
         setTimeout(() => {
@@ -207,7 +207,7 @@ const EmployeeCreateForm = ({ isOpen, onClose, onSuccess }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     if (name.startsWith('additional_info.')) {
       const field = name.split('.')[1];
       setFormData(prev => ({
@@ -223,7 +223,7 @@ const EmployeeCreateForm = ({ isOpen, onClose, onSuccess }) => {
         [name]: type === 'checkbox' ? checked : value
       }));
     }
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -256,9 +256,8 @@ const EmployeeCreateForm = ({ isOpen, onClose, onSuccess }) => {
           value={name.includes('.') ? formData.additional_info[name.split('.')[1]] : formData[name]}
           onChange={handleInputChange}
           placeholder={placeholder}
-          className={`w-full ${Icon ? 'pl-10' : 'pl-3'} pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-            errors[name] ? 'border-red-300' : 'border-gray-300'
-          }`}
+          className={`w-full ${Icon ? 'pl-10' : 'pl-3'} pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors[name] ? 'border-red-300' : 'border-gray-300'
+            }`}
           {...props}
         />
         {type === 'password' && (
@@ -284,9 +283,8 @@ const EmployeeCreateForm = ({ isOpen, onClose, onSuccess }) => {
         name={name}
         value={formData[name]}
         onChange={handleInputChange}
-        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-          errors[name] ? 'border-red-300' : 'border-gray-300'
-        }`}
+        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors[name] ? 'border-red-300' : 'border-gray-300'
+          }`}
       >
         <option value="">{placeholder}</option>
         {options.map((option) => (

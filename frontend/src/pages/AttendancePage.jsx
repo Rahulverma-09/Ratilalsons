@@ -23,8 +23,8 @@ function checkIsHRAdmin(user) {
 }
 
 const MONTHS = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December",
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
 const STATUS_OPTIONS = ["present", "absent", "late", "half_day", "leave"];
@@ -442,9 +442,8 @@ const AttendancePage = () => {
             <button
               onClick={handleCheckIn}
               disabled={isCheckingIn || !checkInLocation}
-              className={`px-6 py-2.5 rounded-lg text-white font-semibold text-sm ${
-                isCheckingIn || !checkInLocation ? "bg-gray-300 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-              }`}
+              className={`px-6 py-2.5 rounded-lg text-white font-semibold text-sm ${isCheckingIn || !checkInLocation ? "bg-gray-300 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+                }`}
             >
               {isCheckingIn ? "Checking in…" : "▶ Check In"}
             </button>
@@ -456,11 +455,10 @@ const AttendancePage = () => {
             <button
               onClick={handleCheckOut}
               disabled={isCheckingOut || !(todayAttendance?.checkin_time || todayAttendance?.check_in)}
-              className={`px-6 py-2.5 rounded-lg text-white font-semibold text-sm ${
-                isCheckingOut || !(todayAttendance?.checkin_time || todayAttendance?.check_in)
-                  ? "bg-gray-300 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }`}
+              className={`px-6 py-2.5 rounded-lg text-white font-semibold text-sm ${isCheckingOut || !(todayAttendance?.checkin_time || todayAttendance?.check_in)
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
+                }`}
             >
               {isCheckingOut ? "Checking out…" : "■ Check Out"}
             </button>
@@ -762,9 +760,8 @@ const AttendancePage = () => {
               <button
                 onClick={handleMarkAttendance}
                 disabled={isMarking}
-                className={`flex-1 rounded-lg py-2 text-sm font-semibold text-white ${
-                  isMarking ? "bg-indigo-300 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
-                }`}
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold text-white ${isMarking ? "bg-indigo-300 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+                  }`}
               >
                 {isMarking ? "Saving…" : "Mark Attendance"}
               </button>

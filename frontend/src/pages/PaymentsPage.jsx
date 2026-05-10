@@ -17,7 +17,7 @@ const Notification = ({ show, message, type = 'info', onClose }) => {
         px-6 py-3 rounded-lg shadow-lg flex items-center gap-3
         ${type === 'success' ? 'bg-green-100 text-green-800 border border-green-300'
           : type === 'error' ? 'bg-red-100 text-red-800 border border-red-300'
-          : 'bg-blue-100 text-blue-800 border border-blue-300'}
+            : 'bg-blue-100 text-blue-800 border border-blue-300'}
       `}>
         <span>
           {type === 'success' && <i className="fas fa-check-circle mr-2"></i>}
@@ -138,7 +138,7 @@ const PaymentsPage = () => {
     fetchData();
     fetchNotifications();
     fetchActivityLog();
-    fetchLeads(); 
+    fetchLeads();
     fetchAllQuotations();
   }, []);
 
@@ -157,7 +157,7 @@ const PaymentsPage = () => {
 
   };
 
-    const fetchAllQuotations = async () => {
+  const fetchAllQuotations = async () => {
     try {
       const res = await fetch('https://ratilalsons-backend-api.onrender.com/api/quotations/', {
         headers: { "Authorization": `Bearer ${localStorage.getItem('access_token') || ''}` }
@@ -169,7 +169,7 @@ const PaymentsPage = () => {
     }
   };
 
-const fetchData = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('access_token') || '';
@@ -195,7 +195,7 @@ const fetchData = async () => {
               ? q.expiry_date.$date.split('T')[0]
               : '');
 
-                return {
+        return {
           id: q.quotation_number || q.id || q._id,
           client: q.client || q.client_name || '',
           clientId: q.lead_id || '',
@@ -224,7 +224,7 @@ const fetchData = async () => {
       if (!res.ok) return;
       const data = await res.json();
       setNotifications(Array.isArray(data) ? data : (data.notifications || []));
-    } catch {}
+    } catch { }
   };
 
   const fetchActivityLog = async () => {
@@ -233,7 +233,7 @@ const fetchData = async () => {
       if (!res.ok) return;
       const data = await res.json();
       setActivityLog(Array.isArray(data) ? data : (data.logs || []));
-    } catch {}
+    } catch { }
   };
 
   // Filter logic
@@ -386,7 +386,7 @@ const fetchData = async () => {
     setNewInvoiceOpen(false);
   };
 
- const handleNewInvoiceQuotationChange = (e) => {
+  const handleNewInvoiceQuotationChange = (e) => {
     const val = e.target.value;
     setNewInvoice((prev) => ({ ...prev, quotation_id: val }));
     if (val) {
@@ -439,7 +439,7 @@ const fetchData = async () => {
     });
   };
 
-const handleNewInvoiceSubmit = async (e) => {
+  const handleNewInvoiceSubmit = async (e) => {
     e.preventDefault();
     try {
       const body = {
@@ -529,7 +529,7 @@ const handleNewInvoiceSubmit = async (e) => {
   };
 
   // Modal for create new invoice as 3d card
-const renderNewInvoiceModal = () => (
+  const renderNewInvoiceModal = () => (
     <Modal open={newInvoiceOpen} onClose={handleCloseNewInvoice} cardStyle>
       <form className="p-8" onSubmit={handleNewInvoiceSubmit}>
         <h2 className="text-2xl font-bold text-purple-700 mb-5 flex items-center gap-2">
@@ -857,9 +857,8 @@ const renderNewInvoiceModal = () => (
               {filteredPayments.map((payment, index) => (
                 <tr
                   key={payment.id}
-                  className={`${
-                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                  } border-b border-gray-100 hover:bg-blue-50 transition-colors`}
+                  className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    } border-b border-gray-100 hover:bg-blue-50 transition-colors`}
                 >
                   <td className="px-4 py-3 text-sm text-gray-800 font-medium whitespace-nowrap">{payment.id}</td>
                   <td className="px-4 py-3 text-sm text-gray-800">
@@ -877,13 +876,12 @@ const renderNewInvoiceModal = () => (
                   </td>
                   <td className="px-4 py-3 text-sm whitespace-nowrap">
                     <span
-                      className={`px-2 py-1 inline-flex items-center rounded-full text-xs font-medium ${
-                        payment.status === 'paid'
-                          ? 'bg-green-100 text-green-700 border border-green-200'
-                          : payment.status === 'pending'
+                      className={`px-2 py-1 inline-flex items-center rounded-full text-xs font-medium ${payment.status === 'paid'
+                        ? 'bg-green-100 text-green-700 border border-green-200'
+                        : payment.status === 'pending'
                           ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
                           : 'bg-red-100 text-red-700 border border-red-200'
-                      }`}
+                        }`}
                     >
                       {payment.status === 'paid' && <i className="fas fa-check-circle mr-1.5"></i>}
                       {payment.status === 'pending' && <i className="fas fa-clock mr-1.5"></i>}
@@ -967,8 +965,8 @@ export default PaymentsPage;
 //   return (
 //     <section
 //       className="
-//         w-full 
-//         bg-white 
+//         w-full
+//         bg-white
 //         rounded-2xl
 //         shadow-2xl
 //         shadow-blue-200/60

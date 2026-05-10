@@ -9,7 +9,7 @@ const sectionCard =
 
 
 
-  function ModalCard({ open, onClose, children, width = 'max-w-md' }) {
+function ModalCard({ open, onClose, children, width = 'max-w-md' }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -182,16 +182,16 @@ export default function EnquiryProfileView() {
   const [newPayment, setNewPayment] = useState({ amount: "", mode: "", status: "success", remark: "" });
 
 
-useEffect(() => {
-  if (activeTab === "Payments") {
-    setPaymentsLoading(true);
-    fetch(`${API_BASE}/${enquiry_id}/payments`)
-      .then(res => res.json())
-      .then(res => setPayments(Array.isArray(res) ? res : [])) // <-- always array!
-      .catch(() => setPayments([]))
-      .finally(() => setPaymentsLoading(false));
-  }
-}, [activeTab, enquiry_id]);
+  useEffect(() => {
+    if (activeTab === "Payments") {
+      setPaymentsLoading(true);
+      fetch(`${API_BASE}/${enquiry_id}/payments`)
+        .then(res => res.json())
+        .then(res => setPayments(Array.isArray(res) ? res : [])) // <-- always array!
+        .catch(() => setPayments([]))
+        .finally(() => setPaymentsLoading(false));
+    }
+  }, [activeTab, enquiry_id]);
 
   const handleAddPayment = async (e) => {
     e.preventDefault();
@@ -301,7 +301,7 @@ useEffect(() => {
     setUploadFiles((prev) => ({ ...prev, [idx]: file }));
   };
 
-   const handleReupload = async (e, doc, idx) => {
+  const handleReupload = async (e, doc, idx) => {
     e.preventDefault();
     setUploadingIdx(idx);
     setUploadMsgs((prev) => ({ ...prev, [idx]: "" }));
@@ -517,210 +517,210 @@ useEffect(() => {
 
         {/* Documents Tab */}
         {activeTab === "Documents" && (
-  <section className={sectionCard + " w-[740px] h-[380px] mx-auto"}>
-    <h3 className="font-bold text-2xl mb-6 text-gray-900 tracking-tight">KYC Documents</h3>
-    {kycStatusMsg && (
-      <div className="text-green-700 mb-4 text-base font-medium">{kycStatusMsg}</div>
-    )}
-    {kycDocs.length === 0 ? (
-      <div className="text-gray-500 text-center py-10">No documents uploaded.</div>
-    ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {kycDocs.map((doc, idx) => {
-          const isRejected = doc.status?.toLowerCase() === "rejected";
-          const canAct = canShowActionButtons(doc.status);
-          return (
-            <div
-              key={doc.url || doc.name + doc.docType + idx}
-              className={`
+          <section className={sectionCard + " w-[740px] h-[380px] mx-auto"}>
+            <h3 className="font-bold text-2xl mb-6 text-gray-900 tracking-tight">KYC Documents</h3>
+            {kycStatusMsg && (
+              <div className="text-green-700 mb-4 text-base font-medium">{kycStatusMsg}</div>
+            )}
+            {kycDocs.length === 0 ? (
+              <div className="text-gray-500 text-center py-10">No documents uploaded.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {kycDocs.map((doc, idx) => {
+                  const isRejected = doc.status?.toLowerCase() === "rejected";
+                  const canAct = canShowActionButtons(doc.status);
+                  return (
+                    <div
+                      key={doc.url || doc.name + doc.docType + idx}
+                      className={`
                 bg-white shadow-md rounded-xl border border-gray-100 p-5 flex flex-col gap-4 relative 
                 transition-transform hover:scale-[1.02] hover:shadow-lg
                 ${isRejected ? "border-red-200" : ""}
               `}
-            >
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
-                  <span className="text-2xl text-blue-500">
-                    {doc.name?.match(/\.(jpg|jpeg|png|pdf)$/i)
-                      ? doc.name?.toLowerCase().endsWith("pdf")
-                        ? "📄"
-                        : "📷"
-                      : "📁"}
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <a
-                    href={
-                      doc.url?.startsWith("http")
-                        ? doc.url
-                        : `${BACKEND_BASE}${doc.url}`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold text-lg text-blue-700 hover:underline break-all"
-                  >
-                    {doc.name}
-                  </a>
-                  <div className="flex gap-2 mt-1">
-                    <span className="bg-blue-50 text-blue-800 px-2 py-0.5 rounded text-xs font-semibold border border-blue-100">
-                      {doc.docType}
-                    </span>
-                    <span className={`px-2 py-0.5 rounded text-xs font-semibold border 
-                      ${doc.status?.toLowerCase() === "approved"
-                        ? "bg-green-50 text-green-700 border-green-200"
-                        : doc.status?.toLowerCase() === "rejected"
-                        ? "bg-red-50 text-red-700 border-red-200"
-                        : "bg-gray-50 text-gray-500 border-gray-200"
-                      }
-                    `}>
-                      {doc.status || "Pending"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              {/* Action buttons */}
-              {canAct && (
-                <div className="flex gap-3 mt-2">
-                  <button
-                    className="flex-1 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow transition"
-                    onClick={() => handleKycStatus(doc.docType, "Approved")}
-                  >
-                    Approve
-                  </button>
-                  <button
-                    className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow transition"
-                    onClick={() => handleKycStatus(doc.docType, "Rejected")}
-                  >
-                    Reject
-                  </button>
-                </div>
-              )}
-              {/* Inline re-upload for rejected */}
-              {isRejected && !canAct && (
-                <form
-                  className="flex flex-col gap-2 mt-2"
-                  onSubmit={e => handleReupload(e, doc, idx)}
-                >
-                  <label className="block text-sm font-medium text-gray-700">
-                    <input
-                      ref={el => (fileInputRefs.current[idx] = el)}
-                      type="file"
-                      className="block w-full text-sm border border-gray-300 rounded px-2 py-1 mt-1"
-                      onChange={e => handleFileChange(idx, e.target.files[0])}
-                      accept="image/*,application/pdf"
-                    />
-                  </label>
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      className="flex-1 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-300 transition"
-                      disabled={uploadingIdx === idx}
                     >
-                      {uploadingIdx === idx ? "Uploading..." : "Re-upload"}
-                    </button>
-                    {uploadMsgs[idx] && (
-                      <span
-                        className="flex-1 text-sm font-medium"
-                        style={{
-                          color: uploadMsgs[idx].toLowerCase().includes("success")
-                            ? "#15803d"
-                            : "#dc2626"
-                        }}
-                      >
-                        {uploadMsgs[idx]}
-                      </span>
-                    )}
-                  </div>
-                </form>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    )}
-  </section>
-)}
+                      <div className="flex items-center gap-4">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                          <span className="text-2xl text-blue-500">
+                            {doc.name?.match(/\.(jpg|jpeg|png|pdf)$/i)
+                              ? doc.name?.toLowerCase().endsWith("pdf")
+                                ? "📄"
+                                : "📷"
+                              : "📁"}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <a
+                            href={
+                              doc.url?.startsWith("http")
+                                ? doc.url
+                                : `${BACKEND_BASE}${doc.url}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-semibold text-lg text-blue-700 hover:underline break-all"
+                          >
+                            {doc.name}
+                          </a>
+                          <div className="flex gap-2 mt-1">
+                            <span className="bg-blue-50 text-blue-800 px-2 py-0.5 rounded text-xs font-semibold border border-blue-100">
+                              {doc.docType}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded text-xs font-semibold border 
+                      ${doc.status?.toLowerCase() === "approved"
+                                ? "bg-green-50 text-green-700 border-green-200"
+                                : doc.status?.toLowerCase() === "rejected"
+                                  ? "bg-red-50 text-red-700 border-red-200"
+                                  : "bg-gray-50 text-gray-500 border-gray-200"
+                              }
+                    `}>
+                              {doc.status || "Pending"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Action buttons */}
+                      {canAct && (
+                        <div className="flex gap-3 mt-2">
+                          <button
+                            className="flex-1 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow transition"
+                            onClick={() => handleKycStatus(doc.docType, "Approved")}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow transition"
+                            onClick={() => handleKycStatus(doc.docType, "Rejected")}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                      {/* Inline re-upload for rejected */}
+                      {isRejected && !canAct && (
+                        <form
+                          className="flex flex-col gap-2 mt-2"
+                          onSubmit={e => handleReupload(e, doc, idx)}
+                        >
+                          <label className="block text-sm font-medium text-gray-700">
+                            <input
+                              ref={el => (fileInputRefs.current[idx] = el)}
+                              type="file"
+                              className="block w-full text-sm border border-gray-300 rounded px-2 py-1 mt-1"
+                              onChange={e => handleFileChange(idx, e.target.files[0])}
+                              accept="image/*,application/pdf"
+                            />
+                          </label>
+                          <div className="flex gap-2">
+                            <button
+                              type="submit"
+                              className="flex-1 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-300 transition"
+                              disabled={uploadingIdx === idx}
+                            >
+                              {uploadingIdx === idx ? "Uploading..." : "Re-upload"}
+                            </button>
+                            {uploadMsgs[idx] && (
+                              <span
+                                className="flex-1 text-sm font-medium"
+                                style={{
+                                  color: uploadMsgs[idx].toLowerCase().includes("success")
+                                    ? "#15803d"
+                                    : "#dc2626"
+                                }}
+                              >
+                                {uploadMsgs[idx]}
+                              </span>
+                            )}
+                          </div>
+                        </form>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
 
-{activeTab === "Notes" && (
-  <section className={sectionCard + " w-[720px] mx-auto"}>
-    <h3 className="font-bold text-2xl mb-5 text-blue-900 tracking-tight flex items-center gap-2">
-      <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 00-3-3.87"></path><path strokeLinecap="round" strokeLinejoin="round" d="M16 3.13a4 4 0 010 7.75"></path></svg>
-      Notes
-    </h3>
-    <form onSubmit={handleAddMultiNote} className="mb-6 flex flex-col sm:flex-row gap-3 items-end">
-      <div className="flex-1">
-        <label htmlFor="new-note" className="block text-sm font-medium text-gray-700 mb-1">
-          Add a new note
-        </label>
-        <textarea
-          id="new-note"
-          className="w-full border border-blue-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 transition"
-          rows={2}
-          placeholder="Type your note here..."
-          value={newNote}
-          onChange={e => setNewNote(e.target.value)}
-          disabled={addNoteLoading}
-        />
-      </div>
-      <button
-        type="submit"
-        className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 disabled:bg-gray-300 transition"
-        disabled={addNoteLoading || !newNote.trim()}
-      >
-        {addNoteLoading ? (
-          <span className="flex items-center gap-2">
-            <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-            </svg>
-            Adding...
-          </span>
-        ) : "Add Note"}
-      </button>
-    </form>
-    {addNoteError && (
-      <div className="text-red-600 mb-4">{addNoteError}</div>
-    )}
-    {multiNotesLoading ? (
-      <div className="text-center text-blue-500 py-10">Loading notes...</div>
-    ) : (
-      <ul className="space-y-3">
-        {multiNotes.length === 0 && <li className="text-gray-400 text-center">No notes added yet.</li>}
-        {multiNotes
-          .slice()
-          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
-          .map(note => (
-          <li
-            key={note.id}
-            className="bg-white border border-blue-100 rounded-lg p-4 shadow hover:shadow-md transition group relative"
-          >
-            <div className="flex items-start gap-3">
-              <div className="mt-1">
-                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-              </div>
+        {activeTab === "Notes" && (
+          <section className={sectionCard + " w-[720px] mx-auto"}>
+            <h3 className="font-bold text-2xl mb-5 text-blue-900 tracking-tight flex items-center gap-2">
+              <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 00-3-3.87"></path><path strokeLinecap="round" strokeLinejoin="round" d="M16 3.13a4 4 0 010 7.75"></path></svg>
+              Notes
+            </h3>
+            <form onSubmit={handleAddMultiNote} className="mb-6 flex flex-col sm:flex-row gap-3 items-end">
               <div className="flex-1">
-                <div className="text-gray-800 text-base leading-relaxed">{note.content}</div>
-                <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                  {note.author && (
-                    <span className="inline-flex items-center gap-1 font-medium text-blue-600">
-                      <svg className="w-4 h-4 inline-block" fill="currentColor" viewBox="0 0 20 20"><path d="M10 10a4 4 0 100-8 4 4 0 000 8zm6 8a6 6 0 00-12 0h12z" /></svg>
-                      {note.author}
-                    </span>
-                  )}
-                  {note.created_at && (
-                    <span>
-                      • {formatDateTime(note.created_at)}
-                    </span>
-                  )}
-                </div>
+                <label htmlFor="new-note" className="block text-sm font-medium text-gray-700 mb-1">
+                  Add a new note
+                </label>
+                <textarea
+                  id="new-note"
+                  className="w-full border border-blue-200 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-gray-800 transition"
+                  rows={2}
+                  placeholder="Type your note here..."
+                  value={newNote}
+                  onChange={e => setNewNote(e.target.value)}
+                  disabled={addNoteLoading}
+                />
               </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-    )}
-  </section>
-)}
+              <button
+                type="submit"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow hover:bg-blue-700 disabled:bg-gray-300 transition"
+                disabled={addNoteLoading || !newNote.trim()}
+              >
+                {addNoteLoading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Adding...
+                  </span>
+                ) : "Add Note"}
+              </button>
+            </form>
+            {addNoteError && (
+              <div className="text-red-600 mb-4">{addNoteError}</div>
+            )}
+            {multiNotesLoading ? (
+              <div className="text-center text-blue-500 py-10">Loading notes...</div>
+            ) : (
+              <ul className="space-y-3">
+                {multiNotes.length === 0 && <li className="text-gray-400 text-center">No notes added yet.</li>}
+                {multiNotes
+                  .slice()
+                  .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+                  .map(note => (
+                    <li
+                      key={note.id}
+                      className="bg-white border border-blue-100 rounded-lg p-4 shadow hover:shadow-md transition group relative"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1">
+                          <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-gray-800 text-base leading-relaxed">{note.content}</div>
+                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                            {note.author && (
+                              <span className="inline-flex items-center gap-1 font-medium text-blue-600">
+                                <svg className="w-4 h-4 inline-block" fill="currentColor" viewBox="0 0 20 20"><path d="M10 10a4 4 0 100-8 4 4 0 000 8zm6 8a6 6 0 00-12 0h12z" /></svg>
+                                {note.author}
+                              </span>
+                            )}
+                            {note.created_at && (
+                              <span>
+                                • {formatDateTime(note.created_at)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </section>
+        )}
 
         {activeTab === "Franchise Map" && (
           <section className={sectionCard + " w-[740px] h-[380px] mx-auto"}>
@@ -963,70 +963,69 @@ useEffect(() => {
         )} */}
 
 
-{activeTab === "Payments" && (
-  <section className={sectionCard + " w-[740px] h-[380px] mx-auto"}>
-    <h3 className="font-semibold text-lg mb-3">Payments</h3>
-    <button
-      className="mb-2 px-3 py-1 bg-blue-600 text-white rounded hover:opacity-90"
-      onClick={() => setShowAddPayment(true)}
-    >
-      Add Payment
-    </button>
-    {paymentsLoading ? (
-      <div className="text-center py-8 text-blue-500">Loading payments...</div>
-    ) : (
-      <table className="w-full text-sm mb-2">
-        <thead>
-          <tr>
-            <th className="text-left py-1 px-2">Amount</th>
-            <th className="text-left py-1 px-2">Date</th>
-            <th className="text-left py-1 px-2">Mode</th>
-            <th className="text-left py-1 px-2">Status</th>
-            <th className="text-left py-1 px-2">Remark</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.isArray(payments) && payments.length === 0 ? (
-            <tr>
-              <td colSpan={5} className="py-5 text-gray-400 text-center">
-                No payments recorded.
-              </td>
-            </tr>
-          ) : (
-            [...(payments || [])]
-              .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date, newest first
-              .map((pay, i) => (
-                <tr key={pay.id || i}>
-                  <td className="py-1 px-2">₹{pay.amount}</td>
-                  <td className="py-1 px-2">{formatDate(pay.date)}</td>
-                  <td className="py-1 px-2">{pay.mode}</td>
-                  <td className={`py-1 px-2 font-semibold ${
-                    pay.status === "success"
-                      ? "text-green-700"
-                      : pay.status === "pending"
-                        ? "text-yellow-700"
-                        : "text-gray-700"
-                  }`}>
-                    {pay.status}
-                  </td>
-                  <td className="py-1 px-2">{pay.remark}</td>
-                </tr>
-              ))
-          )}
-        </tbody>
-      </table>
-    )}
+        {activeTab === "Payments" && (
+          <section className={sectionCard + " w-[740px] h-[380px] mx-auto"}>
+            <h3 className="font-semibold text-lg mb-3">Payments</h3>
+            <button
+              className="mb-2 px-3 py-1 bg-blue-600 text-white rounded hover:opacity-90"
+              onClick={() => setShowAddPayment(true)}
+            >
+              Add Payment
+            </button>
+            {paymentsLoading ? (
+              <div className="text-center py-8 text-blue-500">Loading payments...</div>
+            ) : (
+              <table className="w-full text-sm mb-2">
+                <thead>
+                  <tr>
+                    <th className="text-left py-1 px-2">Amount</th>
+                    <th className="text-left py-1 px-2">Date</th>
+                    <th className="text-left py-1 px-2">Mode</th>
+                    <th className="text-left py-1 px-2">Status</th>
+                    <th className="text-left py-1 px-2">Remark</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.isArray(payments) && payments.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-5 text-gray-400 text-center">
+                        No payments recorded.
+                      </td>
+                    </tr>
+                  ) : (
+                    [...(payments || [])]
+                      .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date, newest first
+                      .map((pay, i) => (
+                        <tr key={pay.id || i}>
+                          <td className="py-1 px-2">₹{pay.amount}</td>
+                          <td className="py-1 px-2">{formatDate(pay.date)}</td>
+                          <td className="py-1 px-2">{pay.mode}</td>
+                          <td className={`py-1 px-2 font-semibold ${pay.status === "success"
+                            ? "text-green-700"
+                            : pay.status === "pending"
+                              ? "text-yellow-700"
+                              : "text-gray-700"
+                            }`}>
+                            {pay.status}
+                          </td>
+                          <td className="py-1 px-2">{pay.remark}</td>
+                        </tr>
+                      ))
+                  )}
+                </tbody>
+              </table>
+            )}
 
-    {/* Add Payment Modal */}
-    <AddPaymentModal
-      open={showAddPayment}
-      onClose={() => setShowAddPayment(false)}
-      onSubmit={handleAddPayment}
-      newPayment={newPayment}
-      setNewPayment={setNewPayment}
-    />
-  </section>
-)}
+            {/* Add Payment Modal */}
+            <AddPaymentModal
+              open={showAddPayment}
+              onClose={() => setShowAddPayment(false)}
+              onSubmit={handleAddPayment}
+              newPayment={newPayment}
+              setNewPayment={setNewPayment}
+            />
+          </section>
+        )}
         {/* ...other tabs, add responsive containers as needed */}
       </main>
     </div>

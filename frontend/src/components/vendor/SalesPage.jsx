@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const API_BASE = "https://ratilalsons-backend-api.onrender.com/api/customer-portal"; 
+const API_BASE = "https://ratilalsons-backend-api.onrender.com/api/customer-portal";
 const PAGE_SIZE = 10;
 
 // Fallback demo data for when API is not available
@@ -97,26 +97,24 @@ function SalesOrderTable({ orders, page, setPage, hasPrev, hasNext }) {
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        order.delivery_status === "Delivered"
-                          ? "bg-green-100 text-green-800"
-                          : order.delivery_status === "Pending"
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${order.delivery_status === "Delivered"
+                        ? "bg-green-100 text-green-800"
+                        : order.delivery_status === "Pending"
                           ? "bg-yellow-100 text-yellow-800"
                           : "bg-red-100 text-red-800"
-                      }`}
+                        }`}
                     >
                       {order.delivery_status}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        order.payment_status === "Paid"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : order.payment_status === "Pending"
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${order.payment_status === "Paid"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : order.payment_status === "Pending"
                           ? "bg-amber-100 text-amber-800"
                           : "bg-red-100 text-red-800"
-                      }`}
+                        }`}
                     >
                       {order.payment_status}
                     </span>
@@ -131,11 +129,10 @@ function SalesOrderTable({ orders, page, setPage, hasPrev, hasNext }) {
         <motion.button
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={!hasPrev}
-          className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-            hasPrev
-              ? "bg-gradient-to-r from-green-500 to-green-700 text-white hover:from-green-600 hover:to-green-800 shadow-lg hover:shadow-xl"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
-          }`}
+          className={`px-6 py-3 rounded-lg font-semibold transition-all ${hasPrev
+            ? "bg-gradient-to-r from-green-500 to-green-700 text-white hover:from-green-600 hover:to-green-800 shadow-lg hover:shadow-xl"
+            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
           style={{ minWidth: 100 }}
           whileTap={{ scale: 0.96 }}
         >
@@ -145,11 +142,10 @@ function SalesOrderTable({ orders, page, setPage, hasPrev, hasNext }) {
         <motion.button
           onClick={() => setPage((p) => p + 1)}
           disabled={!hasNext}
-          className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-            hasNext
-              ? "bg-gradient-to-r from-green-500 to-green-700 text-white hover:from-green-600 hover:to-green-800 shadow-lg hover:shadow-xl"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
-          }`}
+          className={`px-6 py-3 rounded-lg font-semibold transition-all ${hasNext
+            ? "bg-gradient-to-r from-green-500 to-green-700 text-white hover:from-green-600 hover:to-green-800 shadow-lg hover:shadow-xl"
+            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            }`}
           style={{ minWidth: 100 }}
           whileTap={{ scale: 0.96 }}
         >
@@ -181,7 +177,7 @@ export default function SalesPage() {
 
         // Try to fetch from customer portal orders endpoint
         const response = await fetch(`${API_BASE}/orders`, {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
           },
@@ -197,7 +193,7 @@ export default function SalesPage() {
         }
 
         const data = await response.json();
-        
+
         // Transform customer portal orders to sales format
         const salesOrders = (data.orders || []).map(order => ({
           id: order.id || order.order_id,
@@ -205,23 +201,23 @@ export default function SalesPage() {
           product_name: order.item_name || order.product_name || "Product",
           quantity: order.quantity || 1,
           order_date: order.date || order.created_at || new Date().toISOString(),
-          delivery_status: order.status === "delivered" ? "Delivered" : 
-                          order.status === "shipped" ? "Shipped" : "Pending",
+          delivery_status: order.status === "delivered" ? "Delivered" :
+            order.status === "shipped" ? "Shipped" : "Pending",
           payment_status: order.payment_status || "Pending",
           total_amount: order.amount || order.total_amount || 0
         }));
-        
+
         // If no orders from API, use demo data
         setOrders(salesOrders.length > 0 ? salesOrders : DEMO_SALES_DATA);
-        
+
       } catch (err) {
         console.error("Failed to fetch orders:", err);
         console.log("API failed, falling back to demo data");
-        
+
         // Use demo data as fallback
         setOrders(DEMO_SALES_DATA);
         setError(null); // Clear error since we have fallback data
-        
+
       } finally {
         setLoading(false);
       }
@@ -252,7 +248,7 @@ export default function SalesPage() {
 
       {/* Loading State */}
       {loading && (
-        <motion.div 
+        <motion.div
           className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-lg border border-green-100"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -265,7 +261,7 @@ export default function SalesPage() {
 
       {/* Error State */}
       {error && !loading && (
-        <motion.div 
+        <motion.div
           className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center mb-8"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -286,7 +282,7 @@ export default function SalesPage() {
 
       {/* Orders Table */}
       {!loading && !error && orders.length === 0 && (
-        <motion.div 
+        <motion.div
           className="bg-white rounded-2xl shadow-lg border border-green-100 p-12 text-center"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}

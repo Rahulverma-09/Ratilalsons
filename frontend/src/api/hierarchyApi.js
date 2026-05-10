@@ -2,22 +2,22 @@ import axios from 'axios';
 
 // Get API URL from environment or use a fallback based on hostname
 // For Vite, use import.meta.env instead of process.env
-const API_URL = import.meta.env.VITE_API_URL || 
-                (window.location.hostname === 'test.soheru.me' ? 
-                'https://localhost:8004/api' : 
-                'https://ratilalsons-backend-api.onrender.com/api');
+const API_URL = import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'test.soheru.me' ?
+    'https://localhost:8004/api' :
+    'https://ratilalsons-backend-api.onrender.com/api');
 
 // Debug helper function to check auth status
 const checkAuthStatus = () => {
   const token = localStorage.getItem('access_token');
   const user = localStorage.getItem('user');
-  
+
   console.log('Auth Check:');
   console.log('- Token exists:', !!token);
   if (token) {
     // Show first few characters for debugging
     console.log('- Token preview:', token.substring(0, 15) + '...');
-    
+
     try {
       // Decode JWT to check expiration (without verification)
       const tokenParts = token.split('.');
@@ -32,7 +32,7 @@ const checkAuthStatus = () => {
     }
   }
   console.log('- User info exists:', !!user);
-  
+
   // Return true if authentication seems valid
   return !!token;
 };
@@ -43,18 +43,18 @@ const refreshAccessToken = async () => {
   if (!refreshToken) {
     throw new Error('No refresh token available');
   }
-  
+
   try {
     const response = await axios.post(`${API_URL}/auth-sync/refresh-token`, {
       refresh_token: refreshToken
     });
-    
+
     if (response.data && response.data.access_token) {
       // Update stored tokens
       localStorage.setItem('access_token', response.data.access_token);
       localStorage.setItem('refresh_token', response.data.refresh_token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      
+
       console.log('Token refreshed successfully');
       return true;
     } else {
@@ -70,20 +70,20 @@ const refreshAccessToken = async () => {
 const initAuth = async () => {
   try {
     const token = localStorage.getItem('access_token');
-    
+
     // If no token exists, we can't initialize auth
     if (!token) {
       console.error('No token available for auth initialization');
       return false;
     }
-    
+
     // Check if token is expired by decoding it
     try {
       const tokenParts = token.split('.');
       if (tokenParts.length === 3) {
         const payload = JSON.parse(atob(tokenParts[1]));
         const isExpired = payload.exp * 1000 < Date.now();
-        
+
         if (isExpired) {
           console.log('Token is expired, attempting to refresh...');
           return await refreshAccessToken();
@@ -96,7 +96,7 @@ const initAuth = async () => {
       console.error('Error decoding token:', e);
       return await refreshAccessToken();
     }
-    
+
     return true;
   } catch (error) {
     console.error('Error in initAuth:', error);
@@ -108,15 +108,15 @@ const initAuth = async () => {
 const getAxiosInstance = () => {
   // Run auth status check
   const isAuthenticated = checkAuthStatus();
-  
+
   if (!isAuthenticated) {
     console.warn('Warning: Attempting to make API call without valid authentication');
     // Continue anyway but the request will likely fail
   }
-  
+
   const token = localStorage.getItem('access_token');
   console.log('Creating axios instance with token:', token ? `${token.substring(0, 15)}...` : 'No token');
-  
+
   const instance = axios.create({
     baseURL: API_URL,
     headers: {
@@ -124,7 +124,7 @@ const getAxiosInstance = () => {
       'Authorization': token ? `Bearer ${token}` : ''
     }
   });
-  
+
   // Add response interceptor to handle common errors
   instance.interceptors.response.use(
     response => response,
@@ -143,7 +143,7 @@ const getAxiosInstance = () => {
       return Promise.reject(error);
     }
   );
-  
+
   return instance;
 };
 
@@ -213,13 +213,13 @@ const hierarchyApi = {
     try {
       // First check auth status - this logs useful debugging information
       checkAuthStatus();
-      
+
       // Ensure we have a valid token before making the request
       await initAuth();
-      
+
       const api = getAxiosInstance();
       console.log('Making request to get all hierarchies to URL:', `${API_URL}/hierarchy/`);
-      
+
       // Add debugging request first to test authentication
       try {
         console.log('Testing auth with debug endpoint...');
@@ -228,13 +228,13 @@ const hierarchyApi = {
       } catch (debugError) {
         console.warn('Debug endpoint test failed:', debugError.message);
       }
-      
+
       // Make the actual request with trailing slash to avoid redirect
       const response = await api.get('/hierarchy/');
-      
+
       if (response.data && Array.isArray(response.data)) {
         console.log(`Hierarchy API response successful with ${response.data.length} items`);
-        
+
         // Show sample of first item if available for debugging
         if (response.data.length > 0) {
           console.log('Sample hierarchy item:', JSON.stringify(response.data[0]));
@@ -242,15 +242,15 @@ const hierarchyApi = {
       } else {
         console.warn('Hierarchy API returned non-array response:', response.data);
       }
-      
+
       return response.data;
     } catch (error) {
       console.error('Error fetching all hierarchies:', error);
-      
+
       if (error.response) {
         console.error('Error status:', error.response.status);
         console.error('Error data:', error.response.data);
-        
+
         // Enhanced error handling based on status codes
         if (error.response.status === 401) {
           console.error('Authentication error (401): Token is invalid or expired');
@@ -258,7 +258,7 @@ const hierarchyApi = {
           try {
             await initAuth();
             console.log('Token refreshed, retrying request...');
-            
+
             // Retry the request once with new token
             const api = getAxiosInstance();
             const response = await api.get('/hierarchy');
@@ -278,7 +278,7 @@ const hierarchyApi = {
       } else {
         console.error('Error setting up request:', error.message);
       }
-      
+
       throw error;
     }
   },

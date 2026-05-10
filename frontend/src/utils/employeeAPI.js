@@ -17,7 +17,7 @@ const getAuthToken = () => {
  */
 const apiRequest = async (endpoint, options = {}) => {
   const token = getAuthToken();
-  
+
   const defaultHeaders = {
     'Content-Type': 'application/json',
     ...(token && { 'Authorization': `Bearer ${token}` })
@@ -51,12 +51,12 @@ export const fetchEmployees = async (params = {}) => {
     // Try users endpoint (this is what actually works)
     let response = await apiRequest(`/api/staff/employees?${queryParams}`);
     let data;
-    
+
     if (!response.ok) {
       console.warn('Users endpoint failed, trying employees endpoint...');
       // Fallback to employees endpoint
       response = await apiRequest(`/api/staff/employees/?${queryParams}`);
-      
+
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
         throw new Error(error.detail || `HTTP ${response.status}`);
@@ -64,7 +64,7 @@ export const fetchEmployees = async (params = {}) => {
     }
 
     data = await response.json();
-    
+
     // Transform data to match frontend expectations
     const transformedEmployees = (data.data || []).map(emp => ({
       id: emp.user_id || emp.id,
@@ -165,7 +165,7 @@ export const updateEmployee = async (employeeId, employeeData) => {
     console.log('🚀 employeeAPI.updateEmployee called');
     console.log('📝 Employee ID:', employeeId);
     console.log('📝 Employee data:', employeeData);
-    
+
     const payload = {
       full_name: employeeData.full_name || employeeData.name,
       email: employeeData.email,
@@ -198,7 +198,7 @@ export const updateEmployee = async (employeeId, employeeData) => {
 
     const data = await response.json();
     console.log('✅ API success response:', data);
-    
+
     // Return normalized response with success flag
     return {
       success: true,
@@ -282,7 +282,7 @@ export const uploadEmployeeDocument = async (employeeId, file, documentType, doc
 export const getEmployeeStats = async () => {
   try {
     const response = await apiRequest('/api/employees/stats');
-    
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       throw new Error(error.detail || `HTTP ${response.status}`);

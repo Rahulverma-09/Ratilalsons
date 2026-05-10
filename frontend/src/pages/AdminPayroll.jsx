@@ -39,12 +39,12 @@ const PayrollAdmin = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      
+
       // Fetch payroll config
       const configRes = await fetch(`${API_BASE_URL}/api/payroll/config`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (configRes.ok) {
         const configData = await configRes.json();
         setConfig(configData.data || config);
@@ -54,7 +54,7 @@ const PayrollAdmin = () => {
       const structuresRes = await fetch(`${API_BASE_URL}/api/payroll/structures`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (structuresRes.ok) {
         const structuresData = await structuresRes.json();
         setSalaryStructures(structuresData.data || []);
@@ -76,9 +76,9 @@ const PayrollAdmin = () => {
       const token = localStorage.getItem('access_token');
       const response = await fetch(`${API_BASE_URL}/api/payroll/config`, {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json' 
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(config)
       });
@@ -96,17 +96,17 @@ const PayrollAdmin = () => {
   const saveStructure = async (structure) => {
     try {
       const token = localStorage.getItem('access_token');
-      const url = editingStructure 
+      const url = editingStructure
         ? `${API_BASE_URL}/api/payroll/structures/${editingStructure.id}`
         : `${API_BASE_URL}/api/payroll/structures`;
-      
+
       const method = editingStructure ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
-        headers: { 
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json' 
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(structure)
       });
@@ -143,14 +143,14 @@ const PayrollAdmin = () => {
     try {
       const token = localStorage.getItem('access_token');
       let url = `${API_BASE_URL}/api/payroll/admin/all-payment-slips?page=1&limit=50`;
-      
+
       if (paymentFilters.period) {
         url += `&period=${paymentFilters.period}`;
       }
       if (paymentFilters.status) {
         url += `&status=${paymentFilters.status}`;
       }
-      
+
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -170,11 +170,11 @@ const PayrollAdmin = () => {
     try {
       const token = localStorage.getItem('access_token');
       let url = `${API_BASE_URL}/api/payroll/admin/payment-releases?page=1&limit=50`;
-      
+
       if (paymentFilters.period) {
         url += `&period=${paymentFilters.period}`;
       }
-      
+
       const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -201,9 +201,9 @@ const PayrollAdmin = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/payroll/admin/release-payment/${payrollRecordId}`, {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json' 
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(paymentData)
       });
@@ -234,7 +234,7 @@ const PayrollAdmin = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mb-8 border border-white/50"
@@ -246,7 +246,7 @@ const PayrollAdmin = () => {
       </motion.div>
 
       {/* Global Payroll Config */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mb-8 border border-white/50"
@@ -254,14 +254,14 @@ const PayrollAdmin = () => {
         <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
           <FaRupeeSign className="text-emerald-600" /> Global Payroll Parameters
         </h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">HRA Rate (%)</label>
             <input
               type="number"
               value={config.hra_rate}
-              onChange={(e) => setConfig({...config, hra_rate: parseFloat(e.target.value)})}
+              onChange={(e) => setConfig({ ...config, hra_rate: parseFloat(e.target.value) })}
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -270,7 +270,7 @@ const PayrollAdmin = () => {
             <input
               type="number"
               value={config.allowance_rate}
-              onChange={(e) => setConfig({...config, allowance_rate: parseFloat(e.target.value)})}
+              onChange={(e) => setConfig({ ...config, allowance_rate: parseFloat(e.target.value) })}
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -279,7 +279,7 @@ const PayrollAdmin = () => {
             <input
               type="number"
               value={config.pf_rate}
-              onChange={(e) => setConfig({...config, pf_rate: parseFloat(e.target.value)})}
+              onChange={(e) => setConfig({ ...config, pf_rate: parseFloat(e.target.value) })}
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -288,7 +288,7 @@ const PayrollAdmin = () => {
             <input
               type="number"
               value={config.professional_tax}
-              onChange={(e) => setConfig({...config, professional_tax: parseFloat(e.target.value)})}
+              onChange={(e) => setConfig({ ...config, professional_tax: parseFloat(e.target.value) })}
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -297,7 +297,7 @@ const PayrollAdmin = () => {
             <input
               type="number"
               value={config.tds_rate}
-              onChange={(e) => setConfig({...config, tds_rate: parseFloat(e.target.value)})}
+              onChange={(e) => setConfig({ ...config, tds_rate: parseFloat(e.target.value) })}
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -306,7 +306,7 @@ const PayrollAdmin = () => {
             <input
               type="number"
               value={config.tds_threshold}
-              onChange={(e) => setConfig({...config, tds_threshold: parseFloat(e.target.value)})}
+              onChange={(e) => setConfig({ ...config, tds_threshold: parseFloat(e.target.value) })}
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -315,7 +315,7 @@ const PayrollAdmin = () => {
             <input
               type="number"
               value={config.working_days}
-              onChange={(e) => setConfig({...config, working_days: parseInt(e.target.value)})}
+              onChange={(e) => setConfig({ ...config, working_days: parseInt(e.target.value) })}
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -324,7 +324,7 @@ const PayrollAdmin = () => {
             <input
               type="month"
               value={config.active_period}
-              onChange={(e) => setConfig({...config, active_period: e.target.value})}
+              onChange={(e) => setConfig({ ...config, active_period: e.target.value })}
               className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -339,7 +339,7 @@ const PayrollAdmin = () => {
       </motion.div>
 
       {/* Salary Structures */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 border border-white/50"
@@ -373,9 +373,9 @@ const PayrollAdmin = () => {
                   type="text"
                   placeholder="e.g., Software Engineer"
                   value={editingStructure ? editingStructure.position : newStructure.position}
-                  onChange={(e) => editingStructure 
-                    ? setEditingStructure({...editingStructure, position: e.target.value})
-                    : setNewStructure({...newStructure, position: e.target.value})}
+                  onChange={(e) => editingStructure
+                    ? setEditingStructure({ ...editingStructure, position: e.target.value })
+                    : setNewStructure({ ...newStructure, position: e.target.value })}
                   className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -385,9 +385,9 @@ const PayrollAdmin = () => {
                   type="number"
                   placeholder="50000"
                   value={editingStructure ? editingStructure.basic_salary : newStructure.basic_salary}
-                  onChange={(e) => editingStructure 
-                    ? setEditingStructure({...editingStructure, basic_salary: parseFloat(e.target.value)})
-                    : setNewStructure({...newStructure, basic_salary: parseFloat(e.target.value)})}
+                  onChange={(e) => editingStructure
+                    ? setEditingStructure({ ...editingStructure, basic_salary: parseFloat(e.target.value) })
+                    : setNewStructure({ ...newStructure, basic_salary: parseFloat(e.target.value) })}
                   className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -396,9 +396,9 @@ const PayrollAdmin = () => {
                 <input
                   type="number"
                   value={editingStructure ? editingStructure.hra_rate : newStructure.hra_rate}
-                  onChange={(e) => editingStructure 
-                    ? setEditingStructure({...editingStructure, hra_rate: parseFloat(e.target.value)})
-                    : setNewStructure({...newStructure, hra_rate: parseFloat(e.target.value)})}
+                  onChange={(e) => editingStructure
+                    ? setEditingStructure({ ...editingStructure, hra_rate: parseFloat(e.target.value) })
+                    : setNewStructure({ ...newStructure, hra_rate: parseFloat(e.target.value) })}
                   className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -407,9 +407,9 @@ const PayrollAdmin = () => {
                 <input
                   type="number"
                   value={editingStructure ? editingStructure.allowance_rate : newStructure.allowance_rate}
-                  onChange={(e) => editingStructure 
-                    ? setEditingStructure({...editingStructure, allowance_rate: parseFloat(e.target.value)})
-                    : setNewStructure({...newStructure, allowance_rate: parseFloat(e.target.value)})}
+                  onChange={(e) => editingStructure
+                    ? setEditingStructure({ ...editingStructure, allowance_rate: parseFloat(e.target.value) })
+                    : setNewStructure({ ...newStructure, allowance_rate: parseFloat(e.target.value) })}
                   className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -487,13 +487,13 @@ const PayrollAdmin = () => {
       </motion.div>
 
       {/* Payment Management Tabs */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mt-8 border border-white/50"
       >
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Payment Management</h2>
-        
+
         {/* Tab Navigation */}
         <div className="flex space-x-4 mb-8">
           <button
@@ -502,11 +502,10 @@ const PayrollAdmin = () => {
               setShowPaymentReleases(false);
               fetchPaymentSlips();
             }}
-            className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-              showPaymentSlips
-                ? 'bg-indigo-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all ${showPaymentSlips
+              ? 'bg-indigo-600 text-white shadow-lg'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
           >
             All Payment Slips
           </button>
@@ -516,11 +515,10 @@ const PayrollAdmin = () => {
               setShowPaymentSlips(false);
               fetchPaymentReleases();
             }}
-            className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-              showPaymentReleases
-                ? 'bg-indigo-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all ${showPaymentReleases
+              ? 'bg-indigo-600 text-white shadow-lg'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
           >
             Payment Releases
           </button>
@@ -534,7 +532,7 @@ const PayrollAdmin = () => {
               <input
                 type="month"
                 value={paymentFilters.period}
-                onChange={(e) => setPaymentFilters({...paymentFilters, period: e.target.value})}
+                onChange={(e) => setPaymentFilters({ ...paymentFilters, period: e.target.value })}
                 className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -543,7 +541,7 @@ const PayrollAdmin = () => {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
                 <select
                   value={paymentFilters.status}
-                  onChange={(e) => setPaymentFilters({...paymentFilters, status: e.target.value})}
+                  onChange={(e) => setPaymentFilters({ ...paymentFilters, status: e.target.value })}
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="">All Status</option>
@@ -593,11 +591,10 @@ const PayrollAdmin = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                        slip.status === 'paid' ? 'bg-green-100 text-green-800' :
+                      <span className={`px-3 py-1 text-sm font-semibold rounded-full ${slip.status === 'paid' ? 'bg-green-100 text-green-800' :
                         slip.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
                         {slip.status || 'draft'}
                       </span>
                     </td>

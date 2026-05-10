@@ -428,7 +428,7 @@ const HRStaffModuleComplete = () => {
             <i className="fas fa-sign-in-alt text-green-600 text-xl mb-2"></i>
             <span className="text-sm font-medium text-green-700">Check In</span>
           </button>
-          
+
           <button
             onClick={() => handleAttendanceAction('checkout')}
             className="flex flex-col items-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
@@ -436,7 +436,7 @@ const HRStaffModuleComplete = () => {
             <i className="fas fa-sign-out-alt text-red-600 text-xl mb-2"></i>
             <span className="text-sm font-medium text-red-700">Check Out</span>
           </button>
-          
+
           <button
             onClick={() => navigate("/hr")} //hr staff management
             className="flex flex-col items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
@@ -444,7 +444,7 @@ const HRStaffModuleComplete = () => {
             <i className="fas fa-users text-blue-600 text-xl mb-2"></i>
             <span className="text-sm font-medium text-blue-700">Manage Employees</span>
           </button>
-          
+
           <button
             onClick={() => navigate("/attendance")}
             className="flex flex-col items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
@@ -483,13 +483,12 @@ const HRStaffModuleComplete = () => {
 
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      record.status === 'present' 
-                        ? 'bg-green-100 text-green-800'
-                        : record.status === 'absent'
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${record.status === 'present'
+                      ? 'bg-green-100 text-green-800'
+                      : record.status === 'absent'
                         ? 'bg-red-100 text-red-800'
                         : 'bg-yellow-100 text-yellow-800'
-                    }`}>
+                      }`}>
                       {record.status || 'Unknown'}
                     </span>
                   </td>
@@ -858,9 +857,8 @@ const HRStaffModuleComplete = () => {
               </div>
               <button
                 type="submit"
-                className={`mt-6 w-full bg-indigo-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-indigo-700 transition ${
-                  editLoading && "opacity-60 pointer-events-none"
-                }`}
+                className={`mt-6 w-full bg-indigo-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-indigo-700 transition ${editLoading && "opacity-60 pointer-events-none"
+                  }`}
                 disabled={editLoading}
               >
                 {editLoading ? "Updating..." : "Update Profile"}
@@ -945,9 +943,8 @@ const HRStaffModuleComplete = () => {
               </div>
               <button
                 type="submit"
-                className={`mt-6 w-full bg-indigo-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-indigo-700 transition ${
-                  leaveLoading && "opacity-60 pointer-events-none"
-                }`}
+                className={`mt-6 w-full bg-indigo-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-indigo-700 transition ${leaveLoading && "opacity-60 pointer-events-none"
+                  }`}
                 disabled={leaveLoading}
               >
                 {leaveLoading ? "Submitting..." : "Submit Leave Request"}
@@ -978,11 +975,11 @@ const HRStaffModuleComplete = () => {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-500">
-                {new Date().toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
                 })}
               </span>
             </div>
@@ -998,11 +995,10 @@ const HRStaffModuleComplete = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`${
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
+                className={`${activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
               >
                 <i className={`fas fa-${tab.icon}`}></i>
                 <span>{tab.label}</span>
@@ -1023,15 +1019,15 @@ const HRStaffModuleComplete = () => {
         ) : (
           <Dashboard
             dashboardStats={dashboardStats}
-            // pass other Dashboard-specific props if needed
+          // pass other Dashboard-specific props if needed
           />
         )}
       </div>
-      
+
       {/* Info Modal */}
       {infoModal.open && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm" 
-            onClick={() => closeInfoModal()}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => closeInfoModal()}>
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 relative"
             onClick={e => e.stopPropagation()}>
             <button

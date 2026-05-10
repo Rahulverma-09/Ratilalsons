@@ -37,7 +37,7 @@ async function testAuth() {
  */
 async function testFetchEmployees() {
   console.log('🧪 Testing fetch employees...');
-  
+
   try {
     const response = await fetch(`${TEST_CONFIG.API_BASE_URL}/api/employees/?page=1&limit=10`, {
       headers: {
@@ -45,7 +45,7 @@ async function testFetchEmployees() {
         'Content-Type': 'application/json'
       }
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       console.log('✅ Fetch employees successful:', data);
@@ -65,7 +65,7 @@ async function testFetchEmployees() {
  */
 async function testCreateEmployee() {
   console.log('🧪 Testing create employee...');
-  
+
   const employeeData = {
     ...TEST_CONFIG.DEMO_EMPLOYEE,
     user_id: `TEST-${Date.now()}`,
@@ -74,7 +74,7 @@ async function testCreateEmployee() {
     roles: [TEST_CONFIG.DEMO_EMPLOYEE.position.toLowerCase()],
     is_active: true
   };
-  
+
   try {
     const response = await fetch(`${TEST_CONFIG.API_BASE_URL}/api/employees/`, {
       method: 'POST',
@@ -84,7 +84,7 @@ async function testCreateEmployee() {
       },
       body: JSON.stringify(employeeData)
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       console.log('✅ Create employee successful:', data);
@@ -105,12 +105,12 @@ async function testCreateEmployee() {
  */
 async function testUpdateEmployee(employeeId) {
   console.log('🧪 Testing update employee...');
-  
+
   const updateData = {
     full_name: 'John Doe Updated',
     salary: '60000'
   };
-  
+
   try {
     const response = await fetch(`${TEST_CONFIG.API_BASE_URL}/api/employees/${employeeId}`, {
       method: 'PUT',
@@ -120,7 +120,7 @@ async function testUpdateEmployee(employeeId) {
       },
       body: JSON.stringify(updateData)
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       console.log('✅ Update employee successful:', data);
@@ -141,7 +141,7 @@ async function testUpdateEmployee(employeeId) {
  */
 async function testDeleteEmployee(employeeId) {
   console.log('🧪 Testing delete employee...');
-  
+
   try {
     const response = await fetch(`${TEST_CONFIG.API_BASE_URL}/api/employees/${employeeId}`, {
       method: 'DELETE',
@@ -150,7 +150,7 @@ async function testDeleteEmployee(employeeId) {
         'Content-Type': 'application/json'
       }
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       console.log('✅ Delete employee successful:', data);
@@ -172,37 +172,37 @@ async function testDeleteEmployee(employeeId) {
 async function runAllTests() {
   console.log('🚀 Starting Employee Management API Tests...');
   console.log('='.repeat(50));
-  
+
   // Test auth
   const hasAuth = await testAuth();
   if (!hasAuth) return;
-  
+
   // Test fetch employees
   const fetchResult = await testFetchEmployees();
   if (!fetchResult) return;
-  
+
   // Test create employee
   const createResult = await testCreateEmployee();
   if (!createResult || !createResult.data || !createResult.data.user_id) {
     console.log('⚠️  Skipping update/delete tests due to create failure');
     return;
   }
-  
+
   const testEmployeeId = createResult.data.user_id;
   console.log(`📝 Test employee created with ID: ${testEmployeeId}`);
-  
+
   // Wait a moment
   await new Promise(resolve => setTimeout(resolve, 1000));
-  
+
   // Test update employee
   await testUpdateEmployee(testEmployeeId);
-  
+
   // Wait a moment
   await new Promise(resolve => setTimeout(resolve, 1000));
-  
+
   // Test delete employee (cleanup)
   await testDeleteEmployee(testEmployeeId);
-  
+
   console.log('='.repeat(50));
   console.log('🏁 Employee Management API Tests Completed!');
 }
@@ -212,7 +212,7 @@ async function runAllTests() {
  */
 function testValidation() {
   console.log('🧪 Testing validation functions...');
-  
+
   // Test valid data
   const validData = {
     name: 'John Doe',
@@ -220,7 +220,7 @@ function testValidation() {
     phone: '1234567890',
     position: 'Developer'
   };
-  
+
   // Test invalid data
   const invalidData = {
     name: '',
@@ -228,10 +228,10 @@ function testValidation() {
     phone: 'abc123',
     position: ''
   };
-  
+
   console.log('Valid data test:', validData);
   console.log('Invalid data test:', invalidData);
-  
+
   // You can implement validation logic here or import from your utility file
   console.log('✅ Validation tests completed');
 }

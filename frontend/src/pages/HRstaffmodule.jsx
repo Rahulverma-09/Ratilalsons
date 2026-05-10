@@ -17,12 +17,12 @@ const HRStaffModule = () => {
   const [loginError, setLoginError] = useState('');
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [allEmployeeAttendance, setAllEmployeeAttendance] = useState([]);
-  
+
   // Employee management states
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const [showEditEmployee, setShowEditEmployee] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  
+
   // Enhanced employee form state with all requested fields
   const [newEmployee, setNewEmployee] = useState({
     // Personal Details
@@ -30,24 +30,24 @@ const HRStaffModule = () => {
     date_of_birth: '',
     email: '',
     phone: '',
-    
+
     // Address Details
     address: '',
     pincode: '',
     city: '',
     state: '',
-    
+
     // Job Details
     department: '',
     position: '',
     salary: '',
-    
+
     // Login Credentials
     username: '',
     password: '',
     auto_generated_password: '',
     role: 'employee',
-    
+
     // Additional fields
     hire_date: new Date().toISOString().split('T')[0],
     emergency_contact: '',
@@ -73,7 +73,7 @@ const HRStaffModule = () => {
   const positionOptions = [
     'Manager',
     'HR',
-    'Executive', 
+    'Executive',
     'Senior Executive',
     'Team Lead',
     'Assistant',
@@ -94,14 +94,14 @@ const HRStaffModule = () => {
   // Check if user is admin or HR
   const isAdminOrHR = () => {
     if (!currentUser) return false;
-    
+
     // Check if admin (reports_to is None/null)
     const isAdmin = !currentUser.reports_to || currentUser.reports_to === null;
-    
+
     // Check if HR role
-    const isHR = currentUser.role_names?.some(role => 
+    const isHR = currentUser.role_names?.some(role =>
       ['HR', 'Human Resource', 'Human Resources'].includes(role)
-    ) || currentUser.roles?.some(role => 
+    ) || currentUser.roles?.some(role =>
       ['HR', 'Human Resource', 'Human Resources'].includes(role)
     ) || currentUser.permissions?.includes('HR');
 
@@ -111,10 +111,10 @@ const HRStaffModule = () => {
   // Generate username from full name
   const generateUsername = (fullName) => {
     if (!fullName) return '';
-    
+
     // Remove special characters and spaces, convert to lowercase
     const cleanName = fullName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-    
+
     // If name is too short, add date of birth
     if (cleanName.length < 6 && newEmployee.date_of_birth) {
       const dobParts = newEmployee.date_of_birth.split('-');
@@ -123,7 +123,7 @@ const HRStaffModule = () => {
       const day = dobParts[2];
       return `${cleanName}${day}${month}`;
     }
-    
+
     return cleanName.substring(0, 20); // Limit to 20 characters
   };
 
@@ -184,14 +184,14 @@ const HRStaffModule = () => {
 
       if (data && data[0] && data[0].Status === 'Success') {
         const postOffices = data[0].PostOffice;
-        
+
         // Extract unique cities and state
         const cities = [...new Set(postOffices.map(office => office.Name))];
         const state = postOffices[0].State;
-        
+
         setCityOptions(cities);
-        setNewEmployee(prev => ({ 
-          ...prev, 
+        setNewEmployee(prev => ({
+          ...prev,
           state: state,
           city: cities.length === 1 ? cities[0] : ''
         }));
@@ -238,7 +238,7 @@ const HRStaffModule = () => {
   const toggleAutoGeneratePassword = () => {
     const newValue = !autoGeneratePassword;
     setAutoGeneratePassword(newValue);
-    
+
     if (newValue) {
       const password = generatePassword();
       setNewEmployee(prev => ({ ...prev, password, auto_generated_password: password }));
@@ -261,7 +261,7 @@ const HRStaffModule = () => {
       ];
 
       let loginSuccess = false;
-      
+
       for (const endpoint of endpoints) {
         try {
           const formResponse = await fetch(endpoint, {
@@ -345,7 +345,7 @@ const HRStaffModule = () => {
   const fetchCurrentUser = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      
+
       if (!token) {
         const userStr = localStorage.getItem('user');
         if (userStr) {
@@ -353,7 +353,7 @@ const HRStaffModule = () => {
             const user = JSON.parse(userStr);
             setCurrentUser({
               id: user.user_id || user.id || user._id || 'unknown',
-              employee_id: user.user_id || user.id || 'unknown', 
+              employee_id: user.user_id || user.id || 'unknown',
               full_name: user.full_name || user.username || 'Unknown User',
               name: user.full_name || user.username || 'Unknown User',
               email: user.email || '',
@@ -373,7 +373,7 @@ const HRStaffModule = () => {
             console.log('❌ Failed to parse localStorage user');
           }
         }
-        
+
         setShowLogin(true);
         setLoading(false);
         return;
@@ -456,29 +456,29 @@ const HRStaffModule = () => {
   // Handle add employee
   const handleAddEmployee = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!newEmployee.full_name.trim()) {
       alert('Please enter full name');
       return;
     }
-    
+
     // Email validation - only if provided
     if (newEmployee.email && newEmployee.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmployee.email)) {
       alert('Please enter a valid email address');
       return;
     }
-    
+
     if (!newEmployee.username.trim()) {
       alert('Please enter username');
       return;
     }
-    
+
     if (usernameAvailable === false) {
       alert('Username is not available');
       return;
     }
-    
+
     if (!newEmployee.password.trim()) {
       alert('Please enter password');
       return;
@@ -486,7 +486,7 @@ const HRStaffModule = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      
+
       const employeeData = {
         full_name: newEmployee.full_name.trim(),
         email: newEmployee.email.trim(),
@@ -522,9 +522,9 @@ const HRStaffModule = () => {
       if (response.ok) {
         const result = await response.json();
         console.log('Employee created successfully:', result);
-        
+
         alert(`Employee created successfully!\nUsername: ${newEmployee.username}\nPassword: ${newEmployee.password}`);
-        
+
         // Reset form
         setNewEmployee({
           full_name: '',
@@ -546,11 +546,11 @@ const HRStaffModule = () => {
           emergency_contact: '',
           emergency_phone: ''
         });
-        
+
         setCityOptions([]);
         setUsernameAvailable(null);
         setShowAddEmployee(false);
-        
+
         // Refresh employees list
         fetchEmployees();
       } else {
@@ -610,7 +610,7 @@ const HRStaffModule = () => {
                   type="text"
                   required
                   value={loginCredentials.username}
-                  onChange={(e) => setLoginCredentials({...loginCredentials, username: e.target.value})}
+                  onChange={(e) => setLoginCredentials({ ...loginCredentials, username: e.target.value })}
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   placeholder="Username"
                 />
@@ -620,7 +620,7 @@ const HRStaffModule = () => {
                   type="password"
                   required
                   value={loginCredentials.password}
-                  onChange={(e) => setLoginCredentials({...loginCredentials, password: e.target.value})}
+                  onChange={(e) => setLoginCredentials({ ...loginCredentials, password: e.target.value })}
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   placeholder="Password"
                 />
@@ -677,22 +677,20 @@ const HRStaffModule = () => {
           <div className="flex space-x-8">
             <button
               onClick={() => setActiveTab('employees')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'employees'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'employees'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               Employee Management
             </button>
             {isAdminOrHR() && (
               <button
                 onClick={() => setActiveTab('attendance')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'attendance'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'attendance'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 All Attendance
               </button>
@@ -755,25 +753,24 @@ const HRStaffModule = () => {
                         {employee.email || 'No email'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {Array.isArray(employee.role_names) 
-                          ? employee.role_names.join(', ') 
+                        {Array.isArray(employee.role_names)
+                          ? employee.role_names.join(', ')
                           : employee.role_names || employee.roles || employee.role || 'No role'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {employee.department || 'No department'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          employee.is_active !== false
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.is_active !== false
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                          }`}>
                           {employee.is_active !== false ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          <button 
+                          <button
                             className="text-blue-600 hover:text-blue-900"
                             title="View Details"
                           >
@@ -781,13 +778,13 @@ const HRStaffModule = () => {
                           </button>
                           {isAdminOrHR() && (
                             <>
-                              <button 
+                              <button
                                 className="text-green-600 hover:text-green-900"
                                 title="Edit Employee"
                               >
                                 <i className="fas fa-edit"></i>
                               </button>
-                              <button 
+                              <button
                                 className="text-red-600 hover:text-red-900"
                                 title="Deactivate Employee"
                               >
@@ -856,14 +853,13 @@ const HRStaffModule = () => {
                         {record.working_hours || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          record.status === 'present' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${record.status === 'present' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
                           {record.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button 
+                        <button
                           className="text-blue-600 hover:text-blue-900 mr-3"
                           title="Edit Attendance"
                         >
@@ -893,7 +889,7 @@ const HRStaffModule = () => {
                   <i className="fas fa-times text-xl"></i>
                 </button>
               </div>
-              
+
               <form onSubmit={handleAddEmployee} className="space-y-6">
                 {/* Personal Details Section */}
                 <div className="bg-gray-50 p-6 rounded-lg">
@@ -910,7 +906,7 @@ const HRStaffModule = () => {
                         placeholder="Enter full name"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
                       <input
@@ -920,7 +916,7 @@ const HRStaffModule = () => {
                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Email</label>
                       <input
@@ -931,7 +927,7 @@ const HRStaffModule = () => {
                         placeholder="Enter email address (optional)"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Phone Number</label>
                       <input
@@ -959,7 +955,7 @@ const HRStaffModule = () => {
                         placeholder="Enter complete address"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Pincode</label>
                       <div className="relative">
@@ -979,7 +975,7 @@ const HRStaffModule = () => {
                         )}
                       </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">City</label>
                       {cityOptions.length > 1 ? (
@@ -1004,7 +1000,7 @@ const HRStaffModule = () => {
                         />
                       )}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">State</label>
                       <input
@@ -1036,7 +1032,7 @@ const HRStaffModule = () => {
                         ))}
                       </select>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Position</label>
                       <select
@@ -1050,7 +1046,7 @@ const HRStaffModule = () => {
                         ))}
                       </select>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Salary (per month)</label>
                       <input
@@ -1063,7 +1059,7 @@ const HRStaffModule = () => {
                         placeholder="Enter salary amount"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Hire Date</label>
                       <input
@@ -1091,10 +1087,9 @@ const HRStaffModule = () => {
                             handleFieldChange('username', e.target.value);
                             checkUsernameAvailability(e.target.value);
                           }}
-                          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                            usernameAvailable === true ? 'border-green-500' :
+                          className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${usernameAvailable === true ? 'border-green-500' :
                             usernameAvailable === false ? 'border-red-500' : 'border-gray-300'
-                          }`}
+                            }`}
                           placeholder="Auto-generated from name"
                         />
                         {checkingUsername && (
@@ -1110,7 +1105,7 @@ const HRStaffModule = () => {
                         <p className="text-sm text-red-600 mt-1">✗ Username is not available</p>
                       )}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Role *</label>
                       <select
@@ -1124,7 +1119,7 @@ const HRStaffModule = () => {
                         ))}
                       </select>
                     </div>
-                    
+
                     <div className="md:col-span-2">
                       <div className="flex items-center mb-2">
                         <input
@@ -1138,7 +1133,7 @@ const HRStaffModule = () => {
                           Auto-generate password
                         </label>
                       </div>
-                      
+
                       <div className="relative">
                         <input
                           type={showPassword ? "text" : "password"}
@@ -1146,9 +1141,8 @@ const HRStaffModule = () => {
                           value={newEmployee.password}
                           onChange={(e) => handleFieldChange('password', e.target.value)}
                           readOnly={autoGeneratePassword}
-                          className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                            autoGeneratePassword ? 'bg-gray-100' : ''
-                          }`}
+                          className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${autoGeneratePassword ? 'bg-gray-100' : ''
+                            }`}
                           placeholder="Password"
                         />
                         <button
@@ -1182,7 +1176,7 @@ const HRStaffModule = () => {
                         placeholder="Enter emergency contact name"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Emergency Contact Phone</label>
                       <input

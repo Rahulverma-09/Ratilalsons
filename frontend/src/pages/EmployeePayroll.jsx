@@ -50,7 +50,7 @@ const EmployeePayroll = () => {
       setLoading(true);
       const token = localStorage.getItem('access_token');
       const userId = currentUser?.user_id || currentUser?.id || currentUser?.userId;
-      
+
       if (!userId) {
         console.error('No user ID found');
         return;
@@ -60,7 +60,7 @@ const EmployeePayroll = () => {
       const salaryRes = await fetch(`${API_BASE_URL}/api/payroll/employee/salary-structure/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (salaryRes.ok) {
         const salaryData = await salaryRes.json();
         setSalaryStructure(salaryData.data);
@@ -70,7 +70,7 @@ const EmployeePayroll = () => {
       const payslipsRes = await fetch(`${API_BASE_URL}/api/payroll/employee/payslips/${userId}?limit=10`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (payslipsRes.ok) {
         const payslipsData = await payslipsRes.json();
         setPayslips(payslipsData.data.payslips || []);
@@ -80,7 +80,7 @@ const EmployeePayroll = () => {
       const taxRes = await fetch(`${API_BASE_URL}/api/payroll/employee/tax-deductions/${userId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (taxRes.ok) {
         const taxData = await taxRes.json();
         setTaxDeductions(taxData.data);
@@ -97,7 +97,7 @@ const EmployeePayroll = () => {
     try {
       const token = localStorage.getItem('access_token');
       const userId = currentUser?.user_id || currentUser?.id || currentUser?.userId;
-      
+
       const ticketData = {
         ...newTicket,
         employee_id: userId
@@ -105,9 +105,9 @@ const EmployeePayroll = () => {
 
       const response = await fetch(`${API_BASE_URL}/api/payroll/employee/raise-ticket`, {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json' 
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(ticketData)
       });
@@ -140,7 +140,7 @@ const EmployeePayroll = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
       {/* Header */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mb-8 border border-white/50"
@@ -153,7 +153,7 @@ const EmployeePayroll = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Salary Structure */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 border border-white/50"
@@ -161,7 +161,7 @@ const EmployeePayroll = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
             <FaRupeeSign className="text-emerald-600" /> My Salary Structure
           </h2>
-          
+
           {salaryStructure ? (
             <div className="space-y-4">
               <div className="flex justify-between items-center p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl">
@@ -200,13 +200,13 @@ const EmployeePayroll = () => {
         </motion.div>
 
         {/* Tax & Deductions */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 border border-white/50"
         >
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Tax & Deductions Summary</h2>
-          
+
           {taxDeductions ? (
             <div className="space-y-4">
               <div className="text-center mb-4">
@@ -238,7 +238,7 @@ const EmployeePayroll = () => {
       </div>
 
       {/* Payslips */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mt-8 border border-white/50"
@@ -279,11 +279,10 @@ const EmployeePayroll = () => {
                     <span className="text-lg font-bold text-blue-600">₹{payslip.calculation.net_pay.toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                      payslip.status === 'paid' ? 'bg-green-100 text-green-800' :
+                    <span className={`px-3 py-1 text-sm font-semibold rounded-full ${payslip.status === 'paid' ? 'bg-green-100 text-green-800' :
                       payslip.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
                       {payslip.status || 'draft'}
                     </span>
                   </td>
@@ -323,34 +322,34 @@ const EmployeePayroll = () => {
             className="bg-white rounded-2xl p-8 m-4 max-w-md w-full shadow-2xl"
           >
             <h3 className="text-2xl font-bold text-gray-900 mb-6">Raise Payroll Ticket</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
                 <input
                   type="text"
                   value={newTicket.subject}
-                  onChange={(e) => setNewTicket({...newTicket, subject: e.target.value})}
+                  onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
                   placeholder="Brief description of your issue"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
                 <textarea
                   value={newTicket.description}
-                  onChange={(e) => setNewTicket({...newTicket, description: e.target.value})}
+                  onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 h-32"
                   placeholder="Detailed description of your payroll issue"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Priority</label>
                 <select
                   value={newTicket.priority}
-                  onChange={(e) => setNewTicket({...newTicket, priority: e.target.value})}
+                  onChange={(e) => setNewTicket({ ...newTicket, priority: e.target.value })}
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="low">Low</option>

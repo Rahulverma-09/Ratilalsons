@@ -102,7 +102,7 @@ const PayrollDashboard = () => {
       const configRes = await fetch(`${API_BASE_URL}/api/payroll/config`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (configRes.ok) {
         const configData = await configRes.json();
         setPayrollConfig(configData.data || payrollConfig);
@@ -112,7 +112,7 @@ const PayrollDashboard = () => {
       const structuresRes = await fetch(`${API_BASE_URL}/api/payroll/structures`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (structuresRes.ok) {
         const structuresData = await structuresRes.json();
         setSalaryStructures(structuresData.data || []);
@@ -141,7 +141,7 @@ const PayrollDashboard = () => {
         const staffData = await staffResponse.json();
         employeesData = Array.isArray(staffData.data) ? staffData.data :
           Array.isArray(staffData) ? staffData :
-          staffData.employees || [];
+            staffData.employees || [];
       }
 
       // Enhanced employee data with professional payroll structure
@@ -188,7 +188,7 @@ const PayrollDashboard = () => {
   const generateDraftPayslip = async (employeeData) => {
     try {
       const token = localStorage.getItem('access_token');
-      
+
       // Calculate payroll first
       const calcResponse = await fetch(`${API_BASE_URL}/api/payroll/calculate/${employeeData.userid}?period=${payrollPeriod}&attendance_days=26`, {
         method: 'POST',
@@ -197,13 +197,13 @@ const PayrollDashboard = () => {
 
       if (calcResponse.ok) {
         const calcData = await calcResponse.json();
-        
+
         // Generate draft payslip
         const draftResponse = await fetch(`${API_BASE_URL}/api/payroll/hr/generate-draft-payslip`, {
           method: 'POST',
-          headers: { 
-            'Authorization': `Bearer ${token}`, 
-            'Content-Type': 'application/json' 
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify(calcData.data)
         });
@@ -230,9 +230,9 @@ const PayrollDashboard = () => {
       const token = localStorage.getItem('access_token');
       const response = await fetch(`${API_BASE_URL}/api/payroll/hr/bonus-deduction`, {
         method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`, 
-          'Content-Type': 'application/json' 
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(bonusData)
       });
@@ -261,7 +261,7 @@ const PayrollDashboard = () => {
 
   const filteredEmployees = employees.filter(emp => {
     const matchesSearch = emp.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         emp.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      emp.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = !filterRole || emp.position === filterRole;
     return matchesSearch && matchesRole;
   }).map(emp => ({
@@ -297,7 +297,7 @@ const PayrollDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
       {/* Header */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mb-8 border border-white/50"
@@ -310,13 +310,13 @@ const PayrollDashboard = () => {
             <p className="text-gray-600 text-lg">Professional payroll processing for employees</p>
           </div>
           <div className="flex gap-4">
-            <button 
+            <button
               onClick={() => setShowAddSalaryStructure(true)}
               className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-green-700 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
             >
               <FaPlus /> New Salary Structure
             </button>
-            <button 
+            <button
               onClick={() => fetchEmployees()}
               className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-indigo-600 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
             >
@@ -327,7 +327,7 @@ const PayrollDashboard = () => {
       </motion.div>
 
       {/* KPI Cards */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
@@ -392,7 +392,7 @@ const PayrollDashboard = () => {
       </motion.div>
 
       {/* Filters & Search */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 border border-white/50 mb-8"
@@ -407,7 +407,7 @@ const PayrollDashboard = () => {
               value={payrollConfig.active_period || payrollPeriod}
               onChange={(e) => {
                 setPayrollPeriod(e.target.value);
-                setPayrollConfig({...payrollConfig, active_period: e.target.value});
+                setPayrollConfig({ ...payrollConfig, active_period: e.target.value });
               }}
               className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white/50 backdrop-blur-sm"
             />
@@ -522,11 +522,10 @@ const PayrollDashboard = () => {
                       </div>
                     </td>
                     <td className="px-6 py-6 whitespace-nowrap">
-                      <div className={`text-sm font-semibold px-3 py-1 rounded-full ${
-                        payroll.attendance >= 95 ? 'bg-emerald-100 text-emerald-800' :
+                      <div className={`text-sm font-semibold px-3 py-1 rounded-full ${payroll.attendance >= 95 ? 'bg-emerald-100 text-emerald-800' :
                         payroll.attendance >= 90 ? 'bg-blue-100 text-blue-800' :
-                        payroll.attendance >= 85 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
-                      }`}>
+                          payroll.attendance >= 85 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+                        }`}>
                         {employee.attendance}%
                       </div>
                     </td>
@@ -736,7 +735,7 @@ const PayrollDashboard = () => {
 
       {/* HR-Specific Sections */}
       {/* Pending Approvals */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mb-8 border border-white/50"
@@ -769,11 +768,10 @@ const PayrollDashboard = () => {
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">{approval.employee_id}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                        approval.type === 'bonus' ? 'bg-green-100 text-green-800' :
+                      <span className={`px-3 py-1 text-sm font-semibold rounded-full ${approval.type === 'bonus' ? 'bg-green-100 text-green-800' :
                         approval.type === 'incentive' ? 'bg-blue-100 text-blue-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
+                          'bg-red-100 text-red-800'
+                        }`}>
                         {approval.type}
                       </span>
                     </td>
@@ -801,7 +799,7 @@ const PayrollDashboard = () => {
       </motion.div>
 
       {/* Bonus/Deduction Management */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 mb-8 border border-white/50"
@@ -815,7 +813,7 @@ const PayrollDashboard = () => {
             <FaPlus /> Add Bonus/Deduction
           </button>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-200">
             <div className="flex items-center justify-between mb-4">
@@ -827,7 +825,7 @@ const PayrollDashboard = () => {
             </p>
             <p className="text-sm text-green-700">Pending Approval</p>
           </div>
-          
+
           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border-2 border-blue-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-blue-900">Incentives</h3>
@@ -838,7 +836,7 @@ const PayrollDashboard = () => {
             </p>
             <p className="text-sm text-blue-700">Pending Approval</p>
           </div>
-          
+
           <div className="bg-gradient-to-br from-red-50 to-pink-50 p-6 rounded-2xl border-2 border-red-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-red-900">Deductions</h3>
@@ -861,24 +859,24 @@ const PayrollDashboard = () => {
             className="bg-white rounded-2xl p-8 m-4 max-w-md w-full shadow-2xl"
           >
             <h3 className="text-2xl font-bold text-gray-900 mb-6">Add Bonus/Deduction</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Employee ID</label>
                 <input
                   type="text"
                   value={bonusData.employee_id}
-                  onChange={(e) => setBonusData({...bonusData, employee_id: e.target.value})}
+                  onChange={(e) => setBonusData({ ...bonusData, employee_id: e.target.value })}
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
                   placeholder="Enter employee ID"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
                 <select
                   value={bonusData.type}
-                  onChange={(e) => setBonusData({...bonusData, type: e.target.value})}
+                  onChange={(e) => setBonusData({ ...bonusData, type: e.target.value })}
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
                 >
                   <option value="bonus">Bonus</option>
@@ -886,34 +884,34 @@ const PayrollDashboard = () => {
                   <option value="deduction">Deduction</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Amount (₹)</label>
                 <input
                   type="number"
                   value={bonusData.amount}
-                  onChange={(e) => setBonusData({...bonusData, amount: parseFloat(e.target.value)})}
+                  onChange={(e) => setBonusData({ ...bonusData, amount: parseFloat(e.target.value) })}
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
                   placeholder="0"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Reason</label>
                 <textarea
                   value={bonusData.reason}
-                  onChange={(e) => setBonusData({...bonusData, reason: e.target.value})}
+                  onChange={(e) => setBonusData({ ...bonusData, reason: e.target.value })}
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 h-24"
                   placeholder="Reason for bonus/deduction"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Period</label>
                 <input
                   type="month"
                   value={bonusData.period}
-                  onChange={(e) => setBonusData({...bonusData, period: e.target.value})}
+                  onChange={(e) => setBonusData({ ...bonusData, period: e.target.value })}
                   className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -954,7 +952,7 @@ const PayrollDashboard = () => {
                 <FaTimes className="text-gray-500" />
               </button>
             </div>
-            
+
             <div className="space-y-4">
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl">
                 <h4 className="text-lg font-bold text-blue-900 mb-4">Payroll Summary</h4>
@@ -981,7 +979,7 @@ const PayrollDashboard = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-xl">
                 <div className="flex items-center gap-2 mb-2">
                   <FaExclamationTriangle className="text-yellow-600" />

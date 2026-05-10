@@ -14,7 +14,7 @@ const AddEmployeeForm = ({ onClose, onSuccess }) => {
     name: '',
     email: '',
     phone: '',
-    position: '', 
+    position: '',
     date_of_joining: new Date().toISOString().split('T')[0], // Changed from 'joinDate'
     address: '',
     city: '',
@@ -78,7 +78,7 @@ const AddEmployeeForm = ({ onClose, onSuccess }) => {
         const deptData = await departmentsResponse.value.json();
         if (deptData.success) {
           console.log('✅ Form departments loaded from API:', deptData.data);
-          const deptList = Array.isArray(deptData.data) ? 
+          const deptList = Array.isArray(deptData.data) ?
             deptData.data
               .map(d => typeof d === 'string' ? d : (d?.name || d?.label || null))
               .filter(d => d && typeof d === 'string') // Remove nulls and ensure strings only
@@ -95,7 +95,7 @@ const AddEmployeeForm = ({ onClose, onSuccess }) => {
         const posData = await positionsResponse.value.json();
         if (posData.success) {
           console.log('✅ Form positions loaded from API:', posData.data);
-          const posList = Array.isArray(posData.data) ? 
+          const posList = Array.isArray(posData.data) ?
             posData.data
               .map(p => typeof p === 'string' ? p : (p?.name || p?.label || null))
               .filter(p => p && typeof p === 'string') // Remove nulls and ensure strings only
@@ -108,7 +108,7 @@ const AddEmployeeForm = ({ onClose, onSuccess }) => {
       }
 
       console.log('✅ Form data loading completed');
-      
+
     } catch (error) {
       console.error('Error loading form data:', error);
       // Set fallback data on error
@@ -139,7 +139,7 @@ const AddEmployeeForm = ({ onClose, onSuccess }) => {
       setFetchingCity(true);
       const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
       const data = await response.json();
-      
+
       if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice.length > 0) {
         const city = data[0].PostOffice[0].District;
         setFormData(prev => ({
@@ -166,7 +166,7 @@ const AddEmployeeForm = ({ onClose, onSuccess }) => {
         toast.error("File size must be less than 5MB");
         return;
       }
-      
+
       // Check file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
       if (!allowedTypes.includes(file.type)) {
@@ -307,7 +307,7 @@ const AddEmployeeForm = ({ onClose, onSuccess }) => {
     setIsSubmitting(true);
 
     try {
-      
+
       const token = localStorage.getItem("access_token");
       if (!token) {
         toast.error("Authentication required. Please login again.");
@@ -363,10 +363,10 @@ const AddEmployeeForm = ({ onClose, onSuccess }) => {
       });
 
       const responseData = await response.json().catch(() => ({}));
-      
+
       if (response.ok && responseData.success) {
         console.log('Employee created with documents:', responseData);
-        
+
         // Show success message including document upload count
         const documentCount = [
           formData.aadhar_card,
@@ -374,11 +374,11 @@ const AddEmployeeForm = ({ onClose, onSuccess }) => {
           formData.bank_documents,
           formData.address_proof
         ].filter(doc => doc).length;
-        
-        const successMsg = documentCount > 0 
+
+        const successMsg = documentCount > 0
           ? `Employee created successfully with ${documentCount} document(s) uploaded!`
           : 'Employee created successfully!';
-        
+
         toast.success(successMsg);
         onSuccess();
       } else {
@@ -624,7 +624,7 @@ const AddEmployeeForm = ({ onClose, onSuccess }) => {
         {/* Address Section */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-slate-900 border-b border-slate-200 pb-2">Address Information</h3>
-          
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Street Address
@@ -678,7 +678,7 @@ const AddEmployeeForm = ({ onClose, onSuccess }) => {
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-slate-900 border-b border-slate-200 pb-2">Document Upload</h3>
           <p className="text-sm text-slate-600">Upload employee documents (JPG, PNG, PDF only, max 5MB each) <span className="text-red-500">*All documents are required</span></p>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Aadhar Card */}
             <div>
@@ -866,7 +866,7 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
         const deptData = await departmentsResponse.value.json();
         if (deptData.success) {
           console.log('✅ Edit form departments loaded from API:', deptData.data);
-          const deptList = Array.isArray(deptData.data) ? 
+          const deptList = Array.isArray(deptData.data) ?
             deptData.data
               .map(d => typeof d === 'string' ? d : (d?.name || d?.label || null))
               .filter(d => d && typeof d === 'string') // Remove nulls and ensure strings only
@@ -883,7 +883,7 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
         const posData = await positionsResponse.value.json();
         if (posData.success) {
           console.log('✅ Edit form positions loaded from API:', posData.data);
-          const posList = Array.isArray(posData.data) ? 
+          const posList = Array.isArray(posData.data) ?
             posData.data
               .map(p => typeof p === 'string' ? p : (p?.name || p?.label || null))
               .filter(p => p && typeof p === 'string') // Remove nulls and ensure strings only
@@ -896,7 +896,7 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
       }
 
       console.log('✅ Edit form data loading completed');
-      
+
     } catch (error) {
       console.error('Error loading form data:', error);
       toast.error('Failed to load form data from server');
@@ -925,7 +925,7 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
       setFetchingCity(true);
       const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
       const data = await response.json();
-      
+
       if (data && data.length > 0 && data[0].Status === 'Success') {
         const cityName = data[0].PostOffice[0].District;
         setFormData(prev => ({ ...prev, city: cityName }));
@@ -1030,7 +1030,7 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
       }
 
       setFormData(prev => ({ ...prev, [fieldName]: file }));
-      
+
       // Create preview for images
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
@@ -1061,7 +1061,7 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
         phone: formData.phone,
         position: formData.position
       });
-      
+
       if (!validation.isValid) {
         validation.errors.forEach(error => toast.error(error));
         return;
@@ -1069,7 +1069,7 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
 
       // Use API utility to update employee
       const result = await employeeAPI.updateEmployee(employee.user_id || employee.employee_id, formData);
-      
+
       if (result.success) {
         toast.success('Employee updated successfully');
         onSuccess();
@@ -1078,7 +1078,7 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
       }
     } catch (error) {
       console.error('Error updating employee:', error);
-      
+
       if (error.message.includes('401') || error.message.includes('Unauthorized')) {
         toast.error("Session expired. Please login again");
         localStorage.removeItem("access_token");
@@ -1106,33 +1106,33 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
-            <input 
-              name="full_name" 
-              value={formData.full_name} 
-              onChange={handleInputChange} 
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+            <input
+              name="full_name"
+              value={formData.full_name}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
               placeholder="Enter full name"
               required
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
-            <input 
-              type="email" 
-              name="email" 
-              value={formData.email} 
-              onChange={handleInputChange} 
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
               placeholder="Enter email address (optional)"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Phone</label>
-            <input 
-              name="phone" 
-              value={formData.phone} 
-              onChange={handleInputChange} 
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+            <input
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
               placeholder="Enter phone number"
             />
           </div>
@@ -1194,21 +1194,21 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Join Date</label>
-            <input 
-              type="date" 
-              name="date_of_joining" 
-              value={formData.date_of_joining} 
-              onChange={handleInputChange} 
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+            <input
+              type="date"
+              name="date_of_joining"
+              value={formData.date_of_joining}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Salary</label>
-            <input 
-              name="salary" 
-              value={formData.salary} 
-              onChange={handleInputChange} 
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+            <input
+              name="salary"
+              value={formData.salary}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
               placeholder="e.g., ₹50,000"
             />
           </div>
@@ -1216,25 +1216,25 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
             <label className="block text-sm font-medium text-slate-700 mb-2">
               City {fetchingCity && <span className="text-indigo-500">(fetching...)</span>}
             </label>
-            <input 
-              name="city" 
-              value={formData.city} 
-              onChange={handleInputChange} 
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+            <input
+              name="city"
+              value={formData.city}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
               placeholder={fetchingCity ? "Fetching city..." : "Enter city"}
               disabled={fetchingCity}
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Pincode</label>
-            <input 
+            <input
               type="text"
-              name="pincode" 
-              value={formData.pincode} 
-              onChange={handleInputChange} 
+              name="pincode"
+              value={formData.pincode}
+              onChange={handleInputChange}
               pattern="[0-9]{6}"
               maxLength="6"
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
               placeholder="Enter 6-digit pincode"
             />
             <p className="text-xs text-slate-500 mt-1">City will be auto-filled when you enter pincode</p>
@@ -1299,15 +1299,15 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
         {/* Address Section */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-slate-900 border-b border-slate-200 pb-2">Address Information</h3>
-          
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">Street Address</label>
-            <textarea 
-              name="address" 
-              value={formData.address} 
-              onChange={handleInputChange} 
-              rows="2" 
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" 
+            <textarea
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              rows="2"
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
               placeholder="Enter street address, house no., area"
             />
           </div>
@@ -1317,7 +1317,7 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-slate-900 border-b border-slate-200 pb-2">Document Upload</h3>
           <p className="text-sm text-slate-600">Update employee documents (JPG, PNG, PDF only, max 5MB each)</p>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Aadhar Card */}
             <div>
@@ -1402,9 +1402,9 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
         </div>
 
         <div className="flex gap-3 pt-6 border-t border-slate-200">
-          <button 
-            type="submit" 
-            disabled={isSubmitting} 
+          <button
+            type="submit"
+            disabled={isSubmitting}
             className="flex-1 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
@@ -1419,10 +1419,10 @@ const EditEmployeeForm = ({ employee, onClose, onSuccess }) => {
               </>
             )}
           </button>
-          <button 
-            type="button" 
-            onClick={onClose} 
-            disabled={isSubmitting} 
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
             className="flex-1 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             Cancel
@@ -1476,36 +1476,36 @@ const EmployeesPage = () => {
     try {
       setStatsLoading(true);
       console.log('📊 Calculating employee statistics...');
-      
+
       // If we already have employees data, calculate stats from it first
       if (employees && employees.length > 0) {
         console.log('📊 Using current employees data for stats calculation:', employees);
-        
+
         // Calculate stats from filtered employees data
         const totalEmployees = employees.length;
         const activeEmployees = employees.filter(emp => emp.status === 'Active').length;
         const inactiveEmployees = totalEmployees - activeEmployees;
-        
+
         // Calculate unique departments
         const uniqueDepartments = [...new Set(
           employees.map(emp => emp.department || 'General').filter(d => d && d.trim())
         )];
         const departments = uniqueDepartments; // Keep as strings for dropdown
-        
+
         // Calculate unique roles/positions
         const uniqueRoles = [...new Set(
           employees.map(emp => emp.position || emp.role || 'No Position').filter(r => r && r.trim())
         )];
         const roles = uniqueRoles; // Keep as strings for dropdown
-        
+
         // Calculate attendance percentage
         const totalAttendance = employees.reduce((sum, emp) => sum + (emp.attendance || 0), 0);
         const avgAttendance = totalEmployees > 0 ? Math.floor(totalAttendance / totalEmployees) : 0;
-        
+
         // Calculate today present (85-95% of active employees)
         const presentPercentage = 0.85 + (Math.random() * 0.1); // 85-95%
         const todayPresent = Math.floor(activeEmployees * presentPercentage);
-        
+
         const calculatedStats = {
           total: totalEmployees,
           active: activeEmployees,
@@ -1515,12 +1515,12 @@ const EmployeesPage = () => {
           roles: roles,
           todayPresent: todayPresent
         };
-        
+
         console.log('✅ Calculated stats from employees:', calculatedStats);
         setEmployeeStats(calculatedStats);
         return;
       }
-      
+
       // If no employees data, try to fetch from API
       const token = localStorage.getItem("access_token");
       if (!token) {
@@ -1540,7 +1540,7 @@ const EmployeesPage = () => {
       // Try to get all users to calculate real stats
       try {
         const usersResponse = await fetch(`${API_BASE_URL}/api/staff/employees`, {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
@@ -1549,60 +1549,60 @@ const EmployeesPage = () => {
         if (usersResponse.ok) {
           const usersData = await usersResponse.json();
           console.log('📊 Raw users data for stats:', usersData);
-          
+
           if (usersData.success && Array.isArray(usersData.data) && usersData.data.length > 0) {
             // Filter out admin/customer/vendor users same as main filter
             const allUsers = usersData.data;
             const filteredUsers = allUsers.filter(user => {
               if (!user) return false;
-              
+
               const userRoles = user.roles || [];
-              
-              const isAdmin = userRoles.some(role => 
+
+              const isAdmin = userRoles.some(role =>
                 (typeof role === 'string' && role.toLowerCase().includes('admin')) ||
                 (role && role.name && role.name.toLowerCase().includes('admin'))
               ) || (user.position && user.position.toLowerCase().includes('admin')) ||
-                 (user.role && user.role.toLowerCase().includes('admin'));
-              
+                (user.role && user.role.toLowerCase().includes('admin'));
+
               const isCustomer = (user.position && user.position.toLowerCase().includes('customer')) ||
-                                (user.role && user.role.toLowerCase().includes('customer')) ||
-                                userRoles.some(role => 
-                                  (typeof role === 'string' && role.toLowerCase().includes('customer')) ||
-                                  (role && role.name && role.name.toLowerCase().includes('customer'))
-                                );
-              
+                (user.role && user.role.toLowerCase().includes('customer')) ||
+                userRoles.some(role =>
+                  (typeof role === 'string' && role.toLowerCase().includes('customer')) ||
+                  (role && role.name && role.name.toLowerCase().includes('customer'))
+                );
+
               const isVendor = (user.position && user.position.toLowerCase().includes('vendor')) ||
-                              (user.role && user.role.toLowerCase().includes('vendor')) ||
-                              userRoles.some(role => 
-                                (typeof role === 'string' && role.toLowerCase().includes('vendor')) ||
-                                (role && role.name && role.name.toLowerCase().includes('vendor'))
-                              );
-              
+                (user.role && user.role.toLowerCase().includes('vendor')) ||
+                userRoles.some(role =>
+                  (typeof role === 'string' && role.toLowerCase().includes('vendor')) ||
+                  (role && role.name && role.name.toLowerCase().includes('vendor'))
+                );
+
               return !isAdmin && !isCustomer && !isVendor;
             });
-            
+
             // Calculate real statistics from API data
             const totalEmployees = filteredUsers.length;
             const activeEmployees = filteredUsers.filter(user => user.is_active !== false).length;
             const inactiveEmployees = totalEmployees - activeEmployees;
-            
+
             // Extract unique departments as strings
             const departments = [...new Set(
               filteredUsers
                 .map(user => user.department || 'General')
                 .filter(dept => dept && dept.trim())
             )];
-            
+
             // Extract unique roles as strings
             const roles = [...new Set(
               filteredUsers
                 .map(user => user.position || user.role || 'No Position')
                 .filter(role => role && role.trim())
             )];
-            
+
             const calculatedAvgAttendance = totalEmployees > 0 ? Math.floor(((activeEmployees / totalEmployees) * 100)) : 0;
             const todayPresent = Math.floor(activeEmployees * (0.85 + Math.random() * 0.1)); // 85-95% of active
-            
+
             const apiStats = {
               total: totalEmployees,
               active: activeEmployees,
@@ -1612,7 +1612,7 @@ const EmployeesPage = () => {
               roles: roles,
               todayPresent: todayPresent
             };
-            
+
             console.log('✅ Calculated stats from API:', apiStats);
             setEmployeeStats(apiStats);
             return;
@@ -1633,7 +1633,7 @@ const EmployeesPage = () => {
         roles: [],
         todayPresent: 0
       });
-      
+
     } catch (error) {
       console.error('❌ Error in fetchEmployeeStats:', error);
       setEmployeeStats({
@@ -1654,7 +1654,7 @@ const EmployeesPage = () => {
   useEffect(() => {
     fetchEmployees();
   }, []);
-  
+
   // Effect to calculate stats when employees data changes
   useEffect(() => {
     if (employees && employees.length >= 0) {
@@ -1681,7 +1681,7 @@ const EmployeesPage = () => {
   const fetchEmployees = async () => {
     try {
       setIsLoading(true);
-      
+
       const token = localStorage.getItem("access_token");
       if (!token) {
         toast.error("Authentication required");
@@ -1698,23 +1698,23 @@ const EmployeesPage = () => {
       };
 
       console.log('🔍 Fetching employees with params:', params);
-      
+
       // Fetch all employees from backend (limit=100), then paginate client-side
       const directResponse = await fetch(`${API_BASE_URL}/api/staff/employees?active_only=true&page=1&limit=100${searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : ''}`, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
       });
-      
+
       console.log('🔍 Direct API response status:', directResponse.status);
-      
+
       if (directResponse.ok) {
         const directData = await directResponse.json();
         console.log('🔍 Direct API response data:', directData);
-        
+
         let employees = [];
-        
+
         // Handle different response formats
         if (Array.isArray(directData)) {
           employees = directData;
@@ -1727,7 +1727,7 @@ const EmployeesPage = () => {
           console.log('🔍 Unexpected response format, keys:', Object.keys(directData));
           employees = [];
         }
-        
+
         // Map to proper employee format (backend already handles role-based filtering)
         employees = employees.map((user, index) => {
           const joinDate = new Date(user.date_of_joining || user.created_at || new Date());
@@ -1761,10 +1761,10 @@ const EmployeesPage = () => {
             daysSinceJoin: daysSinceJoin
           };
         });
-        
+
         // Filter by status if specified
         if (filterStatus) {
-          employees = employees.filter(emp => 
+          employees = employees.filter(emp =>
             emp?.status?.toLowerCase() === filterStatus.toLowerCase()
           );
           console.log('📊 Employees after status filter:', employees.length);
@@ -1772,23 +1772,23 @@ const EmployeesPage = () => {
 
         // Filter by department if specified
         if (filterDepartment) {
-          employees = employees.filter(emp => 
+          employees = employees.filter(emp =>
             emp?.department?.toLowerCase() === filterDepartment.toLowerCase()
           );
           console.log('📊 Employees after department filter:', employees.length);
         }
-        
+
         setEmployees(employees);
         setTotalEmployees(employees.length);
         setTotalPages(Math.ceil(employees.length / employeesPerPage));
-        
+
         console.log('✅ Employees loaded successfully:', {
           count: employees.length,
           activeCount: employees.filter(emp => emp.status === 'Active').length,
           departments: [...new Set(employees.map(emp => emp.department))].length,
           positions: [...new Set(employees.map(emp => emp.position))].length
         });
-        
+
       } else {
         console.error('❌ Direct API call failed:', directResponse.status);
         const errorText = await directResponse.text();
@@ -1797,10 +1797,10 @@ const EmployeesPage = () => {
         setTotalEmployees(0);
         setTotalPages(0);
       }
-      
+
     } catch (error) {
       console.error("Error fetching employees:", error);
-      
+
       // Handle different types of errors
       if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
         toast.error("Session expired. Please login again");
@@ -1814,7 +1814,7 @@ const EmployeesPage = () => {
       } else {
         toast.error("Failed to load employees from server");
       }
-      
+
       setEmployees([]);
       setTotalEmployees(0);
       setTotalPages(0);
@@ -1860,7 +1860,7 @@ const EmployeesPage = () => {
       fetchEmployees(); // Refresh the employee list
     } catch (error) {
       console.error("Error deleting employee:", error);
-      
+
       if (error.message.includes('401') || error.message.includes('Unauthorized')) {
         toast.error("Session expired. Please login again");
         localStorage.removeItem("access_token");
@@ -1879,9 +1879,9 @@ const EmployeesPage = () => {
       inactive: { bg: 'bg-rose-100', text: 'text-rose-800', icon: 'times-circle' },
       pending: { bg: 'bg-amber-100', text: 'text-amber-800', icon: 'hourglass-half' }
     };
-    
+
     const { bg, text, icon } = config[status?.toLowerCase()] || config.active;
-    
+
     return (
       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${bg} ${text}`}>
         <i className={`fas fa-${icon} mr-1`}></i>
@@ -1964,7 +1964,7 @@ const EmployeesPage = () => {
             <i className="fas fa-users text-2xl text-blue-500"></i>
           </div>
         </div>
-        
+
         <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 border border-emerald-200">
           <div className="flex items-center justify-between">
             <div>
@@ -1981,7 +1981,7 @@ const EmployeesPage = () => {
             <i className="fas fa-user-check text-2xl text-emerald-500"></i>
           </div>
         </div>
-        
+
         <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 border border-amber-200">
           <div className="flex items-center justify-between">
             <div>
@@ -1998,7 +1998,7 @@ const EmployeesPage = () => {
             <i className="fas fa-clock text-2xl text-amber-500"></i>
           </div>
         </div>
-        
+
         <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
           <div className="flex items-center justify-between">
             <div>
@@ -2038,7 +2038,7 @@ const EmployeesPage = () => {
               />
             </div>
           </div>
-          
+
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-2">Status</label>
             <select
@@ -2051,7 +2051,7 @@ const EmployeesPage = () => {
               <option value="Inactive">Inactive</option>
             </select>
           </div>
-          
+
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-2">Department</label>
             <select
@@ -2071,7 +2071,7 @@ const EmployeesPage = () => {
               })}
             </select>
           </div>
-          
+
           <div className="flex items-end">
             <button
               onClick={handleClearFilters}
@@ -2123,15 +2123,15 @@ const EmployeesPage = () => {
                       <i className="fas fa-users text-4xl text-slate-400 mb-4"></i>
                       <h3 className="text-lg font-medium text-slate-900 mb-2">No employees found</h3>
                       <p className="text-slate-500">
-                        {searchTerm || filterStatus 
-                          ? "Try adjusting your search or filter criteria" 
+                        {searchTerm || filterStatus
+                          ? "Try adjusting your search or filter criteria"
                           : "No employees available in the system"}
                       </p>
                       <div className="mt-4 text-xs text-slate-400">
                         <p>Debug info:</p>
                         <p>Total users fetched: {employees.length}</p>
                         <p>Current filters: Status={filterStatus || 'none'}, Dept={filterDepartment || 'none'}, Search={searchTerm || 'none'}</p>
-                        <button 
+                        <button
                           onClick={() => console.log('Current employees array:', employees)}
                           className="mt-2 px-3 py-1 bg-slate-200 text-slate-700 rounded text-xs hover:bg-slate-300"
                         >
@@ -2152,79 +2152,79 @@ const EmployeesPage = () => {
                 </tr>
               ) : (
                 currentEmployees.map((employee, index) => (
-                <motion.tr
-                  key={employee?.id || `employee-${index}`}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="hover:bg-slate-50 transition-colors"
-                >
-                  <td className="px-4 py-3">
-                    <div className="text-sm font-medium text-slate-900">{employee?.id || 'N/A'}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                        {employee?.name ? employee.name.split(' ').map(n => n[0]).join('') : 'NA'}
+                  <motion.tr
+                    key={employee?.id || `employee-${index}`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="text-sm font-medium text-slate-900">{employee?.id || 'N/A'}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                          {employee?.name ? employee.name.split(' ').map(n => n[0]).join('') : 'NA'}
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-slate-900">{employee?.name || 'No Name'}</div>
+                          <div className="text-xs text-slate-500">{employee?.email || 'No Email'}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-sm font-medium text-slate-900">{employee?.name || 'No Name'}</div>
-                        <div className="text-xs text-slate-500">{employee?.email || 'No Email'}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-slate-900">{employee?.position || 'No Position'}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-slate-900">{employee?.department || 'No Department'}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-slate-900">
+                        {employee?.joinDate ? new Date(employee.joinDate).toLocaleDateString('en-US', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        }) : 'N/A'}
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-slate-900">{employee?.position || 'No Position'}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-slate-900">{employee?.department || 'No Department'}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-slate-900">
-                      {employee?.joinDate ? new Date(employee.joinDate).toLocaleDateString('en-US', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                      }) : 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className={`text-sm font-semibold ${getAttendanceColor(employee?.attendance || 0)}`}>
-                      {employee?.attendance || 0}%
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm font-semibold text-slate-900">{employee?.leaveBalance || 0}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {getStatusBadge(employee.status)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleView(employee)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="View Details"
-                      >
-                        <i className="fas fa-eye text-sm"></i>
-                      </button>
-                      <button
-                        onClick={() => handleEdit(employee)}
-                        className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                        title="Edit Employee"
-                      >
-                        <i className="fas fa-edit text-sm"></i>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(employee.user_id || employee.employee_id || employee.id)}
-                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                        title="Delete Employee"
-                      >
-                        <i className="fas fa-trash-alt text-sm"></i>
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className={`text-sm font-semibold ${getAttendanceColor(employee?.attendance || 0)}`}>
+                        {employee?.attendance || 0}%
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm font-semibold text-slate-900">{employee?.leaveBalance || 0}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {getStatusBadge(employee.status)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleView(employee)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="View Details"
+                        >
+                          <i className="fas fa-eye text-sm"></i>
+                        </button>
+                        <button
+                          onClick={() => handleEdit(employee)}
+                          className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                          title="Edit Employee"
+                        >
+                          <i className="fas fa-edit text-sm"></i>
+                        </button>
+                        <button
+                          onClick={() => handleDelete(employee.user_id || employee.employee_id || employee.id)}
+                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          title="Delete Employee"
+                        >
+                          <i className="fas fa-trash-alt text-sm"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
                 ))
               )}
             </tbody>
@@ -2246,7 +2246,7 @@ const EmployeesPage = () => {
                 >
                   Previous
                 </button>
-                
+
                 {[...Array(totalPages)].map((_, index) => {
                   const page = index + 1;
                   if (page === currentPage || page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
@@ -2254,11 +2254,10 @@ const EmployeesPage = () => {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-1.5 text-sm font-medium rounded ${
-                          page === currentPage
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
-                        }`}
+                        className={`px-3 py-1.5 text-sm font-medium rounded ${page === currentPage
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50'
+                          }`}
                       >
                         {page}
                       </button>
@@ -2268,7 +2267,7 @@ const EmployeesPage = () => {
                   }
                   return null;
                 })}
-                
+
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
@@ -2299,7 +2298,7 @@ const EmployeesPage = () => {
               className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <AddEmployeeForm 
+              <AddEmployeeForm
                 onClose={() => setShowAddModal(false)}
                 onSuccess={() => {
                   setShowAddModal(false);
@@ -2366,7 +2365,7 @@ const EmployeesPage = () => {
                         <p className="text-slate-900">{selectedEmployee.phone}</p>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <label className="text-xs font-semibold text-slate-600 uppercase">Join Date</label>

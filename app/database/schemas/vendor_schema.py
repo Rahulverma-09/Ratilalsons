@@ -117,6 +117,7 @@ class VendorOrderModel(BaseModel):
     amount: float
     status: str = "pending"
     items: Optional[List[Dict[str, Any]]] = []
+    terms: Optional[List[str]] = []
     order_date: Optional[datetime] = Field(default_factory=datetime.now)
     delivery_date: Optional[datetime] = None
     notes: Optional[str] = None
@@ -157,6 +158,7 @@ class VendorActivityLogModel(BaseModel):
 class PurchaseOrderItem(BaseModel):
     name: str
     qty: float
+    unit: Optional[str] = "nos"
     unit_price: Optional[float] = 0.0
     total: Optional[float] = None
 
@@ -164,6 +166,7 @@ class PurchaseOrderCreate(BaseModel):
     vendor_id: str
     items: List[PurchaseOrderItem]
     notes: Optional[str] = None
+    terms: Optional[List[str]] = []
     gst_percent: Optional[float] = 0.0
 
 # Response Models

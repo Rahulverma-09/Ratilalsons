@@ -543,27 +543,27 @@ function EnquiryTracking() {
                 <dt className="font-semibold">Enquiry ID:</dt>
                 <dd>{viewEnquiry.enquiry_id || viewEnquiry._id || viewEnquiry.id}</dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">Title:</dt>
                 <dd>{viewEnquiry.title}</dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">First Name:</dt>
                 <dd>{viewEnquiry.first_name}</dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">Middle Name:</dt>
                 <dd>{viewEnquiry.middle_name}</dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">Last Name:</dt>
                 <dd>{viewEnquiry.last_name}</dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">Age:</dt>
                 <dd>{viewEnquiry.age}</dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">Email:</dt>
                 <dd>
                   <a href={`mailto:${viewEnquiry.email}`} className="text-blue-600 underline">
@@ -571,31 +571,31 @@ function EnquiryTracking() {
                   </a>
                 </dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">Cell Number:</dt>
                 <dd>{viewEnquiry.cell_number}</dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">Location:</dt>
                 <dd>{viewEnquiry.location}</dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">Total Cash to Invest:</dt>
                 <dd>₹{viewEnquiry.total_cash}</dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">Number of Stores:</dt>
                 <dd>{viewEnquiry.num_stores}</dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">Type:</dt>
                 <dd>{viewEnquiry.type}</dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">Status:</dt>
                 <dd>{viewEnquiry.status}</dd>
               </div>
-              <div  className="flex items-start gap-2">
+              <div className="flex items-start gap-2">
                 <dt className="font-semibold">Date:</dt>
                 <dd>{viewEnquiry.date}</dd>
               </div>
@@ -672,21 +672,21 @@ function FranchiseManagement() {
     <div className="bg-gray-50 min-h-screen">
       {/* Header */}
       <header className="bg-white shadow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row justify-between items-center py-4 sm:h-16">
-          <h1 className="text-xl sm:text-2xl font-bold text-indigo-600 mb-2 sm:mb-0">Franchise & Dealership Management</h1>
-          <button
-            className="ml-4 px-4 py-2 bg-yellow-500 text-white rounded-2xl hover:bg-yellow-700 transition"
-            onClick={() => setShowManageFranchise(true)}
-          >
-            Manage Franchise
-          </button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center py-4 sm:h-16">
+            <h1 className="text-xl sm:text-2xl font-bold text-indigo-600 mb-2 sm:mb-0">Franchise & Dealership Management</h1>
+            <button
+              className="ml-4 px-4 py-2 bg-yellow-500 text-white rounded-2xl hover:bg-yellow-700 transition"
+              onClick={() => setShowManageFranchise(true)}
+            >
+              Manage Franchise
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
-    {showManageFranchise && (
-      <FranchiseListModal onClose={() => setShowManageFranchise(false)} />
-    )}
+      </header>
+      {showManageFranchise && (
+        <FranchiseListModal onClose={() => setShowManageFranchise(false)} />
+      )}
 
       {/* Navigation Tabs */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -810,14 +810,12 @@ function Modal({ open, onClose, children, fullscreen }) {
   if (!open) return null;
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 ${
-        fullscreen ? "p-0" : ""
-      }`}
+      className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 ${fullscreen ? "p-0" : ""
+        }`}
     >
       <div
-        className={`bg-white p-6 rounded-lg shadow-lg relative w-full ${
-          fullscreen ? "h-full max-w-full" : "max-w-xl"
-        }`}
+        className={`bg-white p-6 rounded-lg shadow-lg relative w-full ${fullscreen ? "h-full max-w-full" : "max-w-xl"
+          }`}
         style={fullscreen ? { height: "100%" } : {}}
       >
         <button
@@ -1011,7 +1009,7 @@ function KycUploadSystem() {
   };
 
 
-    function hasAnyPending(enq) {
+  function hasAnyPending(enq) {
     if (!Array.isArray(enq.kyc_docs)) return false;
     return DOC_TYPES.some(docType => {
       const doc = enq.kyc_docs.find(d => d.docType === docType);
@@ -1053,13 +1051,13 @@ function KycUploadSystem() {
   };
 
   function hasDoc(enq, docType) {
-  if (!Array.isArray(enq.kyc_docs)) return false;
-  // Find doc for this type and status
-  const doc = enq.kyc_docs.find(
-    d => d.docType === docType && d.status && d.status.toLowerCase() !== "rejected"
-  );
-  return !!doc;
-}
+    if (!Array.isArray(enq.kyc_docs)) return false;
+    // Find doc for this type and status
+    const doc = enq.kyc_docs.find(
+      d => d.docType === docType && d.status && d.status.toLowerCase() !== "rejected"
+    );
+    return !!doc;
+  }
 
   // Submit All enabled if ANY file is selected and not uploading
   const anyFileSelected = DOCS.some(d => selectedFiles[d.key]);
@@ -1192,7 +1190,7 @@ function KycUploadSystem() {
                           className="h-28 w-auto object-contain border rounded"
                         />
                       )}
-            
+
                       <input
                         type="file"
                         accept={doc.accept}
@@ -1271,7 +1269,7 @@ function KycUploadSystem() {
             {tableLoading ? "Loading..." : "Refresh"}
           </button>
         </div>
-        
+
         {tableLoading ? (
           <div className="text-center py-8">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -1328,10 +1326,10 @@ function KycUploadSystem() {
                             pending
                               ? "text-yellow-600 font-semibold"
                               : enq.status === "approved"
-                              ? "text-green-600 font-semibold"
-                              : enq.status === "rejected"
-                              ? "text-red-600 font-semibold"
-                              : "text-gray-700"
+                                ? "text-green-600 font-semibold"
+                                : enq.status === "rejected"
+                                  ? "text-red-600 font-semibold"
+                                  : "text-gray-700"
                           }
                         >
                           {pending ? "pending" : enq.status}
@@ -1601,13 +1599,12 @@ function InvestmentDocuments() {
                   <td className="px-4 py-4 text-gray-700">{doc.docType || doc.type || "-"}</td>
                   <td className="px-4 py-4 text-gray-700">{doc.date || doc.uploaded_at || "-"}</td>
                   <td className="px-4 py-4">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      (doc.status || '').toLowerCase() === 'verified'
-                        ? 'bg-green-100 text-green-800'
-                        : (doc.status || '').toLowerCase() === 'pending review'
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${(doc.status || '').toLowerCase() === 'verified'
+                      ? 'bg-green-100 text-green-800'
+                      : (doc.status || '').toLowerCase() === 'pending review'
                         ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-gray-100 text-gray-800'
-                    }`}>
+                      }`}>
                       {doc.status || "Pending Review"}
                     </span>
                   </td>
@@ -1905,7 +1902,7 @@ function FranchiseMap() {
               }}
             >
               <div className={`h-6 w-6 ${loc.status === 'Active' ? 'bg-indigo-600' : 'bg-yellow-500'} rounded-full flex items-center justify-center text-white font-bold text-xs`}>
-                  {idx + 1}
+                {idx + 1}
               </div>
             </div>
           ))}
@@ -2003,8 +2000,8 @@ function CommissionProfitModule() {
               type="button"
               onClick={() => setSelectedPeriod('monthly')}
               className={`${selectedPeriod === 'monthly'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white text-gray-700'
                 } px-3 sm:px-4 py-2 text-sm font-medium rounded-l-md border border-gray-300 hover:bg-gray-50 focus:z-10 focus:outline-none`}
             >
               Monthly
@@ -2013,8 +2010,8 @@ function CommissionProfitModule() {
               type="button"
               onClick={() => setSelectedPeriod('quarterly')}
               className={`${selectedPeriod === 'quarterly'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white text-gray-700'
                 } px-3 sm:px-4 py-2 text-sm font-medium border-t border-b border-gray-300 hover:bg-gray-50 focus:z-10 focus:outline-none`}
             >
               Quarterly
@@ -2023,8 +2020,8 @@ function CommissionProfitModule() {
               type="button"
               onClick={() => setSelectedPeriod('yearly')}
               className={`${selectedPeriod === 'yearly'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white text-gray-700'
                 } px-3 sm:px-4 py-2 text-sm font-medium rounded-r-md border border-gray-300 hover:bg-gray-50 focus:z-10 focus:outline-none`}
             >
               Yearly
@@ -2223,9 +2220,9 @@ function RenewalTracking() {
                 <dd className="mt-1 text-sm sm:mt-0">{item.expiry_date}</dd>
                 <dd className="mt-1 text-sm sm:mt-0">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.status === 'approved' ? 'bg-green-100 text-green-800' :
-                      item.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        item.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
+                    item.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      item.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
                     }`}>
                     {item.status}
                   </span>
@@ -2294,9 +2291,9 @@ function RenewalTracking() {
                 <dt className="font-semibold">Status:</dt>
                 <dd>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${selected.status === 'approved' ? 'bg-green-100 text-green-800' :
-                      selected.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        selected.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
+                    selected.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      selected.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
                     }`}>
                     {selected.status}
                   </span>

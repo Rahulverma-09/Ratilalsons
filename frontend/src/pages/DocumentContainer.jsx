@@ -33,7 +33,7 @@ const DocumentsContainer = () => {
       }
     };
     fetchPermissions();
-    
+
     // Get role names from localStorage if available
     try {
       const userStr = localStorage.getItem("currentUser");
@@ -44,15 +44,15 @@ const DocumentsContainer = () => {
           setRoleNames(
             Array.isArray(user.roles)
               ? user.roles.map(r =>
-                  typeof r === "string"
-                    ? r.trim().toLowerCase()
-                    : (r.name || r.role || "").trim().toLowerCase()
-                )
+                typeof r === "string"
+                  ? r.trim().toLowerCase()
+                  : (r.name || r.role || "").trim().toLowerCase()
+              )
               : []
           );
         }
       }
-    } catch {}
+    } catch { }
   }, []);
 
   if (loading) {

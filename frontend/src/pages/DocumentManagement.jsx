@@ -47,10 +47,10 @@ const HRDocumentReview = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('access_token');
-      
+
       let documents = [];
       let success = false;
-      
+
       // Use the working employee documents endpoint as primary
       const endpoints = [
         { url: `${BASE_URL}/api/employee-docs/documents/all`, name: 'Employee Documents API' }, // Primary working endpoint
@@ -61,10 +61,10 @@ const HRDocumentReview = () => {
         { url: `${BASE_URL}/api/documents/all`, name: 'API All Documents' }, // All documents alternative
         { url: `${BASE_URL}/api/documents`, name: 'API Documents' } // Alternative documents endpoint
       ];
-      
+
       // Collect documents from multiple sources
       let allDocuments = [];
-      
+
       for (const endpoint of endpoints) {
         try {
           console.log('Trying endpoint:', endpoint.url, '(' + endpoint.name + ')');
@@ -78,9 +78,9 @@ const HRDocumentReview = () => {
           if (response.ok) {
             const result = await response.json();
             console.log('API Response from', endpoint.name, ':', result);
-            
+
             let data = [];
-            
+
             // Handle different response formats
             if (Array.isArray(result)) {
               data = result;
@@ -103,7 +103,7 @@ const HRDocumentReview = () => {
             } else {
               console.log('Unexpected response format:', typeof result);
             }
-            
+
             if (data.length > 0) {
               console.log('Found', data.length, 'documents from', endpoint.name);
               // Add source identifier to each document
@@ -112,7 +112,7 @@ const HRDocumentReview = () => {
               });
               allDocuments = allDocuments.concat(data);
             }
-            
+
             // For the primary endpoint (Employee Documents API), always stop after successful response
             if (endpoint.name === 'Employee Documents API') {
               success = true;
@@ -120,7 +120,7 @@ const HRDocumentReview = () => {
               console.log('Data received:', data.length, 'documents');
               break;
             }
-            
+
             // For other endpoints, only stop if we got actual data
             if (data.length > 0) {
               success = true;
@@ -141,17 +141,17 @@ const HRDocumentReview = () => {
           console.log('Endpoint', endpoint.url, 'error:', err.message);
         }
       }
-      
+
       // Use all collected documents
       documents = allDocuments;
       console.log('Total documents collected from all sources:', documents.length);
-      
+
       // Ensure data is an array and process documents
       if (!Array.isArray(documents)) {
         console.warn('Documents data is not an array:', documents);
         documents = [];
       }
-      
+
       // Process documents to ensure consistent structure
       const processedDocs = documents.map((doc, index) => {
         const processed = {
@@ -177,7 +177,7 @@ const HRDocumentReview = () => {
           description: doc.description || doc.linked_lead,
           _source: doc._source
         };
-        
+
         // Handle ObjectId conversion
         if (processed.id && typeof processed.id === 'object' && processed.id.$oid) {
           processed.id = processed.id.$oid;
@@ -185,14 +185,14 @@ const HRDocumentReview = () => {
         if (typeof processed.id === 'object') {
           processed.id = String(processed.id);
         }
-        
+
         return processed;
       });
-      
+
       // Remove duplicates based on document ID or name+employee combination
       const uniqueDocs = [];
       const seenIds = new Set();
-      
+
       for (const doc of processedDocs) {
         const uniqueKey = doc.id || `${doc.document_name}_${doc.employee_id}_${doc.upload_date}`;
         if (!seenIds.has(uniqueKey)) {
@@ -200,17 +200,17 @@ const HRDocumentReview = () => {
           uniqueDocs.push(doc);
         }
       }
-      
+
       documents = uniqueDocs;
       console.log('Processed and deduplicated documents:', documents.length);
-      
+
       // Filter documents based on status if not 'all'
-      const filteredDocs = filterStatus === 'all' 
-        ? documents 
+      const filteredDocs = filterStatus === 'all'
+        ? documents
         : documents.filter(doc => doc.status === filterStatus);
-        
+
       setDocuments(filteredDocs);
-      
+
       // Calculate stats from all documents
       const stats = {
         pending: documents.filter(d => d.status === 'pending').length,
@@ -219,13 +219,13 @@ const HRDocumentReview = () => {
         total: documents.length
       };
       setStats(stats);
-      
+
       if (documents.length === 0) {
         console.warn('No documents found from any endpoint');
       } else {
         console.log('Successfully loaded', documents.length, 'documents from multiple sources');
       }
-      
+
     } catch (error) {
       console.error('Error fetching documents:', error);
       showNotification('Failed to load documents', 'error');
@@ -247,19 +247,19 @@ const HRDocumentReview = () => {
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    
+
     if (!reviewForm.status) {
       showNotification('Please select a review status', 'error');
       return;
     }
 
     setSubmitting(true);
-    
+
     try {
       const token = localStorage.getItem('access_token');
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const documentId = selectedDocument.id || selectedDocument._id;
-      
+
       // Try multiple review endpoints
       const reviewEndpoints = [
         `${BASE_URL}/api/employee-docs/documents/${documentId}/review`,
@@ -267,13 +267,13 @@ const HRDocumentReview = () => {
         `${API_URL}/hr/documents/${documentId}/review`,
         `${BASE_URL}/api/documents/${documentId}/review`
       ];
-      
+
       let success = false;
-      
+
       for (const endpoint of reviewEndpoints) {
         try {
           console.log('Trying review endpoint:', endpoint);
-          
+
           const response = await fetch(endpoint, {
             method: 'PUT',
             headers: {
@@ -301,11 +301,11 @@ const HRDocumentReview = () => {
           console.log('Review endpoint', endpoint, 'error:', err.message);
         }
       }
-      
+
       if (!success) {
         throw new Error('All review endpoints failed');
       }
-      
+
     } catch (error) {
       console.error('Review error:', error);
       showNotification('Failed to submit review. Please try again.', 'error');
@@ -341,11 +341,11 @@ const HRDocumentReview = () => {
     try {
       console.log('=== Download Debug Info ===');
       console.log('Document object:', doc);
-      
+
       // Get the document URL
       const documentUrl = getDocumentUrl(doc);
       console.log('Generated URL:', documentUrl);
-      
+
       if (!documentUrl) {
         showNotification('Document URL not available', 'error');
         return;
@@ -356,15 +356,15 @@ const HRDocumentReview = () => {
       try {
         const response = await fetch(documentUrl);
         console.log('Fetch response status:', response.status);
-        
+
         if (response.ok) {
           const blob = await response.blob();
           console.log('Blob size:', blob.size, 'bytes');
-          
+
           if (blob.size > 0) {
             const blobUrl = window.URL.createObjectURL(blob);
             const filename = doc.document_name || doc.filename || doc.original_filename || 'document';
-            
+
             const link = window.document.createElement('a');
             link.href = blobUrl;
             link.download = filename;
@@ -372,7 +372,7 @@ const HRDocumentReview = () => {
             window.document.body.appendChild(link);
             link.click();
             window.document.body.removeChild(link);
-            
+
             setTimeout(() => window.URL.revokeObjectURL(blobUrl), 2000);
             showNotification('Document downloaded successfully!', 'success');
             return;
@@ -386,18 +386,18 @@ const HRDocumentReview = () => {
       console.log('Method 2: iframe download');
       try {
         const filename = doc.document_name || doc.filename || doc.original_filename || 'document';
-        
+
         // Create hidden iframe for download
         const iframe = window.document.createElement('iframe');
         iframe.style.display = 'none';
         iframe.src = documentUrl;
         window.document.body.appendChild(iframe);
-        
+
         // Remove iframe after download starts
         setTimeout(() => {
           window.document.body.removeChild(iframe);
         }, 3000);
-        
+
         showNotification('Download initiated via iframe method', 'success');
         return;
       } catch (iframeError) {
@@ -428,7 +428,7 @@ const HRDocumentReview = () => {
         console.log('Method 4 failed:', clipboardError.message);
         showNotification('All download methods failed. Please contact support.', 'error');
       }
-      
+
     } catch (error) {
       console.error('=== Download completely failed ===', error);
       showNotification('Failed to download document. Please try again.', 'error');
@@ -437,25 +437,25 @@ const HRDocumentReview = () => {
 
   const getDocumentUrl = (document) => {
     console.log('Getting document URL for:', document);
-    
+
     // Handle different URL formats
     if (document.file_path) {
       // If file_path starts with http, use as is
       if (document.file_path.startsWith('http')) {
         return document.file_path;
       }
-      
+
       // If file_path starts with /, it's already a path from root
       if (document.file_path.startsWith('/')) {
         return `${BASE_URL}${document.file_path}`;
       }
-      
+
       // Handle Windows-style paths (backslashes) and convert to forward slashes
       let cleanPath = document.file_path.replace(/\\/g, '/');
-      
+
       // Remove any leading ./ or just use the path as is
       cleanPath = cleanPath.replace(/^\.\//, '');
-      
+
       // If the path already starts with employee_document/, use it directly
       // Otherwise, we need to add the employee_document/ prefix
       if (cleanPath.startsWith('employee_document/')) {
@@ -465,7 +465,7 @@ const HRDocumentReview = () => {
         return `${BASE_URL}/employee_document/${cleanPath}`;
       }
     }
-    
+
     if (document.pdf_url) {
       if (document.pdf_url.startsWith('http')) {
         return document.pdf_url;
@@ -476,24 +476,24 @@ const HRDocumentReview = () => {
       // Handle Windows-style paths and convert to forward slashes
       let cleanPath = document.pdf_url.replace(/\\/g, '/');
       cleanPath = cleanPath.replace(/^\.\//, '');
-      
+
       if (cleanPath.startsWith('employee_document/')) {
         return `${BASE_URL}/${cleanPath}`;
       } else {
         return `${BASE_URL}/employee_document/${cleanPath}`;
       }
     }
-    
+
     // Use stored_filename if available
     if (document.stored_filename) {
       return `${BASE_URL}/employee_document/${document.stored_filename}`;
     }
-    
+
     // Fallback - construct URL from document info
     if (document.document_name || document.filename || document.original_filename) {
       const filename = document.document_name || document.filename || document.original_filename;
       const employeeId = document.employee_id || document.generated_for || document.uploaded_by || 'unknown';
-      
+
       // Try multiple filename patterns that might exist
       const possibleFilenames = [
         document.stored_filename, // Prioritize stored filename
@@ -501,12 +501,12 @@ const HRDocumentReview = () => {
         `${employeeId}_${filename.replace(/\s+/g, '_')}`,
         filename
       ].filter(Boolean);
-      
+
       // Return the first potential URL
       const potentialFilename = possibleFilenames[0];
       return `${BASE_URL}/employee_document/${potentialFilename}`;
     }
-    
+
     console.warn('Could not determine document URL for:', document);
     return null;
   };
@@ -518,9 +518,9 @@ const HRDocumentReview = () => {
       rejected: { bg: 'bg-red-100', text: 'text-red-800', icon: 'times-circle' },
       resubmit: { bg: 'bg-orange-100', text: 'text-orange-800', icon: 'redo' }
     };
-    
+
     const config = statusConfig[status?.toLowerCase()] || statusConfig.pending;
-    
+
     return (
       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}>
         <i className={`fas fa-${config.icon} mr-1.5`}></i>
@@ -587,7 +587,7 @@ const HRDocumentReview = () => {
                 <i className="fas fa-clock text-3xl text-yellow-500"></i>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -597,7 +597,7 @@ const HRDocumentReview = () => {
                 <i className="fas fa-check-circle text-3xl text-green-500"></i>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -607,7 +607,7 @@ const HRDocumentReview = () => {
                 <i className="fas fa-times-circle text-3xl text-red-500"></i>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 border border-indigo-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -633,11 +633,10 @@ const HRDocumentReview = () => {
             <button
               key={filter}
               onClick={() => setFilterStatus(filter)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                filterStatus === filter
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${filterStatus === filter
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               {filter.charAt(0).toUpperCase() + filter.slice(1)}
             </button>
@@ -664,7 +663,7 @@ const HRDocumentReview = () => {
             <i className="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No Documents Found</h3>
             <p className="text-gray-500">
-              {filterStatus === 'pending' 
+              {filterStatus === 'pending'
                 ? 'No documents pending review at the moment.'
                 : `No ${filterStatus} documents found.`}
             </p>
@@ -877,11 +876,10 @@ const HRDocumentReview = () => {
                         <button
                           type="button"
                           onClick={() => setReviewForm({ ...reviewForm, status: 'approved' })}
-                          className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                            reviewForm.status === 'approved'
-                              ? 'bg-green-600 text-white shadow-lg'
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
-                          }`}
+                          className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${reviewForm.status === 'approved'
+                            ? 'bg-green-600 text-white shadow-lg'
+                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            }`}
                         >
                           <i className="fas fa-check-circle mr-2"></i>
                           Approve
@@ -889,11 +887,10 @@ const HRDocumentReview = () => {
                         <button
                           type="button"
                           onClick={() => setReviewForm({ ...reviewForm, status: 'rejected' })}
-                          className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                            reviewForm.status === 'rejected'
-                              ? 'bg-red-600 text-white shadow-lg'
-                              : 'bg-red-100 text-red-700 hover:bg-red-200'
-                          }`}
+                          className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${reviewForm.status === 'rejected'
+                            ? 'bg-red-600 text-white shadow-lg'
+                            : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            }`}
                         >
                           <i className="fas fa-times-circle mr-2"></i>
                           Reject
@@ -901,11 +898,10 @@ const HRDocumentReview = () => {
                         <button
                           type="button"
                           onClick={() => setReviewForm({ ...reviewForm, status: 'resubmit' })}
-                          className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                            reviewForm.status === 'resubmit'
-                              ? 'bg-orange-600 text-white shadow-lg'
-                              : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                          }`}
+                          className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${reviewForm.status === 'resubmit'
+                            ? 'bg-orange-600 text-white shadow-lg'
+                            : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                            }`}
                         >
                           <i className="fas fa-redo mr-2"></i>
                           Resubmit

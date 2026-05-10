@@ -38,18 +38,18 @@ async function getCustomerProfile(customer_id) {
       console.log('No auth token, using demo customer data');
       return { ...DEMO_CUSTOMER, id: customer_id };
     }
-    
+
     const res = await fetch(`${API_BASE}/${customer_id}`, {
       headers: getAuthHeaders()
     });
-    
+
     // Check if response is HTML (error page) instead of JSON
     const contentType = res.headers.get('content-type');
     if (contentType && contentType.includes('text/html')) {
       console.log('API returned HTML instead of JSON, using demo data');
       return { ...DEMO_CUSTOMER, id: customer_id };
     }
-    
+
     if (!res.ok) {
       if (res.status === 404) {
         console.log('Customer not found in API, using demo data');
@@ -57,7 +57,7 @@ async function getCustomerProfile(customer_id) {
       }
       throw new Error(`Failed to fetch customer: ${res.status}`);
     }
-    
+
     return res.json();
   } catch (error) {
     console.error("Error fetching customer profile:", error);
@@ -73,18 +73,18 @@ async function getCustomerHistory(customer_id) {
       console.log('No auth token, using demo history data');
       return getDemoHistoryData();
     }
-    
+
     const res = await fetch(`${API_BASE}/${customer_id}/history`, {
       headers: getAuthHeaders()
     });
-    
+
     // Check if response is HTML (error page) instead of JSON
     const contentType = res.headers.get('content-type');
     if (contentType && contentType.includes('text/html')) {
       console.log('History API returned HTML, using demo data');
       return getDemoHistoryData();
     }
-    
+
     if (!res.ok) {
       if (res.status === 404) {
         console.log('Customer history not found, using demo data');
@@ -92,7 +92,7 @@ async function getCustomerHistory(customer_id) {
       }
       throw new Error(`Failed to fetch customer history: ${res.status}`);
     }
-    
+
     return res.json();
   } catch (error) {
     console.error("Error fetching customer history:", error);
@@ -424,7 +424,7 @@ export default function CustomerProfileView() {
   // Fetch customer details
   useEffect(() => {
     setLoading(true);
-    
+
     if (!customer_id) {
       console.log('No customer ID provided, using demo data');
       setCustomer({ ...DEMO_CUSTOMER, id: 'DEMO-001' });
@@ -502,7 +502,7 @@ export default function CustomerProfileView() {
           ]);
         });
     }
-    
+
     // Helper function to fetch communication logs
     async function getCommunicationLogs(customer_id) {
       try {
@@ -749,7 +749,7 @@ export default function CustomerProfileView() {
       </div>
     );
   }
-  
+
   if (!customer) {
     return (
       <div className="p-8 text-center text-gray-500 min-h-screen flex items-center justify-center">
@@ -757,7 +757,7 @@ export default function CustomerProfileView() {
           <div className="text-6xl mb-4">👤</div>
           <h2 className="text-2xl font-bold text-gray-700 mb-2">Customer Profile</h2>
           <p className="text-gray-500 mb-6">Loading customer information...</p>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all"
           >

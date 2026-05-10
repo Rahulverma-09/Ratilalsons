@@ -220,6 +220,7 @@ async def create_purchase_order(
         items_with_totals.append({
             "name": item.name,
             "qty": item.qty,
+            "unit": item.unit or "nos",
             "unit_price": unit_price,
             "total": line_total,
         })
@@ -269,6 +270,10 @@ async def create_purchase_order(
         "vendor_name": vendor_name,
         "vendor_email": vendor_email,
         "vendor_company": vendor_company,
+        "vendor_address": vendor.get("address", ""),
+        "vendor_phone": vendor.get("phone", ""),
+        "vendor_gstin": vendor.get("registration_number", ""),
+        "vendor_contact_person": vendor.get("contact_person", ""),
         "invoice_date": current_time,
         "items": items_with_totals,
         "subtotal": subtotal,
@@ -278,6 +283,7 @@ async def create_purchase_order(
         "amount": grand_total,
         "status": "pending",
         "notes": order_data.notes,
+        "terms": order_data.terms or [],
         "created_by": current_user.get("id") or current_user.get("user_id"),
         "created_at": current_time,
         "updated_at": current_time,
@@ -299,8 +305,8 @@ async def create_purchase_order(
 
     log_vendor_activity(
         vendor_id=order_data.vendor_id,
-        action="purchase_order_created",
-        description=f"Purchase order {invoice_number} created" + (f" for \u20b9{grand_total:.2f}" if grand_total > 0 else ""),
+        action="purchase_request_created",
+        description=f"Purchase request {invoice_number} created" + (f" for \u20b9{grand_total:.2f}" if grand_total > 0 else ""),
         user_id=current_user.get("id"),
         metadata={"invoice_number": invoice_number, "grand_total": grand_total},
     )
@@ -312,6 +318,10 @@ async def create_purchase_order(
         "vendor_name": vendor_name,
         "vendor_email": vendor_email,
         "vendor_company": vendor_company,
+        "vendor_address": vendor.get("address", ""),
+        "vendor_phone": vendor.get("phone", ""),
+        "vendor_gstin": vendor.get("registration_number", ""),
+        "vendor_contact_person": vendor.get("contact_person", ""),
         "invoice_date": current_time.isoformat(),
         "items": items_with_totals,
         "subtotal": subtotal,
@@ -320,6 +330,7 @@ async def create_purchase_order(
         "grand_total": grand_total,
         "status": "pending",
         "notes": order_data.notes,
+        "terms": order_data.terms or [],
     }
 
 

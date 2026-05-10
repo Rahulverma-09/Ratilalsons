@@ -63,17 +63,15 @@ export default function Alerts() {
       <div className="bg-white rounded-lg mb-6 border shadow-sm flex overflow-hidden">
         <button
           onClick={() => setView("inactivity")}
-          className={`flex-1 flex items-center justify-center px-8 py-4 font-medium space-x-2 ${
-            view === "inactivity" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:bg-gray-50"
-          }`}
+          className={`flex-1 flex items-center justify-center px-8 py-4 font-medium space-x-2 ${view === "inactivity" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:bg-gray-50"
+            }`}
         >
           <FaClock className="mr-2" /> Inactivity & Overtime
         </button>
         <button
           onClick={() => setView("anomaly")}
-          className={`flex-1 flex items-center justify-center px-8 py-4 font-medium space-x-2 ${
-            view === "anomaly" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:bg-gray-50"
-          }`}
+          className={`flex-1 flex items-center justify-center px-8 py-4 font-medium space-x-2 ${view === "anomaly" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:bg-gray-50"
+            }`}
         >
           <FaBolt className="mr-2" /> Reading/Performance Anomalies
         </button>

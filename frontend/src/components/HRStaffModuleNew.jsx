@@ -15,14 +15,14 @@ const HRStaffModuleComplete = () => {
   const [loginCredentials, setLoginCredentials] = useState({ username: 'amit24', password: 'Amit@123' });
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
-  
+
   // Modal states
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
   const [showLeaveRequestModal, setShowLeaveRequestModal] = useState(false);
   const [showMarkAttendanceModal, setShowMarkAttendanceModal] = useState(false);
   const [showEmployeeDetailsModal, setShowEmployeeDetailsModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  
+
   // Form states
   const [employeeForm, setEmployeeForm] = useState({
     email: '',
@@ -50,11 +50,11 @@ const HRStaffModuleComplete = () => {
     notes: '',
     location: 'Office'
   });
-  
+
   // Available options
   const [availableRoles, setAvailableRoles] = useState([]);
   const [formLoading, setFormLoading] = useState(false);
-  
+
   const navigate = useNavigate();
 
   // Login function
@@ -72,7 +72,7 @@ const HRStaffModuleComplete = () => {
       ];
 
       let loginSuccess = false;
-      
+
       for (const endpoint of endpoints) {
         try {
           // Try form data format
@@ -157,7 +157,7 @@ const HRStaffModuleComplete = () => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
@@ -219,7 +219,7 @@ const HRStaffModuleComplete = () => {
       }
     } catch (error) {
       console.error('Error fetching user:', error);
-      
+
       // Try fallback to localStorage
       const userStr = localStorage.getItem('user');
       if (userStr) {
@@ -227,7 +227,7 @@ const HRStaffModuleComplete = () => {
           const user = JSON.parse(userStr);
           setCurrentUser({
             id: user.user_id || user.id || user._id || 'unknown',
-            employee_id: user.user_id || user.id || 'unknown', 
+            employee_id: user.user_id || user.id || 'unknown',
             full_name: user.full_name || user.username || 'Unknown User',
             name: user.full_name || user.username || 'Unknown User',
             email: user.email || '',
@@ -285,7 +285,7 @@ const HRStaffModuleComplete = () => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       let stats = {
         total_employees: 0,
         present_today: 0,
@@ -293,13 +293,13 @@ const HRStaffModuleComplete = () => {
         pending_leaves: 0,
         on_leave_today: 0
       };
-      
+
       if (employeesResponse.ok) {
         const employeesResult = await employeesResponse.json();
         if (employeesResult.success) {
           const employeesList = employeesResult.data || employeesResult.employees || [];
           stats.total_employees = employeesList.length;
-          
+
           // Calculate attendance stats from employee data
           employeesList.forEach(employee => {
             if (employee.attendance_status) {
@@ -317,20 +317,20 @@ const HRStaffModuleComplete = () => {
         setShowLogin(true);
         return;
       }
-      
+
       // Try to get leave requests for pending count
       if (hasPermission('hr')) {
         try {
           const userRoles = Array.isArray(currentUser.roles) ? currentUser.roles : [currentUser.role || 'employee'];
           const rolesParam = userRoles.map(role => `current_user_roles=${encodeURIComponent(role)}`).join('&');
-          
+
           const leaveResponse = await fetch(`${API_URL}/api/attendance/leave/admin/all?page=1&limit=100`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           });
-          
+
           if (leaveResponse.ok) {
             const leaveResult = await leaveResponse.json();
             if (leaveResult.success) {
@@ -341,7 +341,7 @@ const HRStaffModuleComplete = () => {
           console.error('Error fetching leave requests:', error);
         }
       }
-      
+
       setDashboardStats(stats);
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
@@ -361,13 +361,13 @@ const HRStaffModuleComplete = () => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
           const employeesList = result.data || result.employees || [];
           setEmployees(employeesList);
-          
+
           // Update total employees count in dashboard stats
           setDashboardStats(prevStats => ({
             ...prevStats,
@@ -387,7 +387,7 @@ const HRStaffModuleComplete = () => {
   // Fetch my attendance records
   const fetchMyAttendance = async () => {
     if (!currentUser?.id) return;
-    
+
     try {
       const token = localStorage.getItem('access_token');
       if (!token) return;
@@ -399,7 +399,7 @@ const HRStaffModuleComplete = () => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
@@ -416,7 +416,7 @@ const HRStaffModuleComplete = () => {
   // Fetch leave requests
   const fetchLeaveRequests = async () => {
     if (!currentUser?.id) return;
-    
+
     try {
       const token = localStorage.getItem('access_token');
       if (!token) return;
@@ -424,18 +424,18 @@ const HRStaffModuleComplete = () => {
       // Prepare user roles for API call
       const userRoles = Array.isArray(currentUser.roles) ? currentUser.roles : [currentUser.role || 'employee'];
       const rolesParam = userRoles.map(role => `current_user_roles=${encodeURIComponent(role)}`).join('&');
-      
+
       // For HR users, fetch all leave requests; for regular users, their own requests
       const isHR = hasPermission('hr');
       const employeeIdParam = isHR ? '' : `&employee_id=${currentUser.id}`;
-      
+
       const response = await fetch(`${API_URL}/api/attendance/leave/admin/all?page=1&limit=50`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
@@ -463,7 +463,7 @@ const HRStaffModuleComplete = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      
+
       const response = await fetch(`https://ratilalsons-backend-api.onrender.com/api/attendance/leave/admin/action/${requestId}`, {
         method: 'PUT',
         headers: {
@@ -476,7 +476,7 @@ const HRStaffModuleComplete = () => {
           remarks: `${action === 'approve' ? 'Approved' : 'Rejected'} by ${currentUser.full_name || currentUser.name}`
         })
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         alert(result.message || `Leave request ${action}d successfully!`);
@@ -513,7 +513,7 @@ const HRStaffModuleComplete = () => {
           date_of_joining: new Date().toISOString().split('T')[0]
         })
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         alert(`Employee created successfully! Employee ID: ${result.employee?.emp_id || 'Generated'}`);
@@ -565,7 +565,7 @@ const HRStaffModuleComplete = () => {
         },
         body: JSON.stringify(updateData)
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         alert(result.message || 'Employee updated successfully!');
@@ -603,7 +603,7 @@ const HRStaffModuleComplete = () => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         alert(result.message || 'Employee deactivated successfully!');
@@ -638,7 +638,7 @@ const HRStaffModuleComplete = () => {
           location: 'Office'
         })
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         alert(result.message || `${action === 'checkin' ? 'Checked in' : 'Checked out'} successfully!`);
@@ -673,7 +673,7 @@ const HRStaffModuleComplete = () => {
           location: 'Office'
         })
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         alert(result.message || `Employee ${action === 'checkin' ? 'checked in' : 'checked out'} successfully!`);
@@ -703,7 +703,7 @@ const HRStaffModuleComplete = () => {
           url: documentUrl
         })
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         alert(result.message || 'Document uploaded successfully!');
@@ -738,7 +738,7 @@ const HRStaffModuleComplete = () => {
           status: 'pending'
         })
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         alert(result.message || 'Leave request submitted successfully!');
@@ -785,7 +785,7 @@ const HRStaffModuleComplete = () => {
           location: attendanceData.location || 'Office'
         })
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         alert(result.message || `Employee ${attendanceData.action} marked successfully!`);
@@ -817,19 +817,19 @@ const HRStaffModuleComplete = () => {
   const exportAttendanceData = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      
+
       // Get current date range (last 30 days)
       const endDate = new Date();
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - 30);
-      
+
       const response = await fetch(`https://ratilalsons-backend-api.onrender.com/api/employees/attendance/export?start_date=${startDate.toISOString().split('T')[0]}&end_date=${endDate.toISOString().split('T')[0]}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         // Create CSV data from attendance records
         const attendanceData = [];
@@ -846,21 +846,21 @@ const HRStaffModuleComplete = () => {
             });
           }
         }
-        
+
         // Convert to CSV
         const csvHeaders = Object.keys(attendanceData[0] || {});
         const csvContent = [
           csvHeaders.join(','),
           ...attendanceData.map(row => csvHeaders.map(header => `"${row[header]}"`).join(','))
         ].join('\n');
-        
+
         // Download CSV
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = `attendance_report_${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
-        
+
         alert('Attendance data exported successfully!');
       } else {
         alert('Failed to export attendance data');
@@ -891,7 +891,7 @@ const HRStaffModuleComplete = () => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         alert(`Sync completed successfully!\n\nResults:\n- Users processed: ${result.results?.users_processed || 0}\n- Employees created: ${result.results?.employees_created || 0}\n- Employees processed: ${result.results?.employees_processed || 0}\n- Users created: ${result.results?.users_created || 0}`);
@@ -959,7 +959,7 @@ const HRStaffModuleComplete = () => {
                     type="text"
                     required
                     value={loginCredentials.username}
-                    onChange={(e) => setLoginCredentials({...loginCredentials, username: e.target.value})}
+                    onChange={(e) => setLoginCredentials({ ...loginCredentials, username: e.target.value })}
                     className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter your username"
                   />
@@ -977,7 +977,7 @@ const HRStaffModuleComplete = () => {
                     type="password"
                     required
                     value={loginCredentials.password}
-                    onChange={(e) => setLoginCredentials({...loginCredentials, password: e.target.value})}
+                    onChange={(e) => setLoginCredentials({ ...loginCredentials, password: e.target.value })}
                     className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Enter your password"
                   />
@@ -1097,8 +1097,8 @@ const HRStaffModuleComplete = () => {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-600 truncate">Pending Leaves</p>
               <p className="text-xl sm:text-2xl font-bold text-yellow-600">
-                {dashboardStats.pending_leaves !== undefined 
-                  ? dashboardStats.pending_leaves 
+                {dashboardStats.pending_leaves !== undefined
+                  ? dashboardStats.pending_leaves
                   : leaveRequests.filter(req => req.status === 'pending').length || 0}
               </p>
               <p className="text-xs text-gray-500 mt-1">Awaiting approval</p>
@@ -1121,7 +1121,7 @@ const HRStaffModuleComplete = () => {
             <i className="fas fa-sign-in-alt text-green-600 text-lg sm:text-xl mb-2"></i>
             <span className="text-xs sm:text-sm font-medium text-green-700 text-center">Check In</span>
           </button>
-          
+
           <button
             onClick={() => handleAttendanceAction('checkout')}
             className="flex flex-col items-center p-3 sm:p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
@@ -1129,7 +1129,7 @@ const HRStaffModuleComplete = () => {
             <i className="fas fa-sign-out-alt text-red-600 text-lg sm:text-xl mb-2"></i>
             <span className="text-xs sm:text-sm font-medium text-red-700 text-center">Check Out</span>
           </button>
-          
+
           <button
             onClick={() => setShowLeaveRequestModal(true)}
             className="flex flex-col items-center p-3 sm:p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
@@ -1137,7 +1137,7 @@ const HRStaffModuleComplete = () => {
             <i className="fas fa-calendar-plus text-blue-600 text-lg sm:text-xl mb-2"></i>
             <span className="text-xs sm:text-sm font-medium text-blue-700 text-center">Request Leave</span>
           </button>
-          
+
           <button
             onClick={() => setActiveTab('employees')}
             className="flex flex-col items-center p-3 sm:p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
@@ -1153,8 +1153,8 @@ const HRStaffModuleComplete = () => {
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Employees by Role</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           {availableRoles.map((role) => {
-            const roleEmployees = employees.filter(emp => 
-              emp.role === role || 
+            const roleEmployees = employees.filter(emp =>
+              emp.role === role ||
               (Array.isArray(emp.roles) && emp.roles.includes(role)) ||
               emp.role_names?.toLowerCase().includes(role.toLowerCase())
             );
@@ -1171,7 +1171,7 @@ const HRStaffModuleComplete = () => {
               'employee': 'bg-gray-50 text-gray-700 border-gray-200'
             };
             const colorClass = roleColors[role] || 'bg-gray-50 text-gray-700 border-gray-200';
-            
+
             return (
               <div key={role} className={`border rounded-lg p-3 ${colorClass}`}>
                 <div className="text-center">
@@ -1211,13 +1211,12 @@ const HRStaffModuleComplete = () => {
                       {record.checkout_time || '-'}
                     </td>
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        record.status === 'present' 
-                          ? 'bg-green-100 text-green-800'
-                          : record.status === 'absent'
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${record.status === 'present'
+                        ? 'bg-green-100 text-green-800'
+                        : record.status === 'absent'
                           ? 'bg-red-100 text-red-800'
                           : 'bg-yellow-100 text-yellow-800'
-                      }`}>
+                        }`}>
                         {record.status || 'Unknown'}
                       </span>
                     </td>
@@ -1244,25 +1243,25 @@ const HRStaffModuleComplete = () => {
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Employee Management</h2>
         {hasPermission('hr') && (
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-            <button 
+            <button
               onClick={exportAttendanceData}
               className="w-full sm:w-auto bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base"
             >
               <i className="fas fa-download mr-2"></i>Export Data
             </button>
-            <button 
+            <button
               onClick={() => setShowMarkAttendanceModal(true)}
               className="w-full sm:w-auto bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base"
             >
               <i className="fas fa-clock mr-2"></i>Mark Attendance
             </button>
-            <button 
+            <button
               onClick={syncCollections}
               className="w-full sm:w-auto bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm sm:text-base"
             >
               <i className="fas fa-sync mr-2"></i>Sync Collections
             </button>
-            <button 
+            <button
               onClick={() => setShowAddEmployeeModal(true)}
               className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
             >
@@ -1276,25 +1275,25 @@ const HRStaffModuleComplete = () => {
       <div className="bg-white rounded-lg shadow p-4">
         <h3 className="text-sm font-medium text-gray-700 mb-3">Filter by Role</h3>
         <div className="flex flex-wrap gap-2">
-          <button 
+          <button
             onClick={() => fetchEmployees()}
             className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-xs font-medium text-gray-700 transition-colors"
           >
             All ({employees.length})
           </button>
           {availableRoles.map((role) => {
-            const count = employees.filter(emp => 
-              emp.role === role || 
+            const count = employees.filter(emp =>
+              emp.role === role ||
               (Array.isArray(emp.roles) && emp.roles.includes(role)) ||
               emp.role_names?.toLowerCase().includes(role.toLowerCase())
             ).length;
             return (
-              <button 
+              <button
                 key={role}
                 onClick={() => {
                   // Filter employees by role (client-side for now)
-                  const filtered = employees.filter(emp => 
-                    emp.role === role || 
+                  const filtered = employees.filter(emp =>
+                    emp.role === role ||
                     (Array.isArray(emp.roles) && emp.roles.includes(role)) ||
                     emp.role_names?.toLowerCase().includes(role.toLowerCase())
                   );
@@ -1359,22 +1358,20 @@ const HRStaffModuleComplete = () => {
                     {employee.department || 'No department'}
                   </td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      employee.is_active !== false
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.is_active !== false
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                      }`}>
                       {employee.is_active !== false ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          employee.attendance_status?.status === 'present'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.attendance_status?.status === 'present'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                          }`}>
                           {employee.attendance_status?.status || 'absent'}
                         </span>
                       </div>
@@ -1404,33 +1401,33 @@ const HRStaffModuleComplete = () => {
                   </td>
                   <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-1 sm:space-x-2">
-                      <button 
+                      <button
                         onClick={() => {
                           setSelectedEmployee(employee);
                           setShowEmployeeDetailsModal(true);
                         }}
-                        className="text-blue-600 hover:text-blue-900 p-1" 
+                        className="text-blue-600 hover:text-blue-900 p-1"
                         title="View Details"
                       >
                         <i className="fas fa-eye text-xs sm:text-sm"></i>
                       </button>
                       {hasPermission('hr') && (
                         <>
-                          <button 
+                          <button
                             onClick={() => {
                               const newName = prompt('Enter new name:', employee.full_name || employee.name);
                               if (newName && newName !== (employee.full_name || employee.name)) {
                                 updateEmployee(employee.user_id || employee.employee_id, { full_name: newName });
                               }
                             }}
-                            className="text-green-600 hover:text-green-900 p-1" 
+                            className="text-green-600 hover:text-green-900 p-1"
                             title="Edit"
                           >
                             <i className="fas fa-edit text-xs sm:text-sm"></i>
                           </button>
-                          <button 
+                          <button
                             onClick={() => deactivateEmployee(employee.user_id || employee.employee_id)}
-                            className="text-red-600 hover:text-red-900 p-1" 
+                            className="text-red-600 hover:text-red-900 p-1"
                             title="Deactivate"
                           >
                             <i className="fas fa-user-times text-xs sm:text-sm"></i>
@@ -1461,14 +1458,14 @@ const HRStaffModuleComplete = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Attendance Management</h2>
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-          <button 
+          <button
             onClick={exportAttendanceData}
             className="w-full sm:w-auto bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
           >
             <i className="fas fa-download mr-2"></i>Export
           </button>
           {hasPermission('hr') && (
-            <button 
+            <button
               onClick={() => setShowMarkAttendanceModal(true)}
               className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
             >
@@ -1553,13 +1550,12 @@ const HRStaffModuleComplete = () => {
                         {workingHours} {workingHours !== '-' ? 'hours' : ''}
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          record.status === 'present' 
-                            ? 'bg-green-100 text-green-800'
-                            : record.status === 'absent'
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${record.status === 'present'
+                          ? 'bg-green-100 text-green-800'
+                          : record.status === 'absent'
                             ? 'bg-red-100 text-red-800'
                             : 'bg-yellow-100 text-yellow-800'
-                        }`}>
+                          }`}>
                           {record.status || 'Unknown'}
                         </span>
                       </td>
@@ -1583,26 +1579,26 @@ const HRStaffModuleComplete = () => {
           <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
             <i className="fas fa-download mr-2"></i>Export
           </button>
-          <button 
+          <button
             onClick={() => {
               // Simple leave request form (you can enhance this with a modal)
               const leaveType = prompt('Enter leave type (sick, vacation, personal, etc.):');
               if (!leaveType) return;
-              
+
               const startDate = prompt('Enter start date (YYYY-MM-DD):');
               if (!startDate) return;
-              
+
               const endDate = prompt('Enter end date (YYYY-MM-DD):');
               if (!endDate) return;
-              
+
               const reason = prompt('Enter reason for leave:');
               if (!reason) return;
-              
+
               // Calculate total days (simple calculation)
               const start = new Date(startDate);
               const end = new Date(endDate);
               const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-              
+
               createLeaveRequest({
                 leave_type: leaveType,
                 start_date: startDate,
@@ -1731,13 +1727,12 @@ const HRStaffModuleComplete = () => {
                       {request.total_days || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        request.status === 'approved' 
-                          ? 'bg-green-100 text-green-800'
-                          : request.status === 'rejected'
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${request.status === 'approved'
+                        ? 'bg-green-100 text-green-800'
+                        : request.status === 'rejected'
                           ? 'bg-red-100 text-red-800'
                           : 'bg-yellow-100 text-yellow-800'
-                      }`}>
+                        }`}>
                         {request.status || 'pending'}
                       </span>
                     </td>
@@ -1751,16 +1746,16 @@ const HRStaffModuleComplete = () => {
                         </button>
                         {hasPermission('hr') && request.status === 'pending' && (
                           <>
-                            <button 
+                            <button
                               onClick={() => handleLeaveAction(request._id, 'approve')}
-                              className="text-green-600 hover:text-green-900" 
+                              className="text-green-600 hover:text-green-900"
                               title="Approve"
                             >
                               <i className="fas fa-check"></i>
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleLeaveAction(request._id, 'reject')}
-                              className="text-red-600 hover:text-red-900" 
+                              className="text-red-600 hover:text-red-900"
                               title="Reject"
                             >
                               <i className="fas fa-times"></i>
@@ -1796,7 +1791,7 @@ const HRStaffModuleComplete = () => {
           <i className="fas fa-sign-out-alt mr-2"></i>Logout
         </button>
       </div>
-      
+
       <div className="bg-white rounded-lg shadow p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-6">
           <div className="flex-shrink-0 mx-auto sm:mx-0">
@@ -1804,7 +1799,7 @@ const HRStaffModuleComplete = () => {
               <i className="fas fa-user text-gray-600 text-2xl sm:text-3xl"></i>
             </div>
           </div>
-          
+
           <div className="flex-1 space-y-4 text-center sm:text-left w-full">
             <div>
               <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
@@ -1812,31 +1807,31 @@ const HRStaffModuleComplete = () => {
               </h3>
               <p className="text-gray-600 text-sm sm:text-base">{currentUser?.email || 'No email'}</p>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Employee ID</label>
                 <p className="mt-1 text-sm text-gray-900">{currentUser?.employee_id || currentUser?.id || 'N/A'}</p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">Department</label>
                 <p className="mt-1 text-sm text-gray-900">{currentUser?.department || 'Not assigned'}</p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">Role</label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {Array.isArray(currentUser?.roles) 
-                    ? currentUser.roles.join(', ') 
+                  {Array.isArray(currentUser?.roles)
+                    ? currentUser.roles.join(', ')
                     : currentUser?.role || currentUser?.roles || 'No role assigned'}
                 </p>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700">Join Date</label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {currentUser?.join_date 
+                  {currentUser?.join_date
                     ? new Date(currentUser.join_date).toLocaleDateString()
                     : 'Not available'}
                 </p>
@@ -1850,15 +1845,15 @@ const HRStaffModuleComplete = () => {
       <div className="bg-white rounded-lg shadow p-4 sm:p-6">
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">My Documents</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div 
+          <div
             onClick={() => {
               // Simple document upload (you can enhance this with actual file upload)
               const documentName = prompt('Enter document name:');
               if (!documentName) return;
-              
+
               const documentUrl = prompt('Enter document URL:');
               if (!documentUrl) return;
-              
+
               uploadEmployeeDocument(currentUser.id, documentName, documentUrl);
             }}
             className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center hover:border-gray-400 transition-colors cursor-pointer"
@@ -1873,26 +1868,26 @@ const HRStaffModuleComplete = () => {
       <div className="bg-white rounded-lg shadow p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-3 sm:space-y-0">
           <h3 className="text-base sm:text-lg font-semibold text-gray-900">My Leave Requests</h3>
-          <button 
+          <button
             onClick={() => {
               // Simple leave request form (you can enhance this with a modal)
               const leaveType = prompt('Enter leave type (sick, vacation, personal, etc.):');
               if (!leaveType) return;
-              
+
               const startDate = prompt('Enter start date (YYYY-MM-DD):');
               if (!startDate) return;
-              
+
               const endDate = prompt('Enter end date (YYYY-MM-DD):');
               if (!endDate) return;
-              
+
               const reason = prompt('Enter reason for leave:');
               if (!reason) return;
-              
+
               // Calculate total days (simple calculation)
               const start = new Date(startDate);
               const end = new Date(endDate);
               const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-              
+
               createLeaveRequest({
                 leave_type: leaveType,
                 start_date: startDate,
@@ -1907,7 +1902,7 @@ const HRStaffModuleComplete = () => {
             <i className="fas fa-plus mr-2"></i>Request Leave
           </button>
         </div>
-        
+
         {leaveRequests.length > 0 ? (
           <div className="overflow-x-auto -mx-4 sm:mx-0">
             <div className="min-w-full inline-block align-middle">
@@ -1944,13 +1939,12 @@ const HRStaffModuleComplete = () => {
                         {request.total_days || 'N/A'}
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          request.status === 'approved' 
-                            ? 'bg-green-100 text-green-800'
-                            : request.status === 'rejected'
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${request.status === 'approved'
+                          ? 'bg-green-100 text-green-800'
+                          : request.status === 'rejected'
                             ? 'bg-red-100 text-red-800'
                             : 'bg-yellow-100 text-yellow-800'
-                        }`}>
+                          }`}>
                           {request.status || 'pending'}
                         </span>
                       </td>
@@ -1995,11 +1989,11 @@ const HRStaffModuleComplete = () => {
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
               <span className="text-xs sm:text-sm text-gray-500 hidden sm:block">
-                {new Date().toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
                 })}
               </span>
               <button
@@ -2037,11 +2031,10 @@ const HRStaffModuleComplete = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`${
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors`}
+                className={`${activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors`}
               >
                 <i className={`fas fa-${tab.icon}`}></i>
                 <span>{tab.label}</span>
@@ -2060,11 +2053,10 @@ const HRStaffModuleComplete = () => {
                       setActiveTab(tab.id);
                       setShowMobileMenu(false);
                     }}
-                    className={`${
-                      activeTab === tab.id
-                        ? 'bg-blue-50 border-blue-500 text-blue-700'
-                        : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
-                    } w-full text-left border-l-4 py-2 pl-3 pr-4 text-base font-medium flex items-center space-x-3 transition-colors`}
+                    className={`${activeTab === tab.id
+                      ? 'bg-blue-50 border-blue-500 text-blue-700'
+                      : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800'
+                      } w-full text-left border-l-4 py-2 pl-3 pr-4 text-base font-medium flex items-center space-x-3 transition-colors`}
                   >
                     <i className={`fas fa-${tab.icon} w-5`}></i>
                     <span>{tab.label}</span>
@@ -2095,8 +2087,8 @@ const HRStaffModuleComplete = () => {
                   <i className="fas fa-times"></i>
                 </button>
               </div>
-              
-              <form 
+
+              <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   createEmployee(employeeForm);
@@ -2110,7 +2102,7 @@ const HRStaffModuleComplete = () => {
                       type="text"
                       required
                       value={employeeForm.full_name}
-                      onChange={(e) => setEmployeeForm({...employeeForm, full_name: e.target.value})}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, full_name: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -2119,7 +2111,7 @@ const HRStaffModuleComplete = () => {
                     <input
                       type="email"
                       value={employeeForm.email}
-                      onChange={(e) => setEmployeeForm({...employeeForm, email: e.target.value})}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, email: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Enter email address (optional)"
                     />
@@ -2129,7 +2121,7 @@ const HRStaffModuleComplete = () => {
                     <input
                       type="tel"
                       value={employeeForm.phone}
-                      onChange={(e) => setEmployeeForm({...employeeForm, phone: e.target.value})}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, phone: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -2139,7 +2131,7 @@ const HRStaffModuleComplete = () => {
                       type="password"
                       required
                       value={employeeForm.password}
-                      onChange={(e) => setEmployeeForm({...employeeForm, password: e.target.value})}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, password: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -2148,7 +2140,7 @@ const HRStaffModuleComplete = () => {
                     <select
                       required
                       value={employeeForm.role}
-                      onChange={(e) => setEmployeeForm({...employeeForm, role: e.target.value})}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, role: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                       {availableRoles.map(role => (
@@ -2163,7 +2155,7 @@ const HRStaffModuleComplete = () => {
                     <input
                       type="text"
                       value={employeeForm.department}
-                      onChange={(e) => setEmployeeForm({...employeeForm, department: e.target.value})}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, department: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -2172,7 +2164,7 @@ const HRStaffModuleComplete = () => {
                     <input
                       type="text"
                       value={employeeForm.position}
-                      onChange={(e) => setEmployeeForm({...employeeForm, position: e.target.value})}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, position: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -2181,7 +2173,7 @@ const HRStaffModuleComplete = () => {
                     <input
                       type="number"
                       value={employeeForm.salary}
-                      onChange={(e) => setEmployeeForm({...employeeForm, salary: e.target.value})}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, salary: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -2190,7 +2182,7 @@ const HRStaffModuleComplete = () => {
                     <input
                       type="text"
                       value={employeeForm.location}
-                      onChange={(e) => setEmployeeForm({...employeeForm, location: e.target.value})}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, location: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -2198,7 +2190,7 @@ const HRStaffModuleComplete = () => {
                     <label className="block text-sm font-medium text-gray-700">Shift</label>
                     <select
                       value={employeeForm.shift}
-                      onChange={(e) => setEmployeeForm({...employeeForm, shift: e.target.value})}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, shift: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="day">Day Shift</option>
@@ -2210,7 +2202,7 @@ const HRStaffModuleComplete = () => {
                     <label className="block text-sm font-medium text-gray-700">Gender</label>
                     <select
                       value={employeeForm.gender}
-                      onChange={(e) => setEmployeeForm({...employeeForm, gender: e.target.value})}
+                      onChange={(e) => setEmployeeForm({ ...employeeForm, gender: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select Gender</option>
@@ -2220,7 +2212,7 @@ const HRStaffModuleComplete = () => {
                     </select>
                   </div>
                 </div>
-                
+
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
                     type="button"
@@ -2257,8 +2249,8 @@ const HRStaffModuleComplete = () => {
                   <i className="fas fa-times"></i>
                 </button>
               </div>
-              
-              <form 
+
+              <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   createLeaveRequest(leaveForm);
@@ -2270,7 +2262,7 @@ const HRStaffModuleComplete = () => {
                   <select
                     required
                     value={leaveForm.leave_type}
-                    onChange={(e) => setLeaveForm({...leaveForm, leave_type: e.target.value})}
+                    onChange={(e) => setLeaveForm({ ...leaveForm, leave_type: e.target.value })}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="annual">Annual Leave</option>
@@ -2281,7 +2273,7 @@ const HRStaffModuleComplete = () => {
                     <option value="paternity">Paternity Leave</option>
                   </select>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Start Date *</label>
@@ -2289,7 +2281,7 @@ const HRStaffModuleComplete = () => {
                       type="date"
                       required
                       value={leaveForm.start_date}
-                      onChange={(e) => setLeaveForm({...leaveForm, start_date: e.target.value})}
+                      onChange={(e) => setLeaveForm({ ...leaveForm, start_date: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -2299,35 +2291,35 @@ const HRStaffModuleComplete = () => {
                       type="date"
                       required
                       value={leaveForm.end_date}
-                      onChange={(e) => setLeaveForm({...leaveForm, end_date: e.target.value})}
+                      onChange={(e) => setLeaveForm({ ...leaveForm, end_date: e.target.value })}
                       className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Reason *</label>
                   <textarea
                     required
                     rows={3}
                     value={leaveForm.reason}
-                    onChange={(e) => setLeaveForm({...leaveForm, reason: e.target.value})}
+                    onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Please provide a reason for your leave request..."
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Additional Notes</label>
                   <textarea
                     rows={2}
                     value={leaveForm.notes}
-                    onChange={(e) => setLeaveForm({...leaveForm, notes: e.target.value})}
+                    onChange={(e) => setLeaveForm({ ...leaveForm, notes: e.target.value })}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Any additional information..."
                   />
                 </div>
-                
+
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
                     type="button"
@@ -2364,8 +2356,8 @@ const HRStaffModuleComplete = () => {
                   <i className="fas fa-times"></i>
                 </button>
               </div>
-              
-              <form 
+
+              <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   markEmployeeAttendance(attendanceForm);
@@ -2377,7 +2369,7 @@ const HRStaffModuleComplete = () => {
                   <select
                     required
                     value={attendanceForm.employee_id}
-                    onChange={(e) => setAttendanceForm({...attendanceForm, employee_id: e.target.value})}
+                    onChange={(e) => setAttendanceForm({ ...attendanceForm, employee_id: e.target.value })}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select Employee</option>
@@ -2388,42 +2380,42 @@ const HRStaffModuleComplete = () => {
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Action *</label>
                   <select
                     required
                     value={attendanceForm.action}
-                    onChange={(e) => setAttendanceForm({...attendanceForm, action: e.target.value})}
+                    onChange={(e) => setAttendanceForm({ ...attendanceForm, action: e.target.value })}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="checkin">Check In</option>
                     <option value="checkout">Check Out</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Location</label>
                   <input
                     type="text"
                     value={attendanceForm.location}
-                    onChange={(e) => setAttendanceForm({...attendanceForm, location: e.target.value})}
+                    onChange={(e) => setAttendanceForm({ ...attendanceForm, location: e.target.value })}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Office, Home, Client Site, etc."
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Notes</label>
                   <textarea
                     rows={3}
                     value={attendanceForm.notes}
-                    onChange={(e) => setAttendanceForm({...attendanceForm, notes: e.target.value})}
+                    onChange={(e) => setAttendanceForm({ ...attendanceForm, notes: e.target.value })}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Any additional notes about the attendance..."
                   />
                 </div>
-                
+
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
                     type="button"
@@ -2460,7 +2452,7 @@ const HRStaffModuleComplete = () => {
                   <i className="fas fa-times"></i>
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -2493,11 +2485,10 @@ const HRStaffModuleComplete = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Status</label>
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      selectedEmployee.is_active !== false
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${selectedEmployee.is_active !== false
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                      }`}>
                       {selectedEmployee.is_active !== false ? 'Active' : 'Inactive'}
                     </span>
                   </div>
@@ -2512,21 +2503,21 @@ const HRStaffModuleComplete = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Date of Joining</label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {selectedEmployee.date_of_joining 
-                        ? new Date(selectedEmployee.date_of_joining).toLocaleDateString() 
+                      {selectedEmployee.date_of_joining
+                        ? new Date(selectedEmployee.date_of_joining).toLocaleDateString()
                         : 'N/A'}
                     </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Last Login</label>
                     <p className="mt-1 text-sm text-gray-900">
-                      {selectedEmployee.last_login 
-                        ? new Date(selectedEmployee.last_login).toLocaleString() 
+                      {selectedEmployee.last_login
+                        ? new Date(selectedEmployee.last_login).toLocaleString()
                         : 'Never'}
                     </p>
                   </div>
                 </div>
-                
+
                 {/* Attendance Status */}
                 {selectedEmployee.attendance_status && (
                   <div className="mt-6 p-4 bg-gray-50 rounded-lg">
@@ -2534,11 +2525,10 @@ const HRStaffModuleComplete = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs text-gray-500">Status</label>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          selectedEmployee.attendance_status.status === 'present'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${selectedEmployee.attendance_status.status === 'present'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                          }`}>
                           {selectedEmployee.attendance_status.status || 'absent'}
                         </span>
                       </div>
@@ -2557,7 +2547,7 @@ const HRStaffModuleComplete = () => {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="flex justify-end pt-4">
                   <button
                     onClick={() => setShowEmployeeDetailsModal(false)}

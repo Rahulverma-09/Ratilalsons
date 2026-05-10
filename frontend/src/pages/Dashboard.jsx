@@ -67,7 +67,7 @@ export default function ClientDashboard() {
       note: "Select period"
     }
   ]);
-  
+
   const [energyData, setEnergyData] = useState({ labels: [], usage: [], cost: [], totalUsage: 0 });
   const [attendanceData, setAttendanceData] = useState({ labels: [], present: [], absent: [] });
   const [salesData, setSalesData] = useState({ labels: [], sales: [], orders: [] });
@@ -80,24 +80,24 @@ export default function ClientDashboard() {
   const fetchAttendanceData = async (filter = attendanceFilter) => {
     const token = localStorage.getItem("access_token");
     try {
-      const url = filter === "all" 
-        ? `${API_BASE}/hr/attendance/statistics` 
+      const url = filter === "all"
+        ? `${API_BASE}/hr/attendance/statistics`
         : `${API_BASE}/hr/attendance/statistics?days=${filter}`;
-      
+
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.ok) {
         const attendance = await response.json();
-        
+
         // Update attendance card
         const currentAttendance = attendance?.today_attendance_percentage || 0;
         const prevAttendance = attendance?.yesterday_attendance_percentage || 0;
         const { trend: attTrend, trendDirection: attDirection } = calcTrend(currentAttendance, prevAttendance);
-        
-        setDashboardCards(prev => prev.map(card => 
-          card.key === "attendance" 
+
+        setDashboardCards(prev => prev.map(card =>
+          card.key === "attendance"
             ? { ...card, value: `${currentAttendance}%`, trend: attTrend, trendDirection: attDirection }
             : card
         ));
@@ -124,7 +124,7 @@ export default function ClientDashboard() {
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     setLoading(true);
-    
+
     // Fetch inventory stats & trend (excluding attendance - it's handled separately)
     Promise.all([
       fetch(`${API_BASE}/stock/products-trend?period_days=7`, {
@@ -140,72 +140,72 @@ export default function ClientDashboard() {
         headers: { Authorization: `Bearer ${token}` }
       })
     ])
-    .then(async ([inventoryRes, productsRes, revenueRes, ordersRes]) => {
-      const [inventoryData, products, revenue, orders] = await Promise.all([
-        inventoryRes.ok ? inventoryRes.json() : {},
-        productsRes.ok ? productsRes.json() : [],
-        revenueRes.ok ? revenueRes.json() : {},
-        ordersRes.ok ? ordersRes.json() : {}
-      ]);
+      .then(async ([inventoryRes, productsRes, revenueRes, ordersRes]) => {
+        const [inventoryData, products, revenue, orders] = await Promise.all([
+          inventoryRes.ok ? inventoryRes.json() : {},
+          productsRes.ok ? productsRes.json() : [],
+          revenueRes.ok ? revenueRes.json() : {},
+          ordersRes.ok ? ordersRes.json() : {}
+        ]);
 
-      // Update dashboard cards
-      const currentVal = inventoryData?.total_present_products || 0;
-      const prevVal = inventoryData?.previous_total_present_products || 0;
-      const { trend: invTrend, trendDirection: invDirection } = calcTrend(currentVal, prevVal);
-      
-      const currentRevenue = revenue?.current_month_revenue || 0;
-      const prevRevenue = revenue?.previous_month_revenue || 0;
-      const { trend: revTrend, trendDirection: revDirection } = calcTrend(currentRevenue, prevRevenue);
+        // Update dashboard cards
+        const currentVal = inventoryData?.total_present_products || 0;
+        const prevVal = inventoryData?.previous_total_present_products || 0;
+        const { trend: invTrend, trendDirection: invDirection } = calcTrend(currentVal, prevVal);
 
-      setDashboardCards(cards => cards.map(card => {
-        switch(card.key) {
-          case "total_inventory":
-            return { ...card, value: currentVal, trend: invTrend, trendDirection: invDirection };
-          case "revenue":
-            return { ...card, value: `₹${(currentRevenue/100000).toFixed(1)}L`, trend: revTrend, trendDirection: revDirection };
-          default:
-            return card;
-        }
-      }));
+        const currentRevenue = revenue?.current_month_revenue || 0;
+        const prevRevenue = revenue?.previous_month_revenue || 0;
+        const { trend: revTrend, trendDirection: revDirection } = calcTrend(currentRevenue, prevRevenue);
 
-      // Set inventory data for cards
-      setInventoryData(products.slice(0, 8).map(prod => ({
-        item: prod.name,
-        available: (prod.warehouse_qty || 0) +
-          (prod.depot_qty && typeof prod.depot_qty === "object"
-            ? Object.values(prod.depot_qty).reduce((a, b) => a + b, 0)
-            : 0),
-        critical: prod.low_stock_threshold !== undefined &&
-          ((prod.warehouse_qty || 0) + (prod.depot_qty && typeof prod.depot_qty === "object"
-            ? Object.values(prod.depot_qty).reduce((a, b) => a + b, 0)
-            : 0)) <= prod.low_stock_threshold,
-        icon: "box",
-        category: prod.category,
-        price: prod.price || 0
-      })));
+        setDashboardCards(cards => cards.map(card => {
+          switch (card.key) {
+            case "total_inventory":
+              return { ...card, value: currentVal, trend: invTrend, trendDirection: invDirection };
+            case "revenue":
+              return { ...card, value: `₹${(currentRevenue / 100000).toFixed(1)}L`, trend: revTrend, trendDirection: revDirection };
+            default:
+              return card;
+          }
+        }));
 
-      // Set sales chart data
-      const salesTrend = revenue?.daily_trend || [];
-      setSalesData({
-        labels: salesTrend.map(d => new Date(d.date).toLocaleDateString('en-US', { day: 'numeric' })),
-        sales: salesTrend.map(d => d.amount || 0),
-        orders: salesTrend.map(d => d.orders_count || 0)
+        // Set inventory data for cards
+        setInventoryData(products.slice(0, 8).map(prod => ({
+          item: prod.name,
+          available: (prod.warehouse_qty || 0) +
+            (prod.depot_qty && typeof prod.depot_qty === "object"
+              ? Object.values(prod.depot_qty).reduce((a, b) => a + b, 0)
+              : 0),
+          critical: prod.low_stock_threshold !== undefined &&
+            ((prod.warehouse_qty || 0) + (prod.depot_qty && typeof prod.depot_qty === "object"
+              ? Object.values(prod.depot_qty).reduce((a, b) => a + b, 0)
+              : 0)) <= prod.low_stock_threshold,
+          icon: "box",
+          category: prod.category,
+          price: prod.price || 0
+        })));
+
+        // Set sales chart data
+        const salesTrend = revenue?.daily_trend || [];
+        setSalesData({
+          labels: salesTrend.map(d => new Date(d.date).toLocaleDateString('en-US', { day: 'numeric' })),
+          sales: salesTrend.map(d => d.amount || 0),
+          orders: salesTrend.map(d => d.orders_count || 0)
+        });
+
+        // Set orders status data
+        setOrdersData({
+          labels: ['Pending', 'Processing', 'Completed', 'Cancelled'],
+          pending: [orders?.pending || 0],
+          completed: [orders?.completed || 0],
+          cancelled: [orders?.cancelled || 0]
+        });
+
+        setLoading(false);
+      })
+      .catch(e => {
+        console.error("Dashboard data fetch failed:", e);
+        setLoading(false);
       });
-
-      // Set orders status data
-      setOrdersData({
-        labels: ['Pending', 'Processing', 'Completed', 'Cancelled'],
-        pending: [orders?.pending || 0],
-        completed: [orders?.completed || 0],
-        cancelled: [orders?.cancelled || 0]
-      });
-
-      setLoading(false);
-    })
-    .catch(e => {
-      console.error("Dashboard data fetch failed:", e);
-      setLoading(false);
-    });
 
     // Fetch initial attendance data
     fetchAttendanceData("all");
@@ -263,7 +263,7 @@ export default function ClientDashboard() {
           return card;
         }));
         setEnergyData({
-          labels: currTrend.map(t => t.date?.slice(0,10)),
+          labels: currTrend.map(t => t.date?.slice(0, 10)),
           usage: currTrend.map(t => t.energy || 0),
           cost: currTrend.map(t => t.cost || 0),
           totalUsage: totalNow
@@ -278,15 +278,15 @@ export default function ClientDashboard() {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { 
-          labels: { 
-            font: { size: 12, family: "Inter, sans-serif" }, 
+        legend: {
+          labels: {
+            font: { size: 12, family: "Inter, sans-serif" },
             color: "#374151",
             usePointStyle: true,
             padding: 20
-          } 
+          }
         },
-        tooltip: { 
+        tooltip: {
           backgroundColor: "rgba(255, 255, 255, 0.95)",
           titleColor: "#1f2937",
           bodyColor: "#374151",
@@ -297,13 +297,13 @@ export default function ClientDashboard() {
         }
       },
       scales: {
-        x: { 
-          grid: { display: false }, 
+        x: {
+          grid: { display: false },
           ticks: { font: { size: 11 }, color: "#6b7280" },
           border: { display: false }
         },
-        y: { 
-          grid: { color: "#f3f4f6", lineWidth: 1 }, 
+        y: {
+          grid: { color: "#f3f4f6", lineWidth: 1 },
           ticks: { font: { size: 11 }, color: "#6b7280" },
           border: { display: false },
           beginAtZero: true
@@ -457,7 +457,7 @@ export default function ClientDashboard() {
             ],
             backgroundColor: [
               "#f59e0b",
-              "#10b981", 
+              "#10b981",
               "#ef4444",
               "#6366f1"
             ],
@@ -469,10 +469,10 @@ export default function ClientDashboard() {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { 
+            legend: {
               position: "bottom",
-              labels: { 
-                font: { size: 11 }, 
+              labels: {
+                font: { size: 11 },
                 padding: 15,
                 usePointStyle: true
               }
@@ -536,11 +536,10 @@ export default function ClientDashboard() {
                 <i className={`fas fa-${stat.icon} text-white text-lg`} />
               </div>
               {stat.trend && stat.trend !== "—" && (
-                <span className={`flex items-center text-sm font-semibold px-3 py-1 rounded-full ${
-                  stat.trendDirection === "positive" 
-                    ? "text-green-700 bg-green-100" 
-                    : "text-red-700 bg-red-100"
-                }`}>
+                <span className={`flex items-center text-sm font-semibold px-3 py-1 rounded-full ${stat.trendDirection === "positive"
+                  ? "text-green-700 bg-green-100"
+                  : "text-red-700 bg-red-100"
+                  }`}>
                   <i className={`fas fa-arrow-${stat.trendDirection === "positive" ? "up" : "down"} mr-1 text-xs`} />
                   {stat.trend}
                 </span>
@@ -651,7 +650,7 @@ export default function ClientDashboard() {
             View All Items
           </button>
         </div>
-        
+
         {inventoryData.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -664,16 +663,14 @@ export default function ClientDashboard() {
             {inventoryData.map((item) => (
               <div
                 key={item.item}
-                className={`p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 cursor-pointer ${
-                  item.critical 
-                    ? "border-red-200 bg-gradient-to-br from-red-50 to-pink-50 hover:border-red-300" 
-                    : "border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 hover:border-blue-300"
-                }`}
+                className={`p-4 rounded-xl border-2 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1 cursor-pointer ${item.critical
+                  ? "border-red-200 bg-gradient-to-br from-red-50 to-pink-50 hover:border-red-300"
+                  : "border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 hover:border-blue-300"
+                  }`}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    item.critical ? "bg-red-500" : "bg-blue-500"
-                  } text-white shadow-lg`}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.critical ? "bg-red-500" : "bg-blue-500"
+                    } text-white shadow-lg`}>
                     <i className={`fas fa-${item.icon} text-sm`} />
                   </div>
                   {item.critical && (

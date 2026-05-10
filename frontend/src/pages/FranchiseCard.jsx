@@ -85,90 +85,90 @@ function AddNewFranchiseForm({ onCreated }) {
   }
 
   async function handleSubmit(e) {
-  e.preventDefault();
-  setError("");
-  setSuccess(false);
+    e.preventDefault();
+    setError("");
+    setSuccess(false);
 
-  // Required fields validation
-  if (!form.name || !form.owner_name || !form.email || !form.phone || !form.address || !form.region) {
-    setError("Please fill all required fields.");
-    return;
-  }
-
-  try {
-    // Prepare payload for backend
-    const payload = {
-      name: form.name,
-      owner_name: form.owner_name,
-      email: form.email,
-      phone: form.phone || undefined,
-      address: form.address,
-      region: form.region || undefined,
-      latitude: form.latitude ? parseFloat(form.latitude) : undefined,
-      longitude: form.longitude ? parseFloat(form.longitude) : undefined,
-      investment_amount: form.investment_amount ? parseFloat(form.investment_amount) : 0,
-      kyc_docs: form.kyc_docs.length ? form.kyc_docs : [],
-      commission_logs: form.commission_logs.length ? form.commission_logs : [],
-      status: form.status || "pending",
-      expiry_date: form.expiry_date || undefined,
-      created_at: form.created_at || undefined,
-      approved_at: form.approved_at || undefined,
-      rejected_at: form.rejected_at || undefined,
-      notes: form.notes || undefined
-    };
-
-    const response = await fetch("https://ratilalsons-backend-api.onrender.com/api/franchises", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    // Handle validation errors from FastAPI
-    if (!response.ok) {
-      const data = await response.json();
-      if (data.detail) {
-        // If detail is an array (Pydantic validation errors), join messages
-        const message = Array.isArray(data.detail)
-          ? data.detail.map(err => `${err.loc.join(".")}: ${err.msg}`).join("; ")
-          : data.detail;
-        setError(message);
-      } else {
-        setError("Failed to add franchise.");
-      }
+    // Required fields validation
+    if (!form.name || !form.owner_name || !form.email || !form.phone || !form.address || !form.region) {
+      setError("Please fill all required fields.");
       return;
     }
 
-    // Success
-    setSuccess(true);
+    try {
+      // Prepare payload for backend
+      const payload = {
+        name: form.name,
+        owner_name: form.owner_name,
+        email: form.email,
+        phone: form.phone || undefined,
+        address: form.address,
+        region: form.region || undefined,
+        latitude: form.latitude ? parseFloat(form.latitude) : undefined,
+        longitude: form.longitude ? parseFloat(form.longitude) : undefined,
+        investment_amount: form.investment_amount ? parseFloat(form.investment_amount) : 0,
+        kyc_docs: form.kyc_docs.length ? form.kyc_docs : [],
+        commission_logs: form.commission_logs.length ? form.commission_logs : [],
+        status: form.status || "pending",
+        expiry_date: form.expiry_date || undefined,
+        created_at: form.created_at || undefined,
+        approved_at: form.approved_at || undefined,
+        rejected_at: form.rejected_at || undefined,
+        notes: form.notes || undefined
+      };
 
-    // Reset form
-    setForm({
-      name: "",
-      owner_name: "",
-      email: "",
-      phone: "",
-      address: "",
-      region: "",
-      latitude: "",
-      longitude: "",
-      kyc_docs: [],
-      investment_amount: "",
-      commission_logs: [],
-      status: "pending",
-      expiry_date: "",
-      created_at: "",
-      approved_at: "",
-      rejected_at: "",
-      notes: ""
-    });
+      const response = await fetch("https://ratilalsons-backend-api.onrender.com/api/franchises", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-    if (typeof onCreated === "function") onCreated();
+      // Handle validation errors from FastAPI
+      if (!response.ok) {
+        const data = await response.json();
+        if (data.detail) {
+          // If detail is an array (Pydantic validation errors), join messages
+          const message = Array.isArray(data.detail)
+            ? data.detail.map(err => `${err.loc.join(".")}: ${err.msg}`).join("; ")
+            : data.detail;
+          setError(message);
+        } else {
+          setError("Failed to add franchise.");
+        }
+        return;
+      }
 
-  } catch (err) {
-    console.error(err);
-    setError("Network error.");
+      // Success
+      setSuccess(true);
+
+      // Reset form
+      setForm({
+        name: "",
+        owner_name: "",
+        email: "",
+        phone: "",
+        address: "",
+        region: "",
+        latitude: "",
+        longitude: "",
+        kyc_docs: [],
+        investment_amount: "",
+        commission_logs: [],
+        status: "pending",
+        expiry_date: "",
+        created_at: "",
+        approved_at: "",
+        rejected_at: "",
+        notes: ""
+      });
+
+      if (typeof onCreated === "function") onCreated();
+
+    } catch (err) {
+      console.error(err);
+      setError("Network error.");
+    }
   }
-}
 
   return (
     <div className="max-w-6xl mx-auto bg-white p-8 rounded shadow mb-8">

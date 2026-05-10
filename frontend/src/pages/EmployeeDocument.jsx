@@ -46,22 +46,22 @@ const UserDocumentUpload = () => {
       if (!user.id && !user.user_id) {
         user = JSON.parse(localStorage.getItem('currentUser') || '{}');
       }
-      
+
       console.log('Current user data for document fetch:', user);
       console.log('Access token exists:', !!token);
-      
+
       if (!token) {
         showNotification('Authentication required. Please log in again.', 'error');
         setLoading(false);
         return;
       }
-      
+
       // Start with the primary my-documents endpoint
       let documents = [];
-      
+
       try {
         console.log('Fetching from my-documents endpoint...');
-        
+
         const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employee-docs/employee/my-documents', {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -70,22 +70,22 @@ const UserDocumentUpload = () => {
         });
 
         console.log('My-documents response status:', response.status);
-        
+
         if (response.ok) {
           const data = await response.json();
           console.log('My-documents response data:', data);
-          
+
           if (data && Array.isArray(data.documents)) {
             documents = data.documents;
             console.log('Successfully loaded documents from my-documents endpoint:', documents.length);
-            
+
             // Validate each document has required fields
             documents = documents.map(doc => {
               // Ensure each document has an id field for React key
               if (!doc.id && doc._id) {
                 doc.id = doc._id;
               }
-              
+
               // Log document details for debugging
               console.log('Document details:', {
                 id: doc.id,
@@ -95,10 +95,10 @@ const UserDocumentUpload = () => {
                 uploaded_at: doc.uploaded_at,
                 status: doc.status
               });
-              
+
               return doc;
             });
-            
+
             setDocuments(documents);
             setLoading(false);
             return;
@@ -108,7 +108,7 @@ const UserDocumentUpload = () => {
         } else {
           const errorText = await response.text();
           console.error('My-documents endpoint error:', response.status, errorText);
-          
+
           // If it's a 403 or 401, show authentication error
           if (response.status === 403 || response.status === 401) {
             showNotification('Authentication failed. Please log in again.', 'error');
@@ -119,16 +119,16 @@ const UserDocumentUpload = () => {
       } catch (error) {
         console.error('My-documents endpoint failed with exception:', error);
       }
-      
+
       // If primary endpoint failed, try fallback endpoints
       const endpoints = [
         `https://ratilalsons-backend-api.onrender.com/api/employee-docs/employees/${user.id || user.user_id || user.username}/documents`,
         `https://ratilalsons-backend-api.onrender.com/api/api/employees/${user.id || user.user_id || user.username}/documents`,
         `https://ratilalsons-backend-api.onrender.com/api/documents?generated_for=${user.id || user.user_id || user.username}`
       ];
-      
+
       console.log('Trying fallback endpoints:', endpoints);
-      
+
       for (const endpoint of endpoints) {
         try {
           console.log('Trying fetch endpoint:', endpoint);
@@ -142,13 +142,13 @@ const UserDocumentUpload = () => {
           if (response.ok) {
             const data = await response.json();
             console.log('Response from', endpoint, ':', data);
-            
+
             if (Array.isArray(data)) {
               documents = data;
             } else if (data && Array.isArray(data.documents)) {
               documents = data.documents;
             }
-            
+
             // If we have documents, filter them for current user
             if (documents.length > 0) {
               // Get all possible user identifiers
@@ -169,37 +169,37 @@ const UserDocumentUpload = () => {
                 ...(user.id ? [`USR-${String(user.id).replace(/\D/g, '').padStart(6, '0')}`] : []),
                 ...(user.user_id ? [`USR-${String(user.user_id).replace(/\D/g, '').padStart(6, '0')}`] : [])
               ].filter(Boolean); // Remove null/undefined values
-              
+
               console.log('User identifiers to match:', userIdentifiers);
-              
+
               // Filter documents for current user with comprehensive matching
               const userDocs = documents.filter(doc => {
                 const docEmployeeId = doc.employee_id || doc.generated_for || doc.uploaded_by || doc.user_id;
-                const matches = userIdentifiers.some(id => 
-                  docEmployeeId === id || 
+                const matches = userIdentifiers.some(id =>
+                  docEmployeeId === id ||
                   docEmployeeId === String(id) ||
                   // Handle partial matches for numeric IDs
                   (docEmployeeId && id && String(docEmployeeId).includes(String(id))) ||
                   (docEmployeeId && id && String(id).includes(String(docEmployeeId)))
                 );
-                
+
                 if (matches) {
                   console.log(`Document ${doc._id} matches user:`, {
                     docEmployeeId,
-                    matchedWith: userIdentifiers.find(id => 
-                      docEmployeeId === id || 
+                    matchedWith: userIdentifiers.find(id =>
+                      docEmployeeId === id ||
                       docEmployeeId === String(id) ||
                       (docEmployeeId && id && String(docEmployeeId).includes(String(id))) ||
                       (docEmployeeId && id && String(id).includes(String(docEmployeeId)))
                     )
                   });
                 }
-                
+
                 return matches;
               });
-              
+
               console.log('Filtered user documents:', userDocs);
-              
+
               if (userDocs.length > 0) {
                 setDocuments(userDocs);
                 break; // Stop trying other endpoints
@@ -210,7 +210,7 @@ const UserDocumentUpload = () => {
           console.log('Endpoint', endpoint, 'failed:', err.message);
         }
       }
-      
+
       if (documents.length === 0) {
         console.log('No documents found for user');
         setDocuments([]);
@@ -231,28 +231,28 @@ const UserDocumentUpload = () => {
         showNotification('File size must be less than 5MB', 'error');
         return;
       }
-      
+
       // Validate file type
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
       if (!allowedTypes.includes(file.type)) {
         showNotification('Only PDF, DOC, DOCX, JPG, and PNG files are allowed', 'error');
         return;
       }
-      
+
       setSelectedFile(file);
     }
   };
 
   const handleUploadDocument = async (e) => {
     e.preventDefault();
-    
+
     if (!selectedFile || !documentType) {
       showNotification('Please select a file and document type', 'error');
       return;
     }
 
     setUploading(true);
-    
+
     try {
       const token = localStorage.getItem('access_token');
       // Try both localStorage keys for user data
@@ -260,20 +260,20 @@ const UserDocumentUpload = () => {
       if (!user.id && !user.user_id) {
         user = JSON.parse(localStorage.getItem('currentUser') || '{}');
       }
-      
+
       // Use the new employee upload endpoint
       const formData = new FormData();
       formData.append('file', selectedFile);
-      
+
       // Create URL with query parameters for the new endpoint
       const uploadUrl = new URL('https://ratilalsons-backend-api.onrender.com/api/employee-docs/employee/upload-document');
       uploadUrl.searchParams.append('document_type', documentType);
       if (description) {
         uploadUrl.searchParams.append('description', description);
       }
-      
+
       console.log('Uploading to new employee endpoint:', uploadUrl.toString());
-      
+
       const response = await fetch(uploadUrl.toString(), {
         method: 'POST',
         headers: {
@@ -281,7 +281,7 @@ const UserDocumentUpload = () => {
         },
         body: formData
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         console.log('Upload successful:', result);
@@ -333,16 +333,16 @@ const UserDocumentUpload = () => {
 
   const getStatusBadge = (doc) => {
     const status = getDocumentStatus(doc);
-    
+
     const statusConfig = {
       pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: 'clock', label: 'Pending Review' },
       approved: { bg: 'bg-green-100', text: 'text-green-800', icon: 'check-circle', label: 'Approved' },
       rejected: { bg: 'bg-red-100', text: 'text-red-800', icon: 'times-circle', label: 'Rejected' },
       resubmit: { bg: 'bg-orange-100', text: 'text-orange-800', icon: 'redo', label: 'Resubmit Required' }
     };
-    
+
     const config = statusConfig[status] || statusConfig.pending;
-    
+
     return (
       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}>
         <i className={`fas fa-${config.icon} mr-1.5`}></i>
@@ -351,8 +351,8 @@ const UserDocumentUpload = () => {
     );
   };
 
-  const filteredDocuments = filterStatus === 'all' 
-    ? documents 
+  const filteredDocuments = filterStatus === 'all'
+    ? documents
     : documents.filter(doc => getDocumentStatus(doc) === filterStatus);
 
   return (
@@ -399,7 +399,7 @@ const UserDocumentUpload = () => {
               Upload Document
             </button>
           </div>
-          
+
           {/* User Info */}
           <div className="mt-6 flex items-center bg-blue-50 rounded-lg p-4">
             <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
@@ -410,7 +410,7 @@ const UserDocumentUpload = () => {
               <p className="text-xs text-blue-600 font-medium mt-0.5">
                 Role: {(() => {
                   if (Array.isArray(currentUser?.roles)) {
-                    return currentUser.roles.map(r => 
+                    return currentUser.roles.map(r =>
                       typeof r === 'string' ? r : (r.name || r.id || 'Unknown')
                     ).join(', ');
                   } else if (typeof currentUser?.roles === 'string') {
@@ -436,11 +436,10 @@ const UserDocumentUpload = () => {
             <button
               key={filter}
               onClick={() => setFilterStatus(filter)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                filterStatus === filter
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${filterStatus === filter
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               {filter.charAt(0).toUpperCase() + filter.slice(1)}
               {filter !== 'all' && (
@@ -471,8 +470,8 @@ const UserDocumentUpload = () => {
             <i className="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No Documents Found</h3>
             <p className="text-gray-500 mb-6">
-              {filterStatus === 'all' 
-                ? "You haven't uploaded any documents yet. Start by uploading your first document!" 
+              {filterStatus === 'all'
+                ? "You haven't uploaded any documents yet. Start by uploading your first document!"
                 : `No ${filterStatus} documents found.`}
             </p>
             {filterStatus === 'all' && (
@@ -500,212 +499,212 @@ const UserDocumentUpload = () => {
                 document_type: doc.document_type,
                 type: doc.type
               });
-              
+
               return (
-              <motion.div
-                key={doc.id || index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group"
-              >
-                <div className="p-6">
-                  {/* Document Icon & Type */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center">
-                      <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                        <i className={`fas fa-${documentTypes.find(t => t.value === (doc.document_type || doc.type))?.icon || 'file'} text-2xl text-blue-600`}></i>
+                <motion.div
+                  key={doc.id || index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group"
+                >
+                  <div className="p-6">
+                    {/* Document Icon & Type */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center">
+                        <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                          <i className={`fas fa-${documentTypes.find(t => t.value === (doc.document_type || doc.type))?.icon || 'file'} text-2xl text-blue-600`}></i>
+                        </div>
+                        <div className="ml-4">
+                          <h3 className="font-semibold text-gray-900 text-lg">{doc.document_type || doc.type}</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">
+                            {new Date(doc.upload_date || doc.timestamp).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </p>
+                        </div>
                       </div>
-                      <div className="ml-4">
-                      <h3 className="font-semibold text-gray-900 text-lg">{doc.document_type || doc.type}</h3>
-                        <p className="text-sm text-gray-500 mt-0.5">
-                          {new Date(doc.upload_date || doc.timestamp).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                          })}
+                    </div>
+
+                    {/* Description */}
+                    {doc.description && (
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{doc.description}</p>
+                    )}
+
+                    {/* Status Badge */}
+                    <div className="mb-4">
+                      {getStatusBadge(doc)}
+                    </div>
+
+                    {/* Review Comments (if rejected or needs resubmit) */}
+                    {doc.hr_comments && (getDocumentStatus(doc) === 'rejected' || getDocumentStatus(doc) === 'resubmit') && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                        <p className="text-xs font-semibold text-red-700 mb-1">
+                          <i className="fas fa-comment-alt mr-1"></i>
+                          Review Comments:
                         </p>
+                        <p className="text-xs text-red-600">{doc.hr_comments}</p>
                       </div>
-                    </div>
-                  </div>
+                    )}
 
-                  {/* Description */}
-                  {doc.description && (
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">{doc.description}</p>
-                  )}
+                    {/* Actions */}
+                    <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                      {(() => {
+                        // Determine the document URL
+                        let documentUrl = null;
 
-                  {/* Status Badge */}
-                  <div className="mb-4">
-                    {getStatusBadge(doc)}
-                  </div>
+                        console.log('Processing document for URL generation:', {
+                          file_path: doc.file_path,
+                          stored_filename: doc.stored_filename,
+                          pdf_url: doc.pdf_url,
+                          document_name: doc.document_name,
+                          filename: doc.filename
+                        });
 
-                  {/* Review Comments (if rejected or needs resubmit) */}
-                  {doc.hr_comments && (getDocumentStatus(doc) === 'rejected' || getDocumentStatus(doc) === 'resubmit') && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                      <p className="text-xs font-semibold text-red-700 mb-1">
-                        <i className="fas fa-comment-alt mr-1"></i>
-                        Review Comments:
-                      </p>
-                      <p className="text-xs text-red-600">{doc.hr_comments}</p>
-                    </div>
-                  )}
+                        if (doc.file_path) {
+                          // The backend now stores just the filename in file_path
+                          let filename = doc.file_path;
 
-                  {/* Actions */}
-                  <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                    {(() => {
-                      // Determine the document URL
-                      let documentUrl = null;
-                      
-                      console.log('Processing document for URL generation:', {
-                        file_path: doc.file_path,
-                        stored_filename: doc.stored_filename,
-                        pdf_url: doc.pdf_url,
-                        document_name: doc.document_name,
-                        filename: doc.filename
-                      });
-                      
-                      if (doc.file_path) {
-                        // The backend now stores just the filename in file_path
-                        let filename = doc.file_path;
-                        
-                        // Remove any directory paths if they still exist (for old records)
-                        if (filename.includes('/')) {
-                          filename = filename.split('/').pop();
+                          // Remove any directory paths if they still exist (for old records)
+                          if (filename.includes('/')) {
+                            filename = filename.split('/').pop();
+                          }
+
+                          // Remove any leading/trailing slashes or spaces
+                          filename = filename.replace(/^\/+|\/+$/g, '').trim();
+
+                          console.log('Original file_path:', doc.file_path);
+                          console.log('Final filename:', filename);
+
+                          // Construct URL with just the filename
+                          documentUrl = `https://ratilalsons-backend-api.onrender.com/employee_document/${filename}`;
+
+                          console.log('Final document URL:', documentUrl);
+                        } else if (doc.stored_filename) {
+                          documentUrl = `https://ratilalsons-backend-api.onrender.com/employee_document/${doc.stored_filename}`;
+                        } else if (doc.pdf_url) {
+                          // Ensure pdf_url starts with /
+                          documentUrl = `https://ratilalsons-backend-api.onrender.com${doc.pdf_url.startsWith('/') ? doc.pdf_url : '/' + doc.pdf_url}`;
+                        } else if (doc.document_name || doc.filename) {
+                          documentUrl = `https://ratilalsons-backend-api.onrender.com/employee_document/${doc.document_name || doc.filename}`;
                         }
-                        
-                        // Remove any leading/trailing slashes or spaces
-                        filename = filename.replace(/^\/+|\/+$/g, '').trim();
-                        
-                        console.log('Original file_path:', doc.file_path);
-                        console.log('Final filename:', filename);
-                        
-                        // Construct URL with just the filename
-                        documentUrl = `https://ratilalsons-backend-api.onrender.com/employee_document/${filename}`;
-                        
-                        console.log('Final document URL:', documentUrl);
-                      } else if (doc.stored_filename) {
-                        documentUrl = `https://ratilalsons-backend-api.onrender.com/employee_document/${doc.stored_filename}`;
-                      } else if (doc.pdf_url) {
-                        // Ensure pdf_url starts with /
-                        documentUrl = `https://ratilalsons-backend-api.onrender.com${doc.pdf_url.startsWith('/') ? doc.pdf_url : '/' + doc.pdf_url}`;
-                      } else if (doc.document_name || doc.filename) {
-                        documentUrl = `https://ratilalsons-backend-api.onrender.com/employee_document/${doc.document_name || doc.filename}`;
-                      }
 
-                      if (!documentUrl || documentUrl.endsWith('#')) {
+                        if (!documentUrl || documentUrl.endsWith('#')) {
+                          return (
+                            <div className="flex-1 px-4 py-2 bg-red-100 text-red-700 rounded-lg font-medium text-center text-sm">
+                              <i className="fas fa-exclamation-triangle mr-2"></i>
+                              File Not Available
+                            </div>
+                          );
+                        }
+
                         return (
-                          <div className="flex-1 px-4 py-2 bg-red-100 text-red-700 rounded-lg font-medium text-center text-sm">
-                            <i className="fas fa-exclamation-triangle mr-2"></i>
-                            File Not Available
-                          </div>
-                        );
-                      }
+                          <>
+                            <a
+                              href={documentUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition-colors duration-200 text-center text-sm"
+                              onClick={async (e) => {
+                                console.log(`Attempting to view document at: ${documentUrl}`);
+                                console.log('Document object:', doc);
 
-                      return (
-                        <>
-                          <a
-                            href={documentUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex-1 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition-colors duration-200 text-center text-sm"
-                            onClick={async (e) => {
-                              console.log(`Attempting to view document at: ${documentUrl}`);
-                              console.log('Document object:', doc);
-                              
-                              // First check if backend is running and serving static files
-                              try {
-                                const backendCheck = await fetch('https://ratilalsons-backend-api.onrender.com/', { method: 'HEAD' });
-                                console.log('Backend status:', backendCheck.status);
-                              } catch (err) {
-                                console.error('Backend not accessible:', err);
-                                e.preventDefault();
-                                alert('Backend server is not running or not accessible at localhost:8000');
-                                return;
-                              }
-                              
-                              // Test a known file to see if static serving works
-                              const testUrls = [
-                                'https://ratilalsons-backend-api.onrender.com/employee_document/USR-000001_Screenshot%202025-10-28%20112536.png',
-                                'https://ratilalsons-backend-api.onrender.com/employee_document/USR-000001_Screenshot 2025-10-28 112536.png',
-                                documentUrl
-                              ];
-                              
-                              console.log('Testing URLs:', testUrls);
-                              
-                              let workingUrl = null;
-                              for (const testUrl of testUrls) {
+                                // First check if backend is running and serving static files
                                 try {
-                                  const response = await fetch(testUrl, { method: 'HEAD' });
-                                  console.log(`URL: ${testUrl} - Status: ${response.status}`);
-                                  if (response.ok) {
-                                    workingUrl = testUrl;
-                                    break;
-                                  }
+                                  const backendCheck = await fetch('https://ratilalsons-backend-api.onrender.com/', { method: 'HEAD' });
+                                  console.log('Backend status:', backendCheck.status);
                                 } catch (err) {
-                                  console.log(`URL failed: ${testUrl} - Error:`, err.message);
+                                  console.error('Backend not accessible:', err);
+                                  e.preventDefault();
+                                  alert('Backend server is not running or not accessible at localhost:8000');
+                                  return;
                                 }
-                              }
-                              
-                              if (workingUrl) {
-                                console.log('Found working URL:', workingUrl);
-                                // Don't prevent default, let the link work
-                                return;
-                              } else {
+
+                                // Test a known file to see if static serving works
+                                const testUrls = [
+                                  'https://ratilalsons-backend-api.onrender.com/employee_document/USR-000001_Screenshot%202025-10-28%20112536.png',
+                                  'https://ratilalsons-backend-api.onrender.com/employee_document/USR-000001_Screenshot 2025-10-28 112536.png',
+                                  documentUrl
+                                ];
+
+                                console.log('Testing URLs:', testUrls);
+
+                                let workingUrl = null;
+                                for (const testUrl of testUrls) {
+                                  try {
+                                    const response = await fetch(testUrl, { method: 'HEAD' });
+                                    console.log(`URL: ${testUrl} - Status: ${response.status}`);
+                                    if (response.ok) {
+                                      workingUrl = testUrl;
+                                      break;
+                                    }
+                                  } catch (err) {
+                                    console.log(`URL failed: ${testUrl} - Error:`, err.message);
+                                  }
+                                }
+
+                                if (workingUrl) {
+                                  console.log('Found working URL:', workingUrl);
+                                  // Don't prevent default, let the link work
+                                  return;
+                                } else {
+                                  e.preventDefault();
+                                  alert('No accessible document URL found. Check console for details.');
+                                }
+                              }}
+                            >
+                              <i className="fas fa-eye mr-2"></i>
+                              View
+                            </a>
+                            <button
+                              className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors duration-200 text-center text-sm"
+                              onClick={async (e) => {
                                 e.preventDefault();
-                                alert('No accessible document URL found. Check console for details.');
-                              }
-                            }}
-                          >
-                            <i className="fas fa-eye mr-2"></i>
-                            View
-                          </a>
-                          <button
-                            className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors duration-200 text-center text-sm"
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              console.log(`Attempting to download document from: ${documentUrl}`);
-                              
-                              try {
-                                // Fetch the file as a blob
-                                const response = await fetch(documentUrl);
-                                if (!response.ok) {
-                                  throw new Error(`HTTP error! status: ${response.status}`);
+                                console.log(`Attempting to download document from: ${documentUrl}`);
+
+                                try {
+                                  // Fetch the file as a blob
+                                  const response = await fetch(documentUrl);
+                                  if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                  }
+
+                                  const blob = await response.blob();
+
+                                  // Create a temporary URL for the blob
+                                  const url = window.URL.createObjectURL(blob);
+
+                                  // Create a temporary link element
+                                  const link = document.createElement('a');
+                                  link.href = url;
+                                  link.download = doc.document_name || doc.original_filename || doc.filename || 'document.pdf';
+
+                                  // Append to body, click, and remove
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+
+                                  // Clean up the blob URL
+                                  window.URL.revokeObjectURL(url);
+
+                                  console.log('Download initiated successfully');
+                                } catch (error) {
+                                  console.error('Download failed:', error);
+                                  alert('Failed to download document. Please try again or contact support.');
                                 }
-                                
-                                const blob = await response.blob();
-                                
-                                // Create a temporary URL for the blob
-                                const url = window.URL.createObjectURL(blob);
-                                
-                                // Create a temporary link element
-                                const link = document.createElement('a');
-                                link.href = url;
-                                link.download = doc.document_name || doc.original_filename || doc.filename || 'document.pdf';
-                                
-                                // Append to body, click, and remove
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                                
-                                // Clean up the blob URL
-                                window.URL.revokeObjectURL(url);
-                                
-                                console.log('Download initiated successfully');
-                              } catch (error) {
-                                console.error('Download failed:', error);
-                                alert('Failed to download document. Please try again or contact support.');
-                              }
-                            }}
-                          >
-                            <i className="fas fa-download mr-2"></i>
-                            Download
-                          </button>
-                        </>
-                      );
-                    })()}
+                              }}
+                            >
+                              <i className="fas fa-download mr-2"></i>
+                              Download
+                            </button>
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
-                </div>
-              </motion.div>
+                </motion.div>
               );
             })}
           </div>

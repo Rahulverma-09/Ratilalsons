@@ -31,12 +31,12 @@ const HRDocumentReview = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('access_token');
-      
+
       // Fetch documents based on filter
       const url = filterStatus === 'all'
         ? 'https://ratilalsons-backend-api.onrender.com/api/documents'
         : `https://ratilalsons-backend-api.onrender.com/api/documents?status=${filterStatus}`;
-      
+
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -47,7 +47,7 @@ const HRDocumentReview = () => {
       if (response.ok) {
         const data = await response.json();
         setDocuments(data);
-        
+
         // Calculate stats
         const stats = {
           pending: data.filter(d => d.status === 'pending').length,
@@ -75,18 +75,18 @@ const HRDocumentReview = () => {
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    
+
     if (!reviewForm.status) {
       showNotification('Please select a review status', 'error');
       return;
     }
 
     setSubmitting(true);
-    
+
     try {
       const token = localStorage.getItem('access_token');
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      
+
       const formData = new FormData();
       formData.append('status', reviewForm.status);
       formData.append('hr_comments', reviewForm.hr_comments);
@@ -128,9 +128,9 @@ const HRDocumentReview = () => {
       rejected: { bg: 'bg-red-100', text: 'text-red-800', icon: 'times-circle' },
       resubmit: { bg: 'bg-orange-100', text: 'text-orange-800', icon: 'redo' }
     };
-    
+
     const config = statusConfig[status?.toLowerCase()] || statusConfig.pending;
-    
+
     return (
       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}>
         <i className={`fas fa-${config.icon} mr-1.5`}></i>
@@ -197,7 +197,7 @@ const HRDocumentReview = () => {
                 <i className="fas fa-clock text-3xl text-yellow-500"></i>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -207,7 +207,7 @@ const HRDocumentReview = () => {
                 <i className="fas fa-check-circle text-3xl text-green-500"></i>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -217,7 +217,7 @@ const HRDocumentReview = () => {
                 <i className="fas fa-times-circle text-3xl text-red-500"></i>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 border border-indigo-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -243,11 +243,10 @@ const HRDocumentReview = () => {
             <button
               key={filter}
               onClick={() => setFilterStatus(filter)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                filterStatus === filter
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${filterStatus === filter
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               {filter.charAt(0).toUpperCase() + filter.slice(1)}
             </button>
@@ -274,7 +273,7 @@ const HRDocumentReview = () => {
             <i className="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">No Documents Found</h3>
             <p className="text-gray-500">
-              {filterStatus === 'pending' 
+              {filterStatus === 'pending'
                 ? 'No documents pending review at the moment.'
                 : `No ${filterStatus} documents found.`}
             </p>
@@ -471,11 +470,10 @@ const HRDocumentReview = () => {
                         <button
                           type="button"
                           onClick={() => setReviewForm({ ...reviewForm, status: 'approved' })}
-                          className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                            reviewForm.status === 'approved'
-                              ? 'bg-green-600 text-white shadow-lg'
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
-                          }`}
+                          className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${reviewForm.status === 'approved'
+                            ? 'bg-green-600 text-white shadow-lg'
+                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            }`}
                         >
                           <i className="fas fa-check-circle mr-2"></i>
                           Approve
@@ -483,11 +481,10 @@ const HRDocumentReview = () => {
                         <button
                           type="button"
                           onClick={() => setReviewForm({ ...reviewForm, status: 'rejected' })}
-                          className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                            reviewForm.status === 'rejected'
-                              ? 'bg-red-600 text-white shadow-lg'
-                              : 'bg-red-100 text-red-700 hover:bg-red-200'
-                          }`}
+                          className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${reviewForm.status === 'rejected'
+                            ? 'bg-red-600 text-white shadow-lg'
+                            : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            }`}
                         >
                           <i className="fas fa-times-circle mr-2"></i>
                           Reject
@@ -495,11 +492,10 @@ const HRDocumentReview = () => {
                         <button
                           type="button"
                           onClick={() => setReviewForm({ ...reviewForm, status: 'resubmit' })}
-                          className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                            reviewForm.status === 'resubmit'
-                              ? 'bg-orange-600 text-white shadow-lg'
-                              : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                          }`}
+                          className={`px-4 py-3 rounded-lg font-medium transition-all duration-200 ${reviewForm.status === 'resubmit'
+                            ? 'bg-orange-600 text-white shadow-lg'
+                            : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                            }`}
                         >
                           <i className="fas fa-redo mr-2"></i>
                           Resubmit

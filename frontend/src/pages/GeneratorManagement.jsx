@@ -215,13 +215,13 @@ function EquipmentTypePicker({ open, onSelect, onClose }) {
             onClick={onClose}
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
           <div className="flex flex-col items-center mb-6">
             <div className="w-12 h-12 rounded-full bg-violet-100 flex items-center justify-center mb-3">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-                <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/>
+                <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /><line x1="12" y1="12" x2="12" y2="16" /><line x1="10" y1="14" x2="14" y2="14" />
               </svg>
             </div>
             <h3 className="text-lg font-bold text-gray-800">Select Equipment Type</h3>
@@ -236,7 +236,7 @@ function EquipmentTypePicker({ open, onSelect, onClose }) {
             >
               <div className="w-14 h-14 rounded-xl bg-violet-100 group-hover:bg-violet-200 flex items-center justify-center transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                 </svg>
               </div>
               <div className="text-center">
@@ -252,9 +252,9 @@ function EquipmentTypePicker({ open, onSelect, onClose }) {
             >
               <div className="w-14 h-14 rounded-xl bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
-                  <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l3-4h8l3 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2"/>
-                  <circle cx="7.5" cy="17" r="2.5"/><circle cx="16.5" cy="17" r="2.5"/>
-                  <line x1="10" y1="17" x2="14" y2="17"/>
+                  <path d="M5 17H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1l3-4h8l3 4h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2" />
+                  <circle cx="7.5" cy="17" r="2.5" /><circle cx="16.5" cy="17" r="2.5" />
+                  <line x1="10" y1="17" x2="14" y2="17" />
                 </svg>
               </div>
               <div className="text-center">
@@ -396,33 +396,33 @@ function RecordModal({ type, open, fields, options, record, onSave, onClose, onA
                       </button>
                     </div>
                   </div>
-                : field.type === "select" ?
-                  <select
-                    className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent shadow-inner text-sm"
-                    value={form[field.key] || ""}
-                    onChange={e => handleInput(field.key, e.target.value)}
-                  >
-                    <option value="">Select {field.label}</option>
-                    {(options[field.key] || field.options || []).map(opt => (
-                      typeof opt === "string"
-                        ? <option value={opt} key={opt}>{opt}</option>
-                        : <option value={opt.value} key={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  : field.readonly ?
-                    <input
-                      type="number"
-                      className="w-full border border-gray-300 rounded-lg p-2.5 bg-gray-50 text-green-700 font-semibold text-sm text-right"
-                      value={form[field.key] || ""}
-                      readOnly
-                    />
-                    : <input
-                      type={field.type}
+                  : field.type === "select" ?
+                    <select
                       className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent shadow-inner text-sm"
                       value={form[field.key] || ""}
-                      onChange={e => handleInput(field.key, field.type === "date" ? normalizeDate(e.target.value) : e.target.value)}
-                      required={field.required}
-                    />
+                      onChange={e => handleInput(field.key, e.target.value)}
+                    >
+                      <option value="">Select {field.label}</option>
+                      {(options[field.key] || field.options || []).map(opt => (
+                        typeof opt === "string"
+                          ? <option value={opt} key={opt}>{opt}</option>
+                          : <option value={opt.value} key={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                    : field.readonly ?
+                      <input
+                        type="number"
+                        className="w-full border border-gray-300 rounded-lg p-2.5 bg-gray-50 text-green-700 font-semibold text-sm text-right"
+                        value={form[field.key] || ""}
+                        readOnly
+                      />
+                      : <input
+                        type={field.type}
+                        className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent shadow-inner text-sm"
+                        value={form[field.key] || ""}
+                        onChange={e => handleInput(field.key, field.type === "date" ? normalizeDate(e.target.value) : e.target.value)}
+                        required={field.required}
+                      />
                 }
               </div>
             ))}

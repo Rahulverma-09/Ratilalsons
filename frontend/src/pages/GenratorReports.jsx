@@ -85,34 +85,34 @@ export default function GeneratorsReport({ onDataUpdateRef }) {
   const [error, setError] = useState(null);
 
   const fetchData = useCallback(async () => {
-  setLoading(true);
-  setError(null);
-  try {
-    const token = localStorage.getItem("access_token");
-    // Change URL to fetch combined report without site_id filter
-    const resp = await fetch(
-      `https://ratilalsons-backend-api.onrender.com/api/generators-utilities/reports?start=${start}&end=${end}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem("access_token");
+      // Change URL to fetch combined report without site_id filter
+      const resp = await fetch(
+        `https://ratilalsons-backend-api.onrender.com/api/generators-utilities/reports?start=${start}&end=${end}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
+      );
+      if (!resp.ok) throw new Error("Failed to fetch data");
+      const json = await resp.json();
+      setReport(json.site_report ? json.site_report : json);
+      setTrend(json.trend || []);
+      if (onDataUpdateRef && typeof onDataUpdateRef.current === "function") {
+        onDataUpdateRef.current();
       }
-    );
-    if (!resp.ok) throw new Error("Failed to fetch data");
-    const json = await resp.json();
-    setReport(json.site_report ? json.site_report : json);
-    setTrend(json.trend || []);
-    if (onDataUpdateRef && typeof onDataUpdateRef.current === "function") {
-      onDataUpdateRef.current();
+    } catch (err) {
+      setError(err.message);
+      setReport(null);
+      setTrend([]);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setError(err.message);
-    setReport(null);
-    setTrend([]);
-  } finally {
-    setLoading(false);
-  }
-}, [start, end, onDataUpdateRef]);
+  }, [start, end, onDataUpdateRef]);
 
 
   useEffect(() => {
@@ -229,111 +229,111 @@ export default function GeneratorsReport({ onDataUpdateRef }) {
             transition={{ delay: 0.2 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
           >
-              {/* Card A - Orange */}
-              <motion.div
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="bg-gradient-to-br from-[#FF8C42] to-[#ff7520] rounded-xl shadow-lg p-6 text-white relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-10 rounded-full -mr-12 -mt-12"></div>
-                <div className="absolute bottom-0 left-0 w-16 h-16 bg-white opacity-5 rounded-full -ml-8 -mb-8"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                      <FaFire className="text-2xl" />
-                    </div>
-                    <div className="text-3xl font-black opacity-30">A</div>
+            {/* Card A - Orange */}
+            <motion.div
+              whileHover={{ y: -5, scale: 1.02 }}
+              className="bg-gradient-to-br from-[#FF8C42] to-[#ff7520] rounded-xl shadow-lg p-6 text-white relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-10 rounded-full -mr-12 -mt-12"></div>
+              <div className="absolute bottom-0 left-0 w-16 h-16 bg-white opacity-5 rounded-full -ml-8 -mb-8"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                    <FaFire className="text-2xl" />
                   </div>
-                  <div className="text-3xl font-black mb-1">
-                    {summary.total_usage ? summary.total_usage.toLocaleString("en-IN") : 0}L
+                  <div className="text-3xl font-black opacity-30">A</div>
+                </div>
+                <div className="text-3xl font-black mb-1">
+                  {summary.total_usage ? summary.total_usage.toLocaleString("en-IN") : 0}L
+                </div>
+                <div className="text-xs font-semibold uppercase tracking-wide opacity-90">
+                  Total Fuel Consumed
+                </div>
+                <div className="mt-3 pt-3 border-t border-white border-opacity-20">
+                  <div className="text-xs opacity-75">All Equipments</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card B - Cyan */}
+            <motion.div
+              whileHover={{ y: -5, scale: 1.02 }}
+              className="bg-gradient-to-br from-[#4ECDC4] to-[#3ab8af] rounded-xl shadow-lg p-6 text-white relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-10 rounded-full -mr-12 -mt-12"></div>
+              <div className="absolute bottom-0 left-0 w-16 h-16 bg-white opacity-5 rounded-full -ml-8 -mb-8"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                    <FaDollarSign className="text-2xl" />
                   </div>
-                  <div className="text-xs font-semibold uppercase tracking-wide opacity-90">
-                    Total Fuel Consumed
+                  <div className="text-3xl font-black opacity-30">B</div>
+                </div>
+                <div className="text-3xl font-black mb-1">
+                  ₹{summary.total_cost ? summary.total_cost.toLocaleString("en-IN") : 0}
+                </div>
+                <div className="text-xs font-semibold uppercase tracking-wide opacity-90">
+                  Total Expenditure
+                </div>
+                <div className="mt-3 pt-3 border-t border-white border-opacity-20">
+                  <div className="text-xs opacity-75">Fuel Costs</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card C - Gray */}
+            <motion.div
+              whileHover={{ y: -5, scale: 1.02 }}
+              className="bg-gradient-to-br from-[#C7C7C7] to-[#a8a8a8] rounded-xl shadow-lg p-6 text-white relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-10 rounded-full -mr-12 -mt-12"></div>
+              <div className="absolute bottom-0 left-0 w-16 h-16 bg-white opacity-5 rounded-full -ml-8 -mb-8"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                    <FaChartLine className="text-2xl" />
                   </div>
-                  <div className="mt-3 pt-3 border-t border-white border-opacity-20">
-                    <div className="text-xs opacity-75">All Equipments</div>
+                  <div className="text-3xl font-black opacity-30">C</div>
+                </div>
+                <div className="text-3xl font-black mb-1">
+                  ₹{summary.avg_cost_per_unit ? summary.avg_cost_per_unit.toFixed(2) : 0}
+                </div>
+                <div className="text-xs font-semibold uppercase tracking-wide opacity-90">
+                  Cost Efficiency
+                </div>
+                <div className="mt-3 pt-3 border-t border-white border-opacity-20">
+                  <div className="text-xs opacity-75">Per Liter</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card D - Dark Blue */}
+            <motion.div
+              whileHover={{ y: -5, scale: 1.02 }}
+              className="bg-gradient-to-br from-[#45526C] to-[#323d52] rounded-xl shadow-lg p-6 text-white relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-10 rounded-full -mr-12 -mt-12"></div>
+              <div className="absolute bottom-0 left-0 w-16 h-16 bg-white opacity-5 rounded-full -ml-8 -mb-8"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                    <FaChartPie className="text-2xl" />
+                  </div>
+                  <div className="text-3xl font-black opacity-30">D</div>
+                </div>
+                <div className="text-xl font-black mb-1 truncate">
+                  {summary.highest_site?.generator_name || "-"}
+                </div>
+                <div className="text-xs font-semibold uppercase tracking-wide opacity-90">
+                  Top Consumer
+                </div>
+                <div className="mt-3 pt-3 border-t border-white border-opacity-20">
+                  <div className="text-xs opacity-75">
+                    {summary.highest_site ? `₹${summary.highest_site.total_cost.toLocaleString("en-IN")}` : "N/A"}
                   </div>
                 </div>
-              </motion.div>
-              
-              {/* Card B - Cyan */}
-              <motion.div
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="bg-gradient-to-br from-[#4ECDC4] to-[#3ab8af] rounded-xl shadow-lg p-6 text-white relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-10 rounded-full -mr-12 -mt-12"></div>
-                <div className="absolute bottom-0 left-0 w-16 h-16 bg-white opacity-5 rounded-full -ml-8 -mb-8"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                      <FaDollarSign className="text-2xl" />
-                    </div>
-                    <div className="text-3xl font-black opacity-30">B</div>
-                  </div>
-                  <div className="text-3xl font-black mb-1">
-                    ₹{summary.total_cost ? summary.total_cost.toLocaleString("en-IN") : 0}
-                  </div>
-                  <div className="text-xs font-semibold uppercase tracking-wide opacity-90">
-                    Total Expenditure
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-white border-opacity-20">
-                    <div className="text-xs opacity-75">Fuel Costs</div>
-                  </div>
-                </div>
-              </motion.div>
-              
-              {/* Card C - Gray */}
-              <motion.div
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="bg-gradient-to-br from-[#C7C7C7] to-[#a8a8a8] rounded-xl shadow-lg p-6 text-white relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-10 rounded-full -mr-12 -mt-12"></div>
-                <div className="absolute bottom-0 left-0 w-16 h-16 bg-white opacity-5 rounded-full -ml-8 -mb-8"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                      <FaChartLine className="text-2xl" />
-                    </div>
-                    <div className="text-3xl font-black opacity-30">C</div>
-                  </div>
-                  <div className="text-3xl font-black mb-1">
-                    ₹{summary.avg_cost_per_unit ? summary.avg_cost_per_unit.toFixed(2) : 0}
-                  </div>
-                  <div className="text-xs font-semibold uppercase tracking-wide opacity-90">
-                    Cost Efficiency
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-white border-opacity-20">
-                    <div className="text-xs opacity-75">Per Liter</div>
-                  </div>
-                </div>
-              </motion.div>
-              
-              {/* Card D - Dark Blue */}
-              <motion.div
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="bg-gradient-to-br from-[#45526C] to-[#323d52] rounded-xl shadow-lg p-6 text-white relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white opacity-10 rounded-full -mr-12 -mt-12"></div>
-                <div className="absolute bottom-0 left-0 w-16 h-16 bg-white opacity-5 rounded-full -ml-8 -mb-8"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                      <FaChartPie className="text-2xl" />
-                    </div>
-                    <div className="text-3xl font-black opacity-30">D</div>
-                  </div>
-                  <div className="text-xl font-black mb-1 truncate">
-                    {summary.highest_site?.generator_name || "-"}
-                  </div>
-                  <div className="text-xs font-semibold uppercase tracking-wide opacity-90">
-                    Top Consumer
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-white border-opacity-20">
-                    <div className="text-xs opacity-75">
-                      {summary.highest_site ? `₹${summary.highest_site.total_cost.toLocaleString("en-IN")}` : "N/A"}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+              </div>
+            </motion.div>
           </motion.div>
 
           {/* Main Charts Section */}
@@ -397,20 +397,20 @@ export default function GeneratorsReport({ onDataUpdateRef }) {
                 <AreaChart data={trend}>
                   <defs>
                     <linearGradient id="colorOrange" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#FF8C42" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#FF8C42" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#FF8C42" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#FF8C42" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorCyan" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4ECDC4" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#4ECDC4" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#4ECDC4" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#4ECDC4" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorGray" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#C7C7C7" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#C7C7C7" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#C7C7C7" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#C7C7C7" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorDark" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#45526C" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#45526C" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#45526C" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#45526C" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
@@ -440,7 +440,7 @@ export default function GeneratorsReport({ onDataUpdateRef }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} />
                 <YAxis tick={{ fontSize: 11 }} axisLine={false} />
-                <Tooltip 
+                <Tooltip
                   formatter={(value) => `${value.toLocaleString("en-IN")} L`}
                   contentStyle={{
                     backgroundColor: 'white',

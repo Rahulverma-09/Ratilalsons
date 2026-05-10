@@ -376,7 +376,7 @@ function StockOutModal({ open, onClose, products, onSuccess }) {
   const handleProductSelect = (e) => {
     const productId = e.target.value;
     if (!productId || selectedProducts.includes(productId)) return;
-    
+
     setSelectedProducts([...selectedProducts, productId]);
     setProductForms({
       ...productForms,
@@ -432,7 +432,7 @@ function StockOutModal({ open, onClose, products, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    
+
     if (selectedProducts.length === 0) {
       return setError("Please select at least one product.");
     }
@@ -442,7 +442,7 @@ function StockOutModal({ open, onClose, products, onSuccess }) {
       const form = productForms[productId];
       const product = products.find(p => (p.product_id || p.id) === productId);
       const productName = product?.name || 'Unknown Product';
-      
+
       if (!form.location) return setError(`Select location for ${productName}`);
       if (!form.quantity || isNaN(form.quantity) || Number(form.quantity) <= 0)
         return setError(`Enter valid quantity for ${productName}`);
@@ -452,7 +452,7 @@ function StockOutModal({ open, onClose, products, onSuccess }) {
     setLoading(true);
     try {
       const token = localStorage.getItem("access_token");
-      
+
       // Submit each product stock out
       for (const productId of selectedProducts) {
         const form = productForms[productId];
@@ -465,19 +465,19 @@ function StockOutModal({ open, onClose, products, onSuccess }) {
           reference_name: form.reference_name || null,
           remarks: form.remarks || null,
         };
-        
+
         const res = await fetch(`${API_BASE}/stock-out`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
         });
-        
+
         if (!res.ok) {
           const err = await res.json();
           throw new Error(err.detail || `Stock out failed for ${products.find(p => (p.product_id || p.id) === productId)?.name}`);
         }
       }
-      
+
       onSuccess();
       onClose();
     } catch (e) {
@@ -492,7 +492,7 @@ function StockOutModal({ open, onClose, products, onSuccess }) {
   const renderReferenceField = (productId, stockHead) => {
     if (!stockHead) return null;
     const form = productForms[productId];
-    
+
     if (stockHead === "Contractor") {
       return (
         <div className="flex-1">
@@ -506,13 +506,13 @@ function StockOutModal({ open, onClose, products, onSuccess }) {
         </div>
       );
     }
-    
+
     const options =
       stockHead === "Customer"
         ? refs.customers
         : stockHead === "Site"
-        ? refs.sites
-        : refs.staff;
+          ? refs.sites
+          : refs.staff;
     return (
       <div className="flex-1">
         <label className="block text-xs font-medium mb-1">{stockHead} Name</label>
@@ -561,7 +561,7 @@ function StockOutModal({ open, onClose, products, onSuccess }) {
               Select multiple products and enter details for each one.
             </p>
           </div>
-          
+
           <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
             {/* Product Selection */}
             <div>
@@ -589,7 +589,7 @@ function StockOutModal({ open, onClose, products, onSuccess }) {
                 {selectedProducts.map((productId, idx) => {
                   const product = products.find(p => (p.product_id || p.id) === productId);
                   const form = productForms[productId] || {};
-                  
+
                   return (
                     <motion.div
                       key={productId}
@@ -690,11 +690,10 @@ function StockOutModal({ open, onClose, products, onSuccess }) {
             <motion.button
               type="submit"
               disabled={loading || selectedProducts.length === 0}
-              className={`w-full bg-gradient-to-r from-red-600 to-orange-500 text-white font-semibold rounded px-4 py-3 mt-2 shadow-sm ${
-                loading || selectedProducts.length === 0
-                  ? "opacity-50 cursor-not-allowed"
-                  : "hover:from-red-700 hover:to-orange-600"
-              }`}
+              className={`w-full bg-gradient-to-r from-red-600 to-orange-500 text-white font-semibold rounded px-4 py-3 mt-2 shadow-sm ${loading || selectedProducts.length === 0
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:from-red-700 hover:to-orange-600"
+                }`}
               whileHover={selectedProducts.length > 0 ? { scale: 1.02 } : {}}
               whileTap={selectedProducts.length > 0 ? { scale: 0.98 } : {}}
             >
@@ -831,13 +830,13 @@ function EditStockOutModal({ open, onClose, log, products, onSuccess }) {
         >
           <button onClick={onClose} className="absolute top-3 right-4 w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
           <div className="flex flex-col items-center mb-4">
             <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mb-2">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
             </div>
             <h2 className="text-lg font-bold text-orange-700">Edit Stock Out Entry</h2>
@@ -942,12 +941,12 @@ function EditProductModal({ open, onClose, product, onUpdate }) {
       setLoading(false);
       return;
     }
-    
+
     const depot_qty = {};
     form.depots.forEach((d) => {
       if (d.name && d.qty && !isNaN(d.qty)) depot_qty[d.name] = Number(d.qty);
     });
-    
+
     // Payload for product metadata update
     const productPayload = {
       name: form.name,
@@ -967,49 +966,49 @@ function EditProductModal({ open, onClose, product, onUpdate }) {
     try {
       const token = localStorage.getItem("access_token");
       const productId = product.product_id || product.id;
-      
+
       console.log("Updating product:", productId, productPayload);
-      
+
       // Update product metadata
       const res = await fetch(`${API_BASE}/products/${productId}`, {
         method: "PUT",
-        headers: { 
-          "Content-Type": "application/json", 
-          Authorization: `Bearer ${token}` 
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(productPayload),
       });
-      
+
       console.log("Product update response status:", res.status);
-      
+
       if (!res.ok) {
         const err = await res.json();
         console.error("Product update error:", err);
         throw new Error(err.detail || "Failed to update product");
       }
-      
+
       // Update stock quantities
       console.log("Updating stock:", stockPayload);
       const stockRes = await fetch(`${API_BASE}/products/${productId}/stock`, {
         method: "PUT",
-        headers: { 
-          "Content-Type": "application/json", 
-          Authorization: `Bearer ${token}` 
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(stockPayload),
       });
-      
+
       console.log("Stock update response status:", stockRes.status);
-      
+
       if (!stockRes.ok) {
         const stockErr = await stockRes.json();
         console.error("Stock update error:", stockErr);
         throw new Error(stockErr.detail || "Failed to update stock quantities");
       }
-      
+
       const result = await stockRes.json();
       console.log("Update successful:", result);
-      
+
       onUpdate();
       onClose();
     } catch (e) {
@@ -1183,7 +1182,7 @@ function EditProductModal({ open, onClose, product, onUpdate }) {
   );
 }
 
-function ProductInventoryTable({ 
+function ProductInventoryTable({
   products, search, page, setPage, hasPrev, hasNext, onAddProduct, onEditProduct, onDeleteProduct
 }) {
   const filtered = products.filter(
@@ -1240,7 +1239,7 @@ function ProductInventoryTable({
             )}
             {paginated.map((p, i) => {
               const productId = p.product_id || p.id;
-              
+
               return (
                 <motion.tr
                   key={productId}
@@ -1294,7 +1293,7 @@ function ProductInventoryTable({
                         title="Edit Product"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
                         Edit
                       </motion.button>
@@ -1468,9 +1467,8 @@ function StockLogs({ logs, search, page, setPage, hasPrev, hasNext, onStockOut, 
 
                 {/* Type column */}
                 <td
-                  className={`px-2 sm:px-4 py-2 whitespace-nowrap text-xs sm:text-sm font-semibold ${
-                    log.type === "in" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                  } rounded`}
+                  className={`px-2 sm:px-4 py-2 whitespace-nowrap text-xs sm:text-sm font-semibold ${log.type === "in" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                    } rounded`}
                 >
                   {log.type?.toUpperCase()}
                 </td>
@@ -1526,7 +1524,7 @@ function StockLogs({ logs, search, page, setPage, hasPrev, hasNext, onStockOut, 
                       className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200 text-xs font-medium transition-colors"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                       </svg>
                       Edit
                     </motion.button>
@@ -1677,7 +1675,7 @@ export default function InventoryManagement() {
     if (!window.confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) {
       return;
     }
-    
+
     try {
       const token = localStorage.getItem("access_token");
       const productId = product.product_id || product.id;
@@ -1685,12 +1683,12 @@ export default function InventoryManagement() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.detail || "Failed to delete product");
       }
-      
+
       // Refresh products list
       fetchProducts();
       alert("Product deleted successfully!");
@@ -1707,14 +1705,14 @@ export default function InventoryManagement() {
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
     >
       <AddProductModal open={showAddProduct} onClose={() => setShowAddProduct(false)} onAdd={fetchProducts} />
-      <EditProductModal 
-        open={showEditProduct} 
+      <EditProductModal
+        open={showEditProduct}
         onClose={() => {
           setShowEditProduct(false);
           setEditingProduct(null);
-        }} 
+        }}
         product={editingProduct}
-        onUpdate={fetchProducts} 
+        onUpdate={fetchProducts}
       />
       <StockOutModal
         open={showStockOut}
@@ -1742,11 +1740,10 @@ export default function InventoryManagement() {
               <motion.button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`${
-                  activeTab === tab.key
-                    ? "border-b-2 border-blue-500 text-blue-700 font-semibold"
-                    : "border-b-2 border-transparent text-gray-700 hover:text-blue-600 hover:border-blue-300"
-                } whitespace-nowrap py-2 px-2 sm:py-3 sm:px-4 font-medium text-xs sm:text-base text-left transition focus:outline-none`}
+                className={`${activeTab === tab.key
+                  ? "border-b-2 border-blue-500 text-blue-700 font-semibold"
+                  : "border-b-2 border-transparent text-gray-700 hover:text-blue-600 hover:border-blue-300"
+                  } whitespace-nowrap py-2 px-2 sm:py-3 sm:px-4 font-medium text-xs sm:text-base text-left transition focus:outline-none`}
                 style={{ minWidth: 90 }}
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}

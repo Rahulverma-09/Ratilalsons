@@ -560,11 +560,10 @@ export default function AccountsFinance() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`${
-                  activeTab === tab.key
-                    ? 'border-b-2 border-blue-500 text-blue-700 font-semibold'
-                    : 'border-b-2 border-transparent text-gray-700 hover:text-blue-600 hover:border-blue-300'
-                } whitespace-nowrap py-3 px-1 font-medium text-base text-left transition focus:outline-none`}
+                className={`${activeTab === tab.key
+                  ? 'border-b-2 border-blue-500 text-blue-700 font-semibold'
+                  : 'border-b-2 border-transparent text-gray-700 hover:text-blue-600 hover:border-blue-300'
+                  } whitespace-nowrap py-3 px-1 font-medium text-base text-left transition focus:outline-none`}
                 style={{ minWidth: 120 }}
               >
                 {tab.name}

@@ -1,10 +1,10 @@
 import { API_URL } from '../../config';
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faClock, 
-  faCalendarAlt, 
-  faCheckCircle, 
+import {
+  faClock,
+  faCalendarAlt,
+  faCheckCircle,
   faTimesCircle,
   faPlay,
   faStop,
@@ -65,20 +65,20 @@ const determineAttendanceStatus = (checkInTime, checkOutTime = null, existingSta
     }
 
     // If there's already a non-default status, respect it unless it's generic 'present'
-    if (existingStatus && 
-        existingStatus.toLowerCase() !== 'present' && 
-        existingStatus !== 'Present' &&
-        existingStatus.trim() !== '') {
+    if (existingStatus &&
+      existingStatus.toLowerCase() !== 'present' &&
+      existingStatus !== 'Present' &&
+      existingStatus.trim() !== '') {
       return existingStatus;
     }
 
     // Parse check-in time to get hours and minutes
     const parseTime = (timeValue) => {
       if (!timeValue) return null;
-      
+
       try {
         let timeString = timeValue;
-        
+
         // Handle different time formats
         if (timeString.includes('T')) {
           // ISO datetime format
@@ -88,7 +88,7 @@ const determineAttendanceStatus = (checkInTime, checkOutTime = null, existingSta
           // "YYYY-MM-DD HH:mm:ss" format
           timeString = timeString.split(' ')[1];
         }
-        
+
         const [hours, minutes] = timeString.split(':').map(Number);
         return { hours, minutes, totalMinutes: hours * 60 + minutes };
       } catch (error) {
@@ -106,7 +106,7 @@ const determineAttendanceStatus = (checkInTime, checkOutTime = null, existingSta
     // Get current working hours settings
     const savedConfig = localStorage.getItem('workingHoursConfig');
     let currentShiftSettings;
-    
+
     if (savedConfig) {
       try {
         const config = JSON.parse(savedConfig);
@@ -133,10 +133,10 @@ const determineAttendanceStatus = (checkInTime, checkOutTime = null, existingSta
     // Parse threshold times
     const [lateHour, lateMin] = currentShiftSettings.lateThreshold.split(':').map(Number);
     const [halfDayHour, halfDayMin] = currentShiftSettings.halfDayThreshold.split(':').map(Number);
-    
+
     const lateThresholdMinutes = lateHour * 60 + lateMin;
     const halfDayThresholdMinutes = halfDayHour * 60 + halfDayMin;
-    
+
     const checkInMinutes = checkInParsed.totalMinutes;
 
     console.log(`[DEBUG] Status determination: CheckIn=${checkInTime} (${checkInMinutes}min), Late=${lateThresholdMinutes}min, HalfDay=${halfDayThresholdMinutes}min`);
@@ -166,7 +166,7 @@ const syncWorkingHoursConfig = () => {
     if (savedConfig) {
       return JSON.parse(savedConfig);
     }
-    
+
     // Default configuration
     const defaultConfig = {
       dayShift: {
@@ -183,7 +183,7 @@ const syncWorkingHoursConfig = () => {
       },
       currentShift: 'day'
     };
-    
+
     return defaultConfig;
   } catch (error) {
     console.error('Error syncing working hours config:', error);
@@ -284,16 +284,16 @@ const MyAttendancePage = () => {
   // Helper function to parse check-in time
   const parseCheckIn = (checkInValue) => {
     if (!checkInValue) return null;
-    
+
     try {
       let timeString = checkInValue;
-      
+
       // If it's a full datetime string, extract just the time part
       if (timeString.includes('T') || timeString.includes(' ')) {
         const date = new Date(timeString);
         timeString = date.toTimeString().split(' ')[0]; // Gets HH:mm:ss
       }
-      
+
       const [h, m] = timeString.split(':').map(Number);
       return { h, m };
     } catch (error) {
@@ -305,44 +305,44 @@ const MyAttendancePage = () => {
   // Helper function to check if entry is late
   const isLateEntry = (checkInTime) => {
     if (!checkInTime) return false;
-    
+
     const parsed = parseCheckIn(checkInTime);
     if (!parsed) return false;
-    
+
     const { h, m } = parsed;
     const checkInMinutes = h * 60 + m;
-    
+
     // Get current shift settings
-    const currentShiftSettings = workingHours.currentShift === 'night' 
-      ? workingHours.nightShift 
+    const currentShiftSettings = workingHours.currentShift === 'night'
+      ? workingHours.nightShift
       : workingHours.dayShift;
-    
+
     // Parse late threshold time
     const [lateH, lateM] = currentShiftSettings.lateThreshold.split(':').map(Number);
     const lateThresholdMinutes = lateH * 60 + lateM;
-    
+
     return checkInMinutes > lateThresholdMinutes;
   };
 
   // Helper function to check if should mark as half day
   const shouldMarkHalfDay = (checkInTime) => {
     if (!checkInTime) return false;
-    
+
     const parsed = parseCheckIn(checkInTime);
     if (!parsed) return false;
-    
+
     const { h, m } = parsed;
     const checkInMinutes = h * 60 + m;
-    
+
     // Get current shift settings
-    const currentShiftSettings = workingHours.currentShift === 'night' 
-      ? workingHours.nightShift 
+    const currentShiftSettings = workingHours.currentShift === 'night'
+      ? workingHours.nightShift
       : workingHours.dayShift;
-    
+
     // Parse half-day threshold time
     const [halfH, halfM] = currentShiftSettings.halfDayThreshold.split(':').map(Number);
     const halfDayThresholdMinutes = halfH * 60 + halfM;
-    
+
     return checkInMinutes > halfDayThresholdMinutes;
   };
 
@@ -350,100 +350,100 @@ const MyAttendancePage = () => {
     // Initialize with safe defaults to prevent render errors
     const initializeComponent = async () => {
       try {
-      // Sync working hours configuration first and ensure it's broadcast to other components
-      const configFromSync = syncWorkingHoursConfig();
-      setWorkingHours(configFromSync);
-      
-      // Broadcast configuration to other components
-      window.dispatchEvent(new CustomEvent('workingHoursConfigUpdated', { 
-        detail: configFromSync 
-      }));
-      
-      // Load current user data immediately - check both possible keys
-      const userDataString = localStorage.getItem('user') || localStorage.getItem('user_data') || '{}';
-      let userData = {};
-      
-      try {
-        userData = JSON.parse(userDataString);
-      } catch (parseError) {
-        console.error('Error parsing user data:', parseError);
-        userData = {};
-      }
-      
-      const token = localStorage.getItem('access_token');
-      
-      setCurrentUser(userData || {});
-      console.log('Loaded user data:', userData);
-      console.log('Token exists:', !!token);
-      console.log('Data source:', localStorage.getItem('user') ? 'user key' : localStorage.getItem('user_data') ? 'user_data key' : 'none');
-      
-      // Validate user authentication on load
-      if (!token) {
-        setError('No authentication token found. Please login again.');
-        setLoading(false);
-        return;
-      }
-      
-      // Check if user data has valid ID fields (prioritizing id field first)
-      const hasValidUserId = userData?.id || 
-                            userData?._id || 
-                            userData?.user_id || 
-                            userData?.username || 
-                            userData?.employee_id ||
-                            userData?.email;
-      
-      if (!hasValidUserId && Object.keys(userData).length > 0) {
-        console.warn('No valid user ID found in user data');
-        setError('User session invalid. Please logout and login again.');
-      }
-      
-      // Update current time every second
-      const timer = setInterval(() => {
-        setCurrentTime(new Date());
-      }, 1000);
+        // Sync working hours configuration first and ensure it's broadcast to other components
+        const configFromSync = syncWorkingHoursConfig();
+        setWorkingHours(configFromSync);
 
-      // Load real attendance data
-      fetchAttendanceData();
+        // Broadcast configuration to other components
+        window.dispatchEvent(new CustomEvent('workingHoursConfigUpdated', {
+          detail: configFromSync
+        }));
 
-      // Get user location
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setLocation({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            });
-            console.log('Location obtained:', position.coords);
-          },
-          (error) => {
-            console.log('Location access denied:', error);
-          }
-        );
-      }
-      
-      // Listen for working hours configuration updates from other components
-      const handleConfigUpdate = (event) => {
-        if (event.detail) {
-          setWorkingHours(prev => ({ ...prev, ...event.detail }));
-          console.log('[MyAttendance] Received working hours config update:', event.detail);
-          // Re-fetch and reprocess attendance data
-          fetchAttendanceData();
+        // Load current user data immediately - check both possible keys
+        const userDataString = localStorage.getItem('user') || localStorage.getItem('user_data') || '{}';
+        let userData = {};
+
+        try {
+          userData = JSON.parse(userDataString);
+        } catch (parseError) {
+          console.error('Error parsing user data:', parseError);
+          userData = {};
         }
-      };
-      
-      window.addEventListener('workingHoursConfigUpdated', handleConfigUpdate);
 
-      return () => {
-        clearInterval(timer);
-        window.removeEventListener('workingHoursConfigUpdated', handleConfigUpdate);
-      };
+        const token = localStorage.getItem('access_token');
+
+        setCurrentUser(userData || {});
+        console.log('Loaded user data:', userData);
+        console.log('Token exists:', !!token);
+        console.log('Data source:', localStorage.getItem('user') ? 'user key' : localStorage.getItem('user_data') ? 'user_data key' : 'none');
+
+        // Validate user authentication on load
+        if (!token) {
+          setError('No authentication token found. Please login again.');
+          setLoading(false);
+          return;
+        }
+
+        // Check if user data has valid ID fields (prioritizing id field first)
+        const hasValidUserId = userData?.id ||
+          userData?._id ||
+          userData?.user_id ||
+          userData?.username ||
+          userData?.employee_id ||
+          userData?.email;
+
+        if (!hasValidUserId && Object.keys(userData).length > 0) {
+          console.warn('No valid user ID found in user data');
+          setError('User session invalid. Please logout and login again.');
+        }
+
+        // Update current time every second
+        const timer = setInterval(() => {
+          setCurrentTime(new Date());
+        }, 1000);
+
+        // Load real attendance data
+        fetchAttendanceData();
+
+        // Get user location
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              setLocation({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+              });
+              console.log('Location obtained:', position.coords);
+            },
+            (error) => {
+              console.log('Location access denied:', error);
+            }
+          );
+        }
+
+        // Listen for working hours configuration updates from other components
+        const handleConfigUpdate = (event) => {
+          if (event.detail) {
+            setWorkingHours(prev => ({ ...prev, ...event.detail }));
+            console.log('[MyAttendance] Received working hours config update:', event.detail);
+            // Re-fetch and reprocess attendance data
+            fetchAttendanceData();
+          }
+        };
+
+        window.addEventListener('workingHoursConfigUpdated', handleConfigUpdate);
+
+        return () => {
+          clearInterval(timer);
+          window.removeEventListener('workingHoursConfigUpdated', handleConfigUpdate);
+        };
       } catch (error) {
         console.error('Error in useEffect:', error);
         setError('An error occurred while initializing the page. Please refresh and try again.');
         setLoading(false);
       }
     };
-    
+
     // Call the async initialization function
     initializeComponent();
   }, []);
@@ -492,7 +492,7 @@ const MyAttendancePage = () => {
         const data = await res.json();
         setHREmployees(Array.isArray(data) ? data : data.users || []);
       }
-    } catch {}
+    } catch { }
   };
 
   const fetchAdminAttendance = async () => {
@@ -514,7 +514,7 @@ const MyAttendancePage = () => {
           setAdminTotal(data.pagination?.total_records || 0);
         }
       }
-    } catch {}
+    } catch { }
     setAdminLoading(false);
   };
 
@@ -571,27 +571,27 @@ const MyAttendancePage = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const token = localStorage.getItem('access_token');
       const userData = JSON.parse(localStorage.getItem('user') || localStorage.getItem('user_data') || '{}');
       setCurrentUser(userData);
-      
+
       if (!token) {
         throw new Error('No authentication token found');
       }
 
       // Get user ID from multiple possible fields
-      const userId = userData?.id || 
-                     userData?._id || 
-                     userData?.user_id || 
-                     userData?.username || 
-                     userData?.employee_id ||
-                     userData?.email;
-      
+      const userId = userData?.id ||
+        userData?._id ||
+        userData?.user_id ||
+        userData?.username ||
+        userData?.employee_id ||
+        userData?.email;
+
       console.log('User data fields available:', Object.keys(userData || {}));
       console.log('Attempting to use userId:', userId);
       console.log('Full user data:', userData);
-      
+
       if (!userId) {
         throw new Error('User ID not found. Available data: ' + JSON.stringify(Object.keys(userData || {})));
       }
@@ -611,7 +611,7 @@ const MyAttendancePage = () => {
         if (todayResponse.ok) {
           const todayData = await todayResponse.json();
           console.log('[DEBUG] Today data:', todayData);
-          
+
           if (todayData.success && todayData.data) {
             const todayStatus = todayData.data;
             const todayRecord = {
@@ -624,7 +624,7 @@ const MyAttendancePage = () => {
               location: todayStatus.record?.location?.address || 'Office'
             };
             setTodayRecord(todayRecord);
-            
+
             // Determine current status based on check-in/out times
             if (todayStatus.has_checkedin && !todayStatus.has_checkedout) {
               setCurrentStatus('checked-in');
@@ -658,7 +658,7 @@ const MyAttendancePage = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error Response:', errorText);
-        
+
         // Try to parse as JSON, fallback to text
         let errorMessage = 'Unknown error occurred';
         try {
@@ -672,7 +672,7 @@ const MyAttendancePage = () => {
             errorMessage = errorText || 'Failed to fetch attendance data';
           }
         }
-        
+
         throw new Error(`${response.status}: ${errorMessage}`);
       }
 
@@ -684,26 +684,26 @@ const MyAttendancePage = () => {
           // Extract check-in time in original format for status determination
           const rawCheckIn = record.checkin_time;
           const rawCheckOut = record.checkout_time;
-          
+
           // Format times for display
           const formattedCheckIn = rawCheckIn ? new Date(rawCheckIn).toLocaleTimeString() : null;
           const formattedCheckOut = rawCheckOut ? new Date(rawCheckOut).toLocaleTimeString() : null;
-          
+
           // Determine status using raw check-in time and working hours config
           const determinedStatus = determineAttendanceStatus(
             rawCheckIn,
             rawCheckOut,
             record.status
           );
-          
+
           console.log(`[MyAttendance] Record processing: Date=${record.attendance_date}, OriginalStatus=${record.status}, DeterminedStatus=${determinedStatus}, CheckIn=${rawCheckIn}`);
-          
+
           return {
             id: record._id || record.attendance_id || record.id,
             date: record.attendance_date || record.date,
             checkIn: formattedCheckIn,
             checkOut: formattedCheckOut,
-            workingHours: record.total_working_minutes ? 
+            workingHours: record.total_working_minutes ?
               `${Math.floor(record.total_working_minutes / 60)}h ${record.total_working_minutes % 60}m` : null,
             status: determinedStatus, // Use determined status instead of direct mapping
             location: getLocationText(record.location, record.location?.address),
@@ -722,7 +722,7 @@ const MyAttendancePage = () => {
         const todayRec = records.find(r => {
           // Try exact match first
           if (r.date === today) return true;
-          
+
           // Try parsing the date if it's in different format
           try {
             const recordDate = new Date(r.date).toISOString().split('T')[0];
@@ -731,11 +731,11 @@ const MyAttendancePage = () => {
             return false;
           }
         });
-        
+
         console.log('Today:', today, 'Found today record:', todayRec);
         if (todayRec) {
           setTodayRecord(todayRec);
-          
+
           if (todayRec.checkIn && !todayRec.checkOut) {
             setCurrentStatus('checked-in');
           } else {
@@ -770,24 +770,24 @@ const MyAttendancePage = () => {
         record.checkOut || record.check_out,
         originalStatus
       );
-      
+
       return {
         ...record,
         status: determinedStatus,
         original_status: originalStatus
       };
     });
-    
+
     console.log('[MyAttendance] Processed records with auto status:', processedRecords);
-    
+
     // Calculate actual working days for the current month
     const currentDate = new Date();
     const year = selectedYear || currentDate.getFullYear();
     const month = selectedMonth || (currentDate.getMonth() + 1);
-    
+
     // Get the number of days in the month
     const daysInMonth = new Date(year, month, 0).getDate();
-    
+
     // Calculate working days (excluding weekends)
     let workingDays = 0;
     for (let day = 1; day <= daysInMonth; day++) {
@@ -798,23 +798,23 @@ const MyAttendancePage = () => {
         workingDays++;
       }
     }
-    
+
     // Count actual attendance statuses using processed records
-    const presentDays = processedRecords.filter(r => 
+    const presentDays = processedRecords.filter(r =>
       r.status === 'Present' || r.status === 'present'
     ).length;
-    
-    const lateDays = processedRecords.filter(r => 
+
+    const lateDays = processedRecords.filter(r =>
       r.status === 'Late' || r.status === 'late'
     ).length;
-    
-    const halfDays = processedRecords.filter(r => 
+
+    const halfDays = processedRecords.filter(r =>
       r.status === 'Half Day' || r.status === 'half_day' || r.status === 'halfday'
     ).length;
-    
+
     // Absent days = working days - present days - late days - half days
     const absentDays = Math.max(0, workingDays - presentDays - lateDays - halfDays);
-    
+
     // Calculate total working hours
     let totalMinutes = 0;
     records.forEach(record => {
@@ -822,28 +822,28 @@ const MyAttendancePage = () => {
         // Extract hours from string like "8h 30m" or "8h"
         const hoursMatch = record.workingHours.match(/(\d+)h/);
         const minutesMatch = record.workingHours.match(/(\d+)m/);
-        
+
         const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
         const minutes = minutesMatch ? parseInt(minutesMatch[1]) : 0;
-        
+
         totalMinutes += (hours * 60) + minutes;
       } else if (record.working_hours && typeof record.working_hours === 'number') {
         // Handle numeric working hours (in hours)
         totalMinutes += Math.floor(record.working_hours * 60);
       }
     });
-    
+
     const totalHours = Math.floor(totalMinutes / 60);
     const totalMins = totalMinutes % 60;
-    
+
     // Calculate average working hours per working day (including half days)
     const totalWorkingDaysWithHours = presentDays + lateDays + halfDays;
     const avgHours = totalWorkingDaysWithHours > 0 ? Math.floor(totalMinutes / totalWorkingDaysWithHours / 60) : 0;
     const avgMins = totalWorkingDaysWithHours > 0 ? Math.floor((totalMinutes / totalWorkingDaysWithHours) % 60) : 0;
-    
+
     // Calculate effective attendance (half days count as 0.5)
     const effectiveAttendance = presentDays + lateDays + (halfDays * 0.5);
-    
+
     return {
       totalWorkingDays: workingDays,
       presentDays: presentDays,
@@ -860,7 +860,7 @@ const MyAttendancePage = () => {
   const handleCheckInOut = async () => {
     setCheckingIn(true);
     setError(null);
-    
+
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
@@ -872,35 +872,35 @@ const MyAttendancePage = () => {
       console.log('Fresh user data from localStorage:', freshUserData);
       console.log('Fresh user data keys:', Object.keys(freshUserData));
       console.log('Data source:', localStorage.getItem('user') ? 'user key' : localStorage.getItem('user_data') ? 'user_data key' : 'none');
-      
+
       // Update current user if fresh data is available
       if (Object.keys(freshUserData).length > 0) {
         setCurrentUser(freshUserData);
       }
-      
+
       // Use fresh data or current user data
       const userData = Object.keys(freshUserData).length > 0 ? freshUserData : currentUser;
       console.log('Using user data:', userData);
       console.log('Available user fields:', Object.keys(userData || {}));
-      
+
       // Try multiple fields to get user ID, prioritizing id then _id
-      const userId = userData?.id || 
-                     userData?._id || 
-                     userData?.user_id || 
-                     userData?.username || 
-                     userData?.employee_id ||
-                     userData?.full_name ||
-                     userData?.name ||
-                     userData?.email;
-      
+      const userId = userData?.id ||
+        userData?._id ||
+        userData?.user_id ||
+        userData?.username ||
+        userData?.employee_id ||
+        userData?.full_name ||
+        userData?.name ||
+        userData?.email;
+
       console.log('Resolved user ID:', userId);
-      
+
       if (!userId) {
         throw new Error('User identification failed. Please logout and login again to refresh your session.');
       }
 
       const isCheckIn = currentStatus === 'checked-out';
-      
+
       // Get current location
       let currentLocation = null;
       try {
@@ -939,7 +939,7 @@ const MyAttendancePage = () => {
         console.warn('Could not get location:', locationError);
         currentLocation = null;
       }
-      
+
       const requestPayload = {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         location: currentLocation ? {
@@ -951,7 +951,7 @@ const MyAttendancePage = () => {
         device_id: 'web_browser',
         notes: isCheckIn ? 'Check-in from web dashboard' : 'Check-out from web dashboard'
       };
-      
+
       console.log('Request payload:', requestPayload);
 
       // Use new attendance API endpoints
@@ -966,11 +966,11 @@ const MyAttendancePage = () => {
       });
 
       console.log('Response status:', response.status);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Check-in/out error response:', errorData);
-        
+
         // Handle specific error cases
         if (response.status === 401) {
           throw new Error('Authentication expired. Please logout and login again.');
@@ -981,7 +981,7 @@ const MyAttendancePage = () => {
         } else if (response.status >= 500) {
           throw new Error('Server error. Please try again later or contact support.');
         }
-        
+
         throw new Error(errorData.detail || `Failed to ${isCheckIn ? 'check in' : 'check out'}`);
       }
 
@@ -991,11 +991,11 @@ const MyAttendancePage = () => {
       if (result.success || response.ok) {
         // Update status immediately
         setCurrentStatus(isCheckIn ? 'checked-in' : 'checked-out');
-        
+
         // Show success message
-        const message = isCheckIn ? 'Successfully checked in!' : 
+        const message = isCheckIn ? 'Successfully checked in!' :
           `Successfully checked out! ${result.working_hours ? `Working hours: ${result.working_hours}h` : ''}`;
-        
+
         // Update today's record
         const today = new Date().toISOString().split('T')[0];
         const newRecord = {
@@ -1009,31 +1009,31 @@ const MyAttendancePage = () => {
           notes: requestPayload.notes
         };
         setTodayRecord(newRecord);
-        
+
         // Refresh attendance data to get latest records
         setTimeout(() => {
           fetchAttendanceData();
         }, 1000);
-        
+
         console.log(message);
       } else {
         throw new Error(result.message || result.detail || 'Operation failed');
       }
-      
+
     } catch (error) {
       console.error('Check in/out error:', error);
-      
+
       // Provide specific guidance based on error type
       let errorMessage = error.message;
-      
-      if (error.message.includes('User identification failed') || 
-          error.message.includes('Authentication expired') ||
-          error.message.includes('session')) {
+
+      if (error.message.includes('User identification failed') ||
+        error.message.includes('Authentication expired') ||
+        error.message.includes('session')) {
         errorMessage = `${error.message}\n\nSteps to resolve:\n1. Click the logout button\n2. Login again with your credentials\n3. Try checking in/out again`;
       } else if (error.message.includes('User ID not found')) {
         errorMessage = 'Unable to identify your account. Please refresh the page or logout and login again.';
       }
-      
+
       setError(errorMessage);
     } finally {
       setCheckingIn(false);
@@ -1056,14 +1056,14 @@ const MyAttendancePage = () => {
       setExporting(true);
       const token = localStorage.getItem('access_token');
       const userData = JSON.parse(localStorage.getItem('user') || localStorage.getItem('user_data') || '{}');
-      
+
       if (!token) {
         setError('Please login again to export report');
         return;
       }
 
       const userId = userData?.id || userData?._id || userData?.user_id || userData?.username || userData?.employee_id;
-      
+
       if (!userId) {
         setError('User ID not found. Please login again.');
         return;
@@ -1083,7 +1083,7 @@ const MyAttendancePage = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Export API Error Response:', errorText);
-        
+
         let errorMessage = 'Failed to fetch data for export';
         try {
           const errorData = JSON.parse(errorText);
@@ -1095,12 +1095,12 @@ const MyAttendancePage = () => {
             errorMessage = errorText || errorMessage;
           }
         }
-        
+
         throw new Error(`${response.status}: ${errorMessage}`);
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.data && data.data.length > 0) {
         // Convert attendance records to CSV format
         const exportData = data.data.map(record => ({
@@ -1112,14 +1112,14 @@ const MyAttendancePage = () => {
           Location: record.location || '-',
           Notes: record.notes || '-'
         }));
-        
+
         // Convert data to CSV format
         const csvContent = convertToCSV(exportData);
-        
+
         // Create and download file
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
-        
+
         if (link.download !== undefined) {
           const url = URL.createObjectURL(blob);
           const filename = `attendance_${userData?.name || 'employee'}_${selectedMonth}_${selectedYear}.csv`;
@@ -1130,7 +1130,7 @@ const MyAttendancePage = () => {
           link.click();
           document.body.removeChild(link);
         }
-        
+
         console.log('Report exported successfully');
       } else {
         throw new Error('No data available to export');
@@ -1148,20 +1148,20 @@ const MyAttendancePage = () => {
     if (!data || data.length === 0) {
       return 'No data available';
     }
-    
+
     const headers = Object.keys(data[0]);
     const csvHeaders = headers.join(',');
-    
-    const csvRows = data.map(row => 
+
+    const csvRows = data.map(row =>
       headers.map(header => {
         const value = row[header] || '';
         // Escape commas and quotes in CSV
-        return typeof value === 'string' && (value.includes(',') || value.includes('"')) 
-          ? `"${value.replace(/"/g, '""')}"` 
+        return typeof value === 'string' && (value.includes(',') || value.includes('"'))
+          ? `"${value.replace(/"/g, '""')}"`
           : value;
       }).join(',')
     );
-    
+
     return [csvHeaders, ...csvRows].join('\n');
   };
 
@@ -1170,7 +1170,7 @@ const MyAttendancePage = () => {
     if (!status || typeof status !== 'string') {
       status = 'Present'; // Default status
     }
-    
+
     let configs = {
       'Present': { color: 'text-green-600 bg-green-100', icon: faCheckCircle, label: 'Present' },
       'present': { color: 'text-green-600 bg-green-100', icon: faCheckCircle, label: 'Present' },
@@ -1183,9 +1183,9 @@ const MyAttendancePage = () => {
       'absent': { color: 'text-red-600 bg-red-100', icon: faTimesCircle, label: 'Absent' },
       'Holiday': { color: 'text-blue-600 bg-blue-100', icon: faCalendarAlt, label: 'Holiday' }
     };
-    
+
     let config = configs[status] || configs['Present'];
-    
+
     // Apply dynamic status modifications for 'present' status based on check-in time
     if ((status.toLowerCase() === 'present') && checkInTime) {
       // Check if it's a late entry
@@ -1196,7 +1196,7 @@ const MyAttendancePage = () => {
           label: 'Present (Late)'
         };
       }
-      
+
       // Check if it should be marked as half day (takes precedence over just late)
       if (shouldMarkHalfDay(checkInTime)) {
         config = {
@@ -1206,7 +1206,7 @@ const MyAttendancePage = () => {
         };
       }
     }
-    
+
     return config;
   };
 
@@ -1243,7 +1243,7 @@ const MyAttendancePage = () => {
       const matchesMonth = recordDate.getMonth() + 1 === parseInt(selectedMonth);
       const matchesYear = recordDate.getFullYear() === parseInt(selectedYear);
       const matchesSearch = (record.status || '').toLowerCase().includes((searchTerm || '').toLowerCase()) ||
-                           (record.notes || '').toLowerCase().includes((searchTerm || '').toLowerCase());
+        (record.notes || '').toLowerCase().includes((searchTerm || '').toLowerCase());
       return matchesMonth && matchesYear && matchesSearch;
     } catch (error) {
       console.warn('Error filtering record:', record, error);
@@ -1257,7 +1257,7 @@ const MyAttendancePage = () => {
       record.checkOut || record.check_out,
       originalStatus
     );
-    
+
     return {
       ...record,
       status: determinedStatus,
@@ -1277,13 +1277,13 @@ const MyAttendancePage = () => {
               <div className="text-sm whitespace-pre-line">{error}</div>
               {(error.includes('login') || error.includes('session') || error.includes('authentication')) && (
                 <div className="mt-3 flex space-x-2">
-                  <button 
+                  <button
                     onClick={() => window.location.reload()}
                     className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm"
                   >
                     Refresh Page
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
                       localStorage.clear();
                       window.location.href = '/login';
@@ -1295,7 +1295,7 @@ const MyAttendancePage = () => {
                 </div>
               )}
             </div>
-            <button 
+            <button
               onClick={() => setError(null)}
               className="ml-2 text-red-500 hover:text-red-700 flex-shrink-0"
             >
@@ -1340,26 +1340,24 @@ const MyAttendancePage = () => {
         {/* Check In/Out Card */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-center">
-            <div className={`w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center ${
-              safeCurrentStatus === 'checked-in' ? 'bg-green-100' : 'bg-gray-100'
-            }`}>
-              <FontAwesomeIcon 
-                icon={safeCurrentStatus === 'checked-in' ? faStop : faPlay} 
-                className={`text-3xl ${
-                  safeCurrentStatus === 'checked-in' ? 'text-green-600' : 'text-gray-600'
-                }`}
+            <div className={`w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center ${safeCurrentStatus === 'checked-in' ? 'bg-green-100' : 'bg-gray-100'
+              }`}>
+              <FontAwesomeIcon
+                icon={safeCurrentStatus === 'checked-in' ? faStop : faPlay}
+                className={`text-3xl ${safeCurrentStatus === 'checked-in' ? 'text-green-600' : 'text-gray-600'
+                  }`}
               />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               {safeCurrentStatus === 'checked-in' ? 'Currently Checked In' : 'Ready to Check In'}
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              {safeCurrentStatus === 'checked-in' 
+              {safeCurrentStatus === 'checked-in'
                 ? `Checked in at: ${todayRecord?.checkIn || 'N/A'}`
                 : 'Click the button below to mark your attendance'
               }
             </p>
-            
+
             {/* Show message if already checked in today */}
             {safeCurrentStatus === 'checked-out' && todayRecord && todayRecord.checkIn && !checkingIn && (
               <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -1372,17 +1370,16 @@ const MyAttendancePage = () => {
                 </p>
               </div>
             )}
-            
+
             <button
               onClick={handleCheckInOut}
               disabled={checkingIn || (safeCurrentStatus === 'checked-out' && todayRecord && todayRecord.checkIn && !todayRecord.checkOut)}
-              className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-                (currentStatus || 'checked-out') === 'checked-in'
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : (todayRecord && todayRecord.checkIn && !todayRecord.checkOut)
-                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700 text-white'
-              } ${checkingIn ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${(currentStatus || 'checked-out') === 'checked-in'
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : (todayRecord && todayRecord.checkIn && !todayRecord.checkOut)
+                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+                } ${checkingIn ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {checkingIn ? (
                 <span>Processing...</span>
@@ -1393,15 +1390,15 @@ const MyAttendancePage = () => {
                 </span>
               ) : (
                 <span>
-                  <FontAwesomeIcon 
-                    icon={(currentStatus || 'checked-out') === 'checked-in' ? faStop : faPlay} 
-                    className="mr-2" 
+                  <FontAwesomeIcon
+                    icon={(currentStatus || 'checked-out') === 'checked-in' ? faStop : faPlay}
+                    className="mr-2"
                   />
                   {(currentStatus || 'checked-out') === 'checked-in' ? 'Check Out' : 'Check In'}
                 </span>
               )}
             </button>
-           
+
           </div>
         </div>
 
@@ -1444,13 +1441,13 @@ const MyAttendancePage = () => {
               <FontAwesomeIcon icon={faExclamationTriangle} className="text-3xl mb-3 text-gray-400" />
               <p className="text-lg font-medium">No attendance record for today</p>
               <p className="text-sm text-gray-400 mt-1">
-                <SafeDateFormat 
-                  date={new Date()} 
+                <SafeDateFormat
+                  date={new Date()}
                   options={{
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                   }}
                 />
               </p>
@@ -1460,7 +1457,7 @@ const MyAttendancePage = () => {
             </div>
           )}
         </div>
-        
+
         {/* Monthly Summary */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">This Month Summary</h3>
@@ -1496,7 +1493,7 @@ const MyAttendancePage = () => {
           </div>
         </div>
       </div>
-        {/* Statistics Cards */}
+      {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
         <div className="bg-white p-4 rounded-lg shadow-md">
           <div className="flex items-center justify-between">
@@ -1537,13 +1534,13 @@ const MyAttendancePage = () => {
                   const totalDays = attendanceSummary?.totalWorkingDays || 0;
                   const presentDays = attendanceSummary?.presentDays || 0;
                   const lateDays = attendanceSummary?.lateDays || 0;
-                  
+
                   if (totalDays === 0) return '0';
-                  
+
                   // Calculate rate considering late days as 0.5 attendance
                   const effectivePresent = presentDays + (lateDays * 0.5);
                   const rate = Math.round((effectivePresent / totalDays) * 100);
-                  
+
                   return rate;
                 })()}%
               </p>
@@ -1573,7 +1570,7 @@ const MyAttendancePage = () => {
             onChange={(e) => setSelectedMonth(e.target.value)}
             className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {Array.from({length: 12}, (_, i) => (
+            {Array.from({ length: 12 }, (_, i) => (
               <option key={i + 1} value={i + 1}>
                 {new Date(2025, i).toLocaleString('default', { month: 'long' })}
               </option>
@@ -1592,18 +1589,17 @@ const MyAttendancePage = () => {
           </select>
 
           {/* Export Button */}
-          <button 
+          <button
             onClick={exportAttendanceReport}
             disabled={exporting}
-            className={`ml-auto px-4 py-2 ${
-              exporting 
-                ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700'
-            } text-white rounded-lg transition-colors flex items-center`}
+            className={`ml-auto px-4 py-2 ${exporting
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700'
+              } text-white rounded-lg transition-colors flex items-center`}
           >
-            <FontAwesomeIcon 
-              icon={exporting ? faHourglass : faDownload} 
-              className={`mr-2 ${exporting ? 'animate-spin' : ''}`} 
+            <FontAwesomeIcon
+              icon={exporting ? faHourglass : faDownload}
+              className={`mr-2 ${exporting ? 'animate-spin' : ''}`}
             />
             {exporting ? 'Exporting...' : 'Export Report'}
           </button>
@@ -1633,76 +1629,76 @@ const MyAttendancePage = () => {
               {filteredRecords.map((record) => {
                 if (!record) return null;
                 return (
-                <tr key={record.id || record._id || Math.random()} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        <SafeDateFormat 
-                          date={record.date} 
-                          options={{
-                            weekday: 'short',
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          }}
-                          fallback="-"
-                        />
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-8 w-8">
-                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                          <FontAwesomeIcon icon={faUser} className="text-blue-600 text-sm" />
-                        </div>
-                      </div>
-                      <div className="ml-3">
+                  <tr key={record.id || record._id || Math.random()} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
                         <p className="text-sm font-medium text-gray-900">
-                          <SafeText>{record.employee_name || record.user_name || 'Unknown'}</SafeText>
+                          <SafeDateFormat
+                            date={record.date}
+                            options={{
+                              weekday: 'short',
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            }}
+                            fallback="-"
+                          />
                         </p>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-600">
-                      <SafeText>{record.position || record.role || 'Employee'}</SafeText>
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">
-                      <SafeText>{record.checkIn}</SafeText>
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">
-                      <SafeText>{record.checkOut}</SafeText>
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">
-                      <SafeText>{record.workingHours}</SafeText>
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusConfig(record.status || 'Present', record.checkIn).color}`}>
-                      <FontAwesomeIcon icon={getStatusConfig(record.status || 'Present', record.checkIn).icon} className="mr-1" />
-                      <SafeText>{getStatusConfig(record.status || 'Present', record.checkIn).label}</SafeText>
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">
-                      {record.location ? (
-                        <span className="flex items-center">
-                          <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-1 text-gray-400" />
-                          <SafeText>{record.location}</SafeText>
-                        </span>
-                      ) : (
-                        '-'
-                      )}
-                    </span>
-                  </td>
-                </tr>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8">
+                          <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                            <FontAwesomeIcon icon={faUser} className="text-blue-600 text-sm" />
+                          </div>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-gray-900">
+                            <SafeText>{record.employee_name || record.user_name || 'Unknown'}</SafeText>
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-600">
+                        <SafeText>{record.position || record.role || 'Employee'}</SafeText>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">
+                        <SafeText>{record.checkIn}</SafeText>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">
+                        <SafeText>{record.checkOut}</SafeText>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">
+                        <SafeText>{record.workingHours}</SafeText>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusConfig(record.status || 'Present', record.checkIn).color}`}>
+                        <FontAwesomeIcon icon={getStatusConfig(record.status || 'Present', record.checkIn).icon} className="mr-1" />
+                        <SafeText>{getStatusConfig(record.status || 'Present', record.checkIn).label}</SafeText>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">
+                        {record.location ? (
+                          <span className="flex items-center">
+                            <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-1 text-gray-400" />
+                            <SafeText>{record.location}</SafeText>
+                          </span>
+                        ) : (
+                          '-'
+                        )}
+                      </span>
+                    </td>
+                  </tr>
                 );
               })}
             </tbody>
@@ -1739,7 +1735,7 @@ const MyAttendancePage = () => {
               onChange={e => { setAdminFilter(f => ({ ...f, status: e.target.value })); setAdminPage(1); }}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
               <option value="">All Statuses</option>
-              {['present','absent','late','half_day','leave'].map(s => (
+              {['present', 'absent', 'late', 'half_day', 'leave'].map(s => (
                 <option key={s} value={s}>{statusLabelHR(s)}</option>
               ))}
             </select>
@@ -1836,12 +1832,12 @@ const MyAttendancePage = () => {
                 <select value={markForm.status}
                   onChange={e => setMarkForm(f => ({ ...f, status: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                  {['present','absent','late','half_day','leave'].map(s => (
+                  {['present', 'absent', 'late', 'half_day', 'leave'].map(s => (
                     <option key={s} value={s}>{statusLabelHR(s)}</option>
                   ))}
                 </select>
               </div>
-              {['present','late','half_day'].includes(markForm.status) && (
+              {['present', 'late', 'half_day'].includes(markForm.status) && (
                 <div className="grid grid-cols-2 gap-3">
                   {/* Check-In AM/PM picker */}
                   <div>
@@ -1857,7 +1853,7 @@ const MyAttendancePage = () => {
                       <select value={checkinPicker.minute}
                         onChange={e => setCheckinPicker(p => ({ ...p, minute: e.target.value }))}
                         className="flex-1 border border-gray-300 rounded-lg px-2 py-2 text-sm">
-                        {['00','05','10','15','20','25','30','35','40','45','50','55'].map(m => (
+                        {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
                           <option key={m} value={m}>{m}</option>
                         ))}
                       </select>
@@ -1883,7 +1879,7 @@ const MyAttendancePage = () => {
                       <select value={checkoutPicker.minute}
                         onChange={e => setCheckoutPicker(p => ({ ...p, minute: e.target.value }))}
                         className="flex-1 border border-gray-300 rounded-lg px-2 py-2 text-sm">
-                        {['00','05','10','15','20','25','30','35','40','45','50','55'].map(m => (
+                        {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
                           <option key={m} value={m}>{m}</option>
                         ))}
                       </select>

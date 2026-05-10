@@ -263,7 +263,7 @@ const TopHeader = ({
     <header className="bg-white border-b border-gray-200 py-3 px-4 md:px-6 flex justify-between items-center shadow-sm">
       {/* Left section - Hamburger menu and Logo */}
       <div className="flex items-center gap-3">
-        <button 
+        <button
           onClick={() => toggleSidebar()}
           className="text-gray-500 hover:text-blue-600 focus:outline-none p-2 rounded-md hover:bg-gray-100 transition-colors md:hidden"
           aria-label="Toggle Sidebar"
@@ -437,8 +437,8 @@ const TopHeader = ({
               strokeWidth="2"
               viewBox="0 0 24 24"
             >
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
-              <path d="M9 12l2 2l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+              <path d="M9 12l2 2l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
             </svg>
             <h3 className="text-xl font-bold text-green-700 mb-2 text-center">Logout Successful!</h3>
             <p className="text-gray-600 text-center mb-1">

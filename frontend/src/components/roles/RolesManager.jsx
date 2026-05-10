@@ -3,10 +3,10 @@ import axios from "axios";
 import CreateRoleModal from "./CreateRoleModal";
 
 // Use environment-aware API URL for Vite
-const API_URL = import.meta.env.VITE_API_BASE_URL || 
-               (window.location.hostname === 'localhost' ? 
-               'https://localhost:8004' : 
-               'https://ratilalsons-backend-api.onrender.com');
+const API_URL = import.meta.env.VITE_API_BASE_URL ||
+  (window.location.hostname === 'localhost' ?
+    'https://localhost:8004' :
+    'https://ratilalsons-backend-api.onrender.com');
 
 function RolesManager() {
   const [roles, setRoles] = useState([]);
@@ -40,17 +40,17 @@ function RolesManager() {
     try {
       setLoading(true);
       const token = localStorage.getItem("access_token");
-      
+
       if (!token) {
         setError("Authentication required");
         setLoading(false);
         return;
       }
-      
+
       const response = await axios.get(`${API_URL}/api/roles/`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       setRoles(response.data);
       setAvailableRoles(response.data);
       setLoading(false);
@@ -82,7 +82,7 @@ function RolesManager() {
       });
       setIsEditing(false);
     }
-    
+
     setShowModal(true);
   };
 
@@ -114,7 +114,7 @@ function RolesManager() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormAlert({ message: "", type: "" });
-    
+
     try {
       const token = localStorage.getItem("access_token");
       if (!token) {
@@ -124,15 +124,15 @@ function RolesManager() {
         });
         return;
       }
-      
+
       // Prepare role data, ensuring report_to is properly handled
       const roleData = {
         ...currentRole,
         report_to: currentRole.report_to || null // Ensure report_to is null if not selected
       };
-      
+
       console.log(`[RolesManager] ${isEditing ? 'Updating' : 'Creating'} role with data:`, roleData);
-      
+
       // Create or update role
       let response;
       if (isEditing) {
@@ -158,7 +158,7 @@ function RolesManager() {
           type: "success"
         });
       }
-      
+
       setShowModal(false);
       fetchRoles(); // Refresh roles list to show the latest data
     } catch (err) {
@@ -176,19 +176,19 @@ function RolesManager() {
     if (!window.confirm(`Are you sure you want to delete the role "${name}"?`)) {
       return;
     }
-    
+
     try {
       const token = localStorage.getItem("access_token");
-      
+
       await axios.delete(`${API_URL}/api/roles/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       setFormAlert({
         message: "Role deleted successfully!",
         type: "success"
       });
-      
+
       fetchRoles();
     } catch (err) {
       console.error("Error deleting role:", err);
@@ -225,7 +225,7 @@ function RolesManager() {
           Create Role
         </button>
       </div>
-      
+
       {/* Organization Hierarchy Info Card */}
       <div className="bg-white rounded-lg shadow-sm border border-blue-100 p-4 mb-6">
         <div className="flex">
@@ -262,9 +262,8 @@ function RolesManager() {
       </div>
 
       {formAlert.message && (
-        <div className={`mb-4 p-3 rounded ${
-          formAlert.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
+        <div className={`mb-4 p-3 rounded ${formAlert.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}>
           {formAlert.message}
         </div>
       )}
@@ -376,7 +375,7 @@ function RolesManager() {
       </div>
 
       {/* Enhanced Create/Edit Role Modal */}
-      <CreateRoleModal 
+      <CreateRoleModal
         show={showModal}
         onHide={() => setShowModal(false)}
         role={currentRole}

@@ -337,7 +337,7 @@ const UserProfiles = () => {
     setError("");
     try {
       const userId = editingUser.id || editingUser.user_id || editingUser._id;
-      
+
       // Get role names for the selected role IDs
       const selectedRoleNames = editUserData.role_ids.map(roleId => {
         const role = roles.find(r => r.id === roleId);
@@ -388,7 +388,7 @@ const UserProfiles = () => {
 
       const responseData = await res.json();
       console.log("Backend response:", responseData);
-      
+
       // Check if the roles were updated correctly
       if (responseData.roles !== payload.roles) {
         console.warn("Role mismatch! Sent:", payload.roles, "Received:", responseData.roles);

@@ -18,7 +18,7 @@ const PermissionDebugger = () => {
       }
 
       console.log('Checking user permissions...');
-      
+
       // Try to fetch user info from the backend
       const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/auth/me', {
         headers: {
@@ -68,7 +68,7 @@ const PermissionDebugger = () => {
       });
 
       const responseData = await response.json();
-      
+
       if (response.ok) {
         toast.success('Test employee created successfully!');
         console.log('Test employee creation successful:', responseData);
@@ -93,7 +93,7 @@ const PermissionDebugger = () => {
   return (
     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-6">
       <h3 className="text-lg font-semibold text-blue-900 mb-3">Permission Debugger</h3>
-      
+
       {userInfo ? (
         <div className="space-y-2 text-sm">
           <p><strong>User ID:</strong> {userInfo.user_id || userInfo.id}</p>
@@ -104,7 +104,7 @@ const PermissionDebugger = () => {
           {userInfo.token_data && (
             <p><strong>Token Roles:</strong> {JSON.stringify(userInfo.token_data.roles)}</p>
           )}
-          
+
           <div className="mt-4">
             <button
               onClick={testEmployeeCreation}
@@ -117,7 +117,7 @@ const PermissionDebugger = () => {
       ) : (
         <p className="text-red-600">Failed to load user information</p>
       )}
-      
+
       <div className="mt-4 text-xs text-gray-600">
         <p>This debugger helps identify permission issues. Remove this component in production.</p>
       </div>

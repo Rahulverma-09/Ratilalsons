@@ -15,16 +15,16 @@ const DashboardContainer = () => {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [allEmployeeAttendance, setAllEmployeeAttendance] = useState([]);
   const [error, setError] = useState(null);
-  
+
   // User Role Information
   const [isAdmin, setIsAdmin] = useState(false);
   const [isHR, setIsHR] = useState(false);
-  
+
   // Initialize and load data
   useEffect(() => {
     fetchCurrentUser();
   }, []);
-  
+
   // Load data after authentication
   useEffect(() => {
     if (currentUser) {
@@ -43,14 +43,14 @@ const DashboardContainer = () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) return;
-      
+
       const response = await fetch(`${API_BASE_URL}/api/attendance/debug/user-permissions`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         console.log('🔧 DEBUG: User permissions check result:', result);
@@ -75,16 +75,16 @@ const DashboardContainer = () => {
   // Check user roles and set permissions
   const checkUserRoles = () => {
     if (!currentUser) return;
-    
+
     console.log('🔒 Checking roles for user:', currentUser);
-    
+
     // Admin check
-    const hasAdminRole = 
-      (currentUser.role || '').toLowerCase() === 'admin' || 
+    const hasAdminRole =
+      (currentUser.role || '').toLowerCase() === 'admin' ||
       (Array.isArray(currentUser.roles) && currentUser.roles.some(r => r.toLowerCase().includes('admin'))) ||
       !currentUser.reports_to ||
       currentUser.reports_to === null;
-    
+
     // HR check - more lenient
     const hasHRRole =
       (currentUser.role || '').toLowerCase().includes('hr') ||
@@ -92,23 +92,23 @@ const DashboardContainer = () => {
       (currentUser.role || '').toLowerCase() === 'hr' ||
       (Array.isArray(currentUser.roles) && currentUser.roles.some(r => r.toLowerCase().includes('hr'))) ||
       (Array.isArray(currentUser.role_names) && currentUser.role_names.some(r => r.toLowerCase().includes('hr')));
-    
+
     setIsAdmin(hasAdminRole);
     setIsHR(hasHRRole);
-    
+
     console.log('🔒 User Role Check - Admin:', hasAdminRole, 'HR:', hasHRRole);
     console.log('🔒 Current user role field:', currentUser.role);
     console.log('🔒 Current user roles array:', currentUser.roles);
     console.log('🔒 Current user role_names:', currentUser.role_names);
   };
-  
+
   // Helper for permission checks
   const hasPermission = (role) => {
     if (role === 'admin') return isAdmin;
     if (role === 'hr') return isHR;
     return false;
   };
-  
+
   // Fetch current user information
   const fetchCurrentUser = async () => {
     try {
@@ -117,14 +117,14 @@ const DashboardContainer = () => {
         setLoading(false);
         return;
       }
-      
+
       const response = await fetch(`${API_BASE_URL}/api/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const userData = await response.json();
         setCurrentUser(userData);
@@ -132,7 +132,7 @@ const DashboardContainer = () => {
       } else {
         console.error('Failed to fetch current user');
       }
-      
+
       setLoading(false);
     } catch (error) {
       console.error('Error fetching current user:', error);
@@ -154,11 +154,11 @@ const DashboardContainer = () => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         console.log('📡 Raw employee response:', result);
-        
+
         // Handle the staff API response format
         let filteredEmployees = [];
         if (result.success && result.data) {
@@ -166,12 +166,12 @@ const DashboardContainer = () => {
         } else if (Array.isArray(result)) {
           filteredEmployees = result;
         }
-        
+
         // Additional filtering to exclude customers
-        filteredEmployees = filteredEmployees.filter(emp => 
+        filteredEmployees = filteredEmployees.filter(emp =>
           !((emp.role || '').toLowerCase() === 'customer')
         );
-        
+
         setEmployees(filteredEmployees);
         console.log(`✅ ${filteredEmployees.length} employees loaded`);
       } else {
@@ -184,13 +184,13 @@ const DashboardContainer = () => {
               'Content-Type': 'application/json'
             }
           });
-          
+
           if (fallbackResponse.ok) {
             const fallbackResult = await fallbackResponse.json();
-            const filteredEmployees = Array.isArray(fallbackResult) 
+            const filteredEmployees = Array.isArray(fallbackResult)
               ? fallbackResult.filter(emp => !((emp.role || '').toLowerCase() === 'customer'))
               : [];
-            
+
             setEmployees(filteredEmployees);
             console.log(`✅ ${filteredEmployees.length} employees loaded (fallback)`);
           }
@@ -202,15 +202,15 @@ const DashboardContainer = () => {
       console.error('Error fetching employees:', error);
     }
   };
-  
+
   // Fetch dashboard statistics
   const fetchDashboardStats = async () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) return;
-      
+
       console.log('📡 Fetching dashboard stats from:', `${API_BASE_URL}/api/attendance/admin/dashboard-stats`);
-      
+
       // Use the correct attendance endpoint for dashboard stats
       const response = await fetch(`${API_BASE_URL}/api/attendance/admin/dashboard-stats`, {
         headers: {
@@ -218,9 +218,9 @@ const DashboardContainer = () => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       console.log('📡 Dashboard stats response status:', response.status);
-      
+
       if (response.ok) {
         const result = await response.json();
         setDashboardStats(result.data || result);
@@ -228,7 +228,7 @@ const DashboardContainer = () => {
       } else {
         const errorText = await response.text();
         console.error('Failed to fetch dashboard stats', response.status, errorText);
-        
+
         // Try alternative endpoint
         try {
           console.log('📡 Trying alternative endpoint: /api/attendance/statistics');
@@ -238,16 +238,16 @@ const DashboardContainer = () => {
               'Content-Type': 'application/json'
             }
           });
-          
+
           console.log('📡 Alternative endpoint status:', altResponse.status);
-          
+
           if (altResponse.ok) {
             const altResult = await altResponse.json();
             setDashboardStats(altResult.data || altResult);
             console.log('📊 Dashboard stats loaded from alternative endpoint:', altResult);
           } else {
             console.error('Alternative endpoint also failed:', altResponse.status);
-            
+
             // Try the leave dashboard-stats endpoint
             try {
               console.log('📡 Trying leave dashboard-stats endpoint');
@@ -257,7 +257,7 @@ const DashboardContainer = () => {
                   'Content-Type': 'application/json'
                 }
               });
-              
+
               if (leaveStatsResponse.ok) {
                 const leaveStatsResult = await leaveStatsResponse.json();
                 console.log('📊 Leave stats loaded:', leaveStatsResult);
@@ -285,7 +285,7 @@ const DashboardContainer = () => {
       if (!token) return;
 
       console.log('📡 Fetching attendance from:', `${API_BASE_URL}/api/attendance/admin/all`);
-      
+
       // Use the correct attendance endpoint
       const response = await fetch(`${API_BASE_URL}/api/attendance/admin/all`, {
         headers: {
@@ -293,22 +293,22 @@ const DashboardContainer = () => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       console.log('📡 Attendance response status:', response.status);
-      
+
       if (response.ok) {
         const result = await response.json();
         console.log('✅ Attendance data result:', result);
-        
+
         // Check if result has the expected structure
         if (result.success && result.data) {
           // Process attendance records for admin/HR view
           setAllEmployeeAttendance(result.data || []);
-          
+
           // Also set current user's attendance if available
           const currentUserId = currentUser?.user_id || currentUser?.id;
           if (currentUserId && Array.isArray(result.data)) {
-            const userAttendance = result.data.filter(record => 
+            const userAttendance = result.data.filter(record =>
               record.employee_id === currentUserId
             );
             setMyAttendance(userAttendance);
@@ -317,12 +317,12 @@ const DashboardContainer = () => {
           console.log('Unexpected attendance data structure:', result);
           setAllEmployeeAttendance([]);
         }
-        
+
         console.log('✅ Attendance data loaded');
       } else {
         const errorText = await response.text();
         console.error('Failed to fetch attendance data', response.status, errorText);
-        
+
         // Try alternative endpoint for personal attendance only
         try {
           console.log('📡 Trying personal attendance endpoint');
@@ -332,9 +332,9 @@ const DashboardContainer = () => {
               'Content-Type': 'application/json'
             }
           });
-          
+
           console.log('📡 Personal attendance response status:', personalResponse.status);
-          
+
           if (personalResponse.ok) {
             const personalResult = await personalResponse.json();
             console.log('✅ Personal attendance loaded:', personalResult);
@@ -357,7 +357,7 @@ const DashboardContainer = () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) return;
-      
+
       // Use the unified leave endpoint
       const response = await fetch(`${API_BASE_URL}/api/attendance/leave/admin/all?page=1&limit=20`, {
         headers: {
@@ -365,10 +365,10 @@ const DashboardContainer = () => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
-        
+
         if (result.success) {
           setLeaveRequests(result.data || []);
           console.log('✅ Leave requests loaded');
@@ -386,9 +386,9 @@ const DashboardContainer = () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) return;
-      
+
       const userId = currentUser.user_id || currentUser.id;
-      
+
       const response = await fetch(`${API_BASE_URL}/api/attendance/checkin`, {
         method: 'POST',
         headers: {
@@ -401,7 +401,7 @@ const DashboardContainer = () => {
           status: 'present'
         })
       });
-      
+
       if (response.ok) {
         alert('Check-in recorded successfully!');
         fetchAttendance(); // Refresh attendance data
@@ -413,15 +413,15 @@ const DashboardContainer = () => {
       alert('Error during check-in');
     }
   };
-  
+
   // Check-out handler
   const handleCheckOut = async () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) return;
-      
+
       const userId = currentUser.user_id || currentUser.id;
-      
+
       const response = await fetch(`${API_BASE_URL}/api/attendance/checkout`, {
         method: 'POST',
         headers: {
@@ -433,7 +433,7 @@ const DashboardContainer = () => {
           date: new Date().toISOString().split('T')[0]
         })
       });
-      
+
       if (response.ok) {
         alert('Check-out recorded successfully!');
         fetchAttendance(); // Refresh attendance data
@@ -445,27 +445,27 @@ const DashboardContainer = () => {
       alert('Error during check-out');
     }
   };
-  
+
   // Leave request approval handler
   const handleLeaveApproval = async (requestId, action, reason) => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) return;
-      
+
       const endpoint = `${API_BASE_URL}/api/attendance/leave/admin/action/${requestId}`;
-      
+
       const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           action: action,
-          remarks: reason 
+          remarks: reason
         })
       });
-      
+
       if (response.ok) {
         alert(`Leave request ${action === 'approve' ? 'approved' : 'rejected'} successfully!`);
         fetchLeaveRequests(); // Refresh leave data
@@ -477,13 +477,13 @@ const DashboardContainer = () => {
       alert(`Error ${action}ing leave request`);
     }
   };
-  
+
   // Submit leave request handler
   const handleSubmitLeaveRequest = async (leaveData) => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) return;
-      
+
       const response = await fetch(`${API_BASE_URL}/api/attendance/leave/request`, {
         method: 'POST',
         headers: {
@@ -492,7 +492,7 @@ const DashboardContainer = () => {
         },
         body: JSON.stringify(leaveData)
       });
-      
+
       if (response.ok) {
         alert('Leave request submitted successfully!');
         fetchLeaveRequests(); // Refresh leave data
@@ -504,7 +504,7 @@ const DashboardContainer = () => {
       alert('Error submitting leave request');
     }
   };
-  
+
   // Loading state
   if (loading) {
     return (
@@ -514,14 +514,14 @@ const DashboardContainer = () => {
       </div>
     );
   }
-  
+
   // Not authenticated state
   if (!currentUser) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <div className="text-red-500 text-xl mb-4">Please log in to access the dashboard</div>
-        <button 
-          onClick={() => window.location.href = '/login'} 
+        <button
+          onClick={() => window.location.href = '/login'}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
           Go to Login
@@ -536,8 +536,8 @@ const DashboardContainer = () => {
       <div className="flex flex-col items-center justify-center h-screen">
         <div className="text-red-500 text-xl mb-4">Error Loading Dashboard</div>
         <div className="text-gray-600 mb-4">{error}</div>
-        <button 
-          onClick={handleRetry} 
+        <button
+          onClick={handleRetry}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
           Retry
@@ -545,7 +545,7 @@ const DashboardContainer = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Content Area */}
@@ -553,13 +553,13 @@ const DashboardContainer = () => {
         {/* Always show Dashboard content */}
         <div className="space-y-6">
           {(isAdmin || isHR) ? (
-            <Dashboard 
-              dashboardStats={dashboardStats} 
-              employees={employees} 
+            <Dashboard
+              dashboardStats={dashboardStats}
+              employees={employees}
               hasPermission={hasPermission}
             />
           ) : (
-            <EmployeeDashboard 
+            <EmployeeDashboard
               userDetails={currentUser}
               userAttendance={myAttendance}
               userLeaves={leaveRequests.filter(leave => leave.user_id === (currentUser.user_id || currentUser.id))}

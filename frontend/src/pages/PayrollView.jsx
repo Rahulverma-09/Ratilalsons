@@ -27,7 +27,7 @@ export default function PayrollView() {
         const response = await fetch(PERMISSIONS_API, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           setPermissions(data.permissions || []);
@@ -40,16 +40,16 @@ export default function PayrollView() {
         setLoading(false);
       }
     };
-    
+
     fetchPermissions();
-    
+
     // Get role names from localStorage if available - check multiple storage keys
     try {
       let user = null;
-      
+
       // Try multiple localStorage keys where user data might be stored
       const userKeys = ["user", "currentUser", "user_info"];
-      
+
       for (const key of userKeys) {
         const userStr = localStorage.getItem(key);
         if (userStr) {
@@ -64,7 +64,7 @@ export default function PayrollView() {
           }
         }
       }
-      
+
       if (user && (user.roles || user.role || user.role_names)) {
         // Handle different role data structures
         if (Array.isArray(user.roles)) {
@@ -76,12 +76,12 @@ export default function PayrollView() {
             }
           });
         }
-        
+
         // Handle single role field
         if (user.role && typeof user.role === "string") {
           setRoleNames(prev => [...prev, user.role.trim().toLowerCase()]);
         }
-        
+
         // Handle role_names array
         if (Array.isArray(user.role_names)) {
           user.role_names.forEach(roleName => {
@@ -90,7 +90,7 @@ export default function PayrollView() {
             }
           });
         }
-        
+
         // Remove duplicates
         setRoleNames(prev => [...new Set(prev)]);
       }
@@ -112,24 +112,24 @@ export default function PayrollView() {
 
   // Check for necessary payroll permission
   const canViewPayroll = permissions.some(code => PAYROLL_PERMISSION_CODES.includes(code));
-  
+
   // Also allow HR to view payroll if they have HR-related permissions
-  const hasHRPermissions = permissions.some(code => 
+  const hasHRPermissions = permissions.some(code =>
     ['hr:access', 'employee:read', 'employee:manage', 'payroll:read'].includes(code)
   );
-  
+
   // Also allow admin to view payroll if they have admin permissions
-  const hasAdminPermissions = permissions.some(code => 
+  const hasAdminPermissions = permissions.some(code =>
     ['admin:access', 'payroll:admin', 'payroll:manage'].includes(code)
   );
 
   // Check role names for fallback access
-  const hasHRRole = roleNames.some(role => 
+  const hasHRRole = roleNames.some(role =>
     ['hr', 'human_resources', 'human resource', 'humanresources', 'hr_staff'].includes(role.toLowerCase())
   );
 
-  const hasAdminRole = roleNames.some(role => 
-    ['admin', 'administrator', 'superuser', 'root'].includes(role.toLowerCase()) && 
+  const hasAdminRole = roleNames.some(role =>
+    ['admin', 'administrator', 'superuser', 'root'].includes(role.toLowerCase()) &&
     !role.includes('hr') // Exclude HR admin roles
   );
 
@@ -137,7 +137,7 @@ export default function PayrollView() {
 
   console.log('=== PAYROLL ACCESS DEBUG ===');
   console.log('Permissions:', permissions);
-  console.log('Role Names:', roleNames); 
+  console.log('Role Names:', roleNames);
   console.log('canViewPayroll:', canViewPayroll);
   console.log('hasHRPermissions:', hasHRPermissions);
   console.log('hasAdminPermissions:', hasAdminPermissions);
@@ -169,7 +169,7 @@ export default function PayrollView() {
   let user = {};
   let userId = null;
   let username = null;
-  
+
   try {
     const userKeys = ["user", "currentUser", "user_info"];
     for (const key of userKeys) {
@@ -210,34 +210,34 @@ export default function PayrollView() {
   ].filter(Boolean).length >= 3;
 
   // Infer payroll access by specific permissions and role names
-  const isAdmin = permissions.some(code => 
-      code.startsWith("admin:") || 
-      code.includes("admin:access") || 
-      code.includes("payroll:admin") ||
-      code.includes("payroll:manage")
-    ) || 
-    roleNames.some(r => 
-      (r.includes("admin") && !r.includes("hr")) || 
-      r.includes("superuser") || 
+  const isAdmin = permissions.some(code =>
+    code.startsWith("admin:") ||
+    code.includes("admin:access") ||
+    code.includes("payroll:admin") ||
+    code.includes("payroll:manage")
+  ) ||
+    roleNames.some(r =>
+      (r.includes("admin") && !r.includes("hr")) ||
+      r.includes("superuser") ||
       r.includes("root") ||
       r.toLowerCase() === "admin" ||
       r === "administrator"
     ) ||
     // Fallback: check if user_id is 1 (usually admin) or username is admin
-    userId === 1 || userId === "1" || 
+    userId === 1 || userId === "1" ||
     (username && username.toLowerCase() === "admin") ||
     // Multi-domain access indicates admin privileges (but not if user is HR)
     (hasMultipleDomainAccess && !roleNames.some(r => r.includes("hr")));
-  
-  const isHR = permissions.some(code => 
-      code.startsWith("hr:") || 
-      code.includes("hr:access") ||
-      code.includes("payroll:read") ||
-      code.includes("employee:manage")
-    ) || 
-    roleNames.some(r => 
-      r.includes("hr") || 
-      r.includes("human_resources") || 
+
+  const isHR = permissions.some(code =>
+    code.startsWith("hr:") ||
+    code.includes("hr:access") ||
+    code.includes("payroll:read") ||
+    code.includes("employee:manage")
+  ) ||
+    roleNames.some(r =>
+      r.includes("hr") ||
+      r.includes("human_resources") ||
       r.includes("human resource") ||
       r.includes("humanresources") ||
       r === "hr" ||
@@ -247,9 +247,9 @@ export default function PayrollView() {
     );
 
   // Define role detection variables for other roles first
-  const isClearlyHR = roleNames.some(r => 
-    r === "hr" || 
-    r.includes("hr") || 
+  const isClearlyHR = roleNames.some(r =>
+    r === "hr" ||
+    r.includes("hr") ||
     r.includes("human_resource") ||
     r.includes("human resource") ||
     r.includes("hrstaff")
@@ -346,10 +346,10 @@ export default function PayrollView() {
 // Add debug functions to window for testing
 window.debugPayrollDetection = () => {
   console.log('=== DEBUG PAYROLL DETECTION ===');
-  
+
   const userKeys = ["user", "currentUser", "user_info"];
   let user = {};
-  
+
   for (const key of userKeys) {
     const userStr = localStorage.getItem(key);
     if (userStr) {
@@ -364,7 +364,7 @@ window.debugPayrollDetection = () => {
       }
     }
   }
-  
+
   const roleNames = [];
   if (Array.isArray(user.roles)) {
     user.roles.forEach(r => {
@@ -378,7 +378,7 @@ window.debugPayrollDetection = () => {
   if (user.role && typeof user.role === "string") {
     roleNames.push(user.role.trim().toLowerCase());
   }
-  
+
   const payrollDetectionResults = {
     user: user,
     roleNames: roleNames,
@@ -389,9 +389,9 @@ window.debugPayrollDetection = () => {
       hasHRPermissions: "Check permissions manually"
     }
   };
-  
+
   console.log('Payroll detection results:', payrollDetectionResults);
-  
+
   return payrollDetectionResults;
 };
 

@@ -994,6 +994,12 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [manualItems, setManualItems] = useState([]);
   const [notes, setNotes] = useState("");
+  const [terms, setTerms] = useState([
+    "1. GST CHARGES AS APPLICABLE 18%",
+    "2. DELIVERY At Aburoad Rajsthan Site",
+    "3. Transportation As par Actual",
+    "4. PAYMENT- 30 DAY CREDIT"
+  ]);
   const [loading, setLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -1006,6 +1012,12 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
       setSelectedProducts([]);
       setManualItems([]);
       setNotes("");
+      setTerms([
+        "1. GST CHARGES AS APPLICABLE 18%",
+        "2. DELIVERY At Aburoad Rajsthan Site",
+        "3. Transportation As par Actual",
+        "4. PAYMENT- 30 DAY CREDIT"
+      ]);
       setError("");
       setShowManualEntry(false);
       setSearchTerm("");
@@ -1035,7 +1047,7 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
     if (exists) {
       setSelectedProducts(prev => prev.filter(p => p.product_id !== product.product_id));
     } else {
-      setSelectedProducts(prev => [...prev, { ...product, qty: 1, unit_price: product.price || 0 }]);
+      setSelectedProducts(prev => [...prev, { ...product, qty: 1, unit: 'nos', unit_price: product.price || 0 }]);
     }
   };
 
@@ -1046,7 +1058,7 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
   };
 
   const addManualItem = () => {
-    setManualItems(prev => [...prev, { name: "", qty: 1 }]);
+    setManualItems(prev => [...prev, { name: "", qty: 1, unit: 'nos' }]);
   };
 
   const updateManualItem = (idx, field, value) => {
@@ -1068,11 +1080,13 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
   const allItems = [
     ...selectedProducts.map(p => ({
       name: p.name,
-      qty: parseFloat(p.qty) || 0
+      qty: parseFloat(p.qty) || 0,
+      unit: p.unit || 'nos'
     })),
     ...manualItems.filter(m => m.name.trim()).map(m => ({
       name: m.name.trim(),
-      qty: parseFloat(m.qty) || 0
+      qty: parseFloat(m.qty) || 0,
+      unit: m.unit || 'nos'
     }))
   ];
 
@@ -1093,7 +1107,8 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
         body: JSON.stringify({
           vendor_id: vendorId,
           items: allItems,
-          notes: notes.trim() || null
+          notes: notes.trim() || null,
+          terms: terms
         }),
       });
       if (!res.ok) {
@@ -1121,7 +1136,7 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               <ShoppingCart className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Create Purchase Order</h2>
+              <h2 className="text-2xl font-bold text-white">Create Purchase Request</h2>
               <p className="text-purple-100 text-sm">Select products from catalog or add manually</p>
             </div>
           </div>
@@ -1245,16 +1260,31 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
                           <X className="w-4 h-4" />
                         </button>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-600">Quantity</label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={product.qty}
-                          onChange={e => updateSelectedProduct(product.product_id, 'qty', e.target.value)}
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                          onClick={e => e.stopPropagation()}
-                        />
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs text-gray-600">Unit</label>
+                          <select
+                            value={product.unit || 'nos'}
+                            onChange={e => updateSelectedProduct(product.product_id, 'unit', e.target.value)}
+                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          >
+                            <option value="nos">nos</option>
+                            <option value="kgs">kgs</option>
+                            <option value="case">case</option>
+                            <option value="pack">pack</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-600">Quantity</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={product.qty}
+                            onChange={e => updateSelectedProduct(product.product_id, 'qty', e.target.value)}
+                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                            onClick={e => e.stopPropagation()}
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1290,15 +1320,30 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
-                          <div>
-                            <label className="text-xs text-gray-600">Quantity</label>
-                            <input
-                              type="number"
-                              min="1"
-                              value={item.qty}
-                              onChange={e => updateManualItem(idx, 'qty', e.target.value)}
-                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                            />
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-xs text-gray-600">Unit</label>
+                              <select
+                                value={item.unit || 'nos'}
+                                onChange={e => updateManualItem(idx, 'unit', e.target.value)}
+                                className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              >
+                                <option value="nos">nos</option>
+                                <option value="kgs">kgs</option>
+                                <option value="case">case</option>
+                                <option value="pack">pack</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-600">Quantity</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.qty}
+                                onChange={e => updateManualItem(idx, 'qty', e.target.value)}
+                                className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                              />
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -1317,15 +1362,52 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
             </div>
 
             {/* Notes */}
-            <div className="mt-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Notes (Optional)</label>
-              <textarea
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                rows={2}
-                placeholder="Additional notes for this purchase order..."
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-              />
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Notes (Optional)</label>
+                <textarea
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  rows={4}
+                  placeholder="Additional notes for this purchase request..."
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-semibold text-gray-700">Terms & Conditions</label>
+                  <button
+                    type="button"
+                    onClick={() => setTerms([...terms, `${terms.length + 1}. `])}
+                    className="text-[10px] bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200"
+                  >
+                    + Add Term
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                  {terms.map((term, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={term}
+                        onChange={e => {
+                          const newTerms = [...terms];
+                          newTerms[idx] = e.target.value;
+                          setTerms(newTerms);
+                        }}
+                        className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setTerms(terms.filter((_, i) => i !== idx))}
+                        className="text-red-400 hover:text-red-600"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {error && (
@@ -1350,7 +1432,7 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               {loading ? (
                 <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> Creating Order...</>
               ) : (
-                <><FileText className="w-4 h-4" /> Create Purchase Order</>
+                <><FileText className="w-4 h-4" /> Create Purchase Request</>
               )}
             </button>
           </div>
@@ -1363,22 +1445,34 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
 // ─── Place Purchase Order Modal (Simple Entry) ───────────────────────────────────────────────
 const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
   const [vendorId, setVendorId] = useState("");
-  const [items, setItems] = useState([{ name: "", qty: "1", unit_price: "" }]);
+  const [items, setItems] = useState([{ name: "", qty: "1", unit: "nos", unit_price: "" }]);
   const [notes, setNotes] = useState("");
+  const [terms, setTerms] = useState([
+    "1. GST CHARGES AS APPLICABLE 18%",
+    "2. DELIVERY At Aburoad Rajsthan Site",
+    "3. Transportation As par Actual",
+    "4. PAYMENT- 30 DAY CREDIT"
+  ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (open) {
       setVendorId("");
-      setItems([{ name: "", qty: "1", unit_price: "" }]);
+      setItems([{ name: "", qty: "1", unit: "nos", unit_price: "" }]);
       setNotes("");
+      setTerms([
+        "1. GST CHARGES AS APPLICABLE 18%",
+        "2. DELIVERY At Aburoad Rajsthan Site",
+        "3. Transportation As par Actual",
+        "4. PAYMENT- 30 DAY CREDIT"
+      ]);
       setError("");
     }
   }, [open]);
 
   const addItem = () =>
-    setItems(prev => [...prev, { name: "", qty: "1", unit_price: "" }]);
+    setItems(prev => [...prev, { name: "", qty: "1", unit: "nos", unit_price: "" }]);
 
   const removeItem = idx =>
     setItems(prev => prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev);
@@ -1413,9 +1507,11 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
           items: validItems.map(it => ({
             name: it.name.trim(),
             qty: parseFloat(it.qty),
+            unit: it.unit || 'nos',
             unit_price: parseFloat(it.unit_price),
           })),
           notes: notes.trim() || null,
+          terms: terms,
           gst_percent: 18,
         }),
       });
@@ -1444,8 +1540,8 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               <ShoppingCart className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Place Purchase Order</h2>
-              <p className="text-blue-100 text-sm">Select vendor, add items and generate invoice</p>
+              <h2 className="text-2xl font-bold text-white">Place Purchase Request</h2>
+              <p className="text-blue-100 text-sm">Select vendor, add items and generate request</p>
             </div>
           </div>
           <button onClick={onClose} className="text-white hover:text-red-300 w-9 h-9 rounded-full bg-white bg-opacity-20 flex items-center justify-center transition-colors">
@@ -1496,6 +1592,7 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">#</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Item Name</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Unit</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Qty</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Unit Price (₹)</th>
                       <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total (₹)</th>
@@ -1518,11 +1615,23 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
                             />
                           </td>
                           <td className="px-4 py-2">
+                            <select
+                              value={item.unit || "nos"}
+                              onChange={e => updateItem(idx, "unit", e.target.value)}
+                              className="w-full border border-gray-200 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                            >
+                              <option value="nos">nos</option>
+                              <option value="kgs">kgs</option>
+                              <option value="case">case</option>
+                              <option value="pack">pack</option>
+                            </select>
+                          </td>
+                          <td className="px-4 py-2">
                             <input
                               type="number" min="0.01" step="any"
                               value={item.qty}
                               onChange={e => updateItem(idx, "qty", e.target.value)}
-                              className="w-20 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                              className="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                             />
                           </td>
                           <td className="px-4 py-2">
@@ -1531,7 +1640,7 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
                               value={item.unit_price}
                               onChange={e => updateItem(idx, "unit_price", e.target.value)}
                               placeholder="0.00"
-                              className="w-28 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                              className="w-24 border border-gray-200 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                             />
                           </td>
                           <td className="px-4 py-2 text-right font-semibold text-gray-800">₹{lineTotal.toFixed(2)}</td>
@@ -1553,16 +1662,53 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               </div>
             </div>
 
-            {/* Notes */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Notes (Optional)</label>
-              <textarea
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                rows={2}
-                placeholder="Additional notes for this order..."
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              />
+            {/* Notes & Terms */}
+            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Notes (Optional)</label>
+                <textarea
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  rows={4}
+                  placeholder="Additional notes for this request..."
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-semibold text-gray-700">Terms & Conditions</label>
+                  <button
+                    type="button"
+                    onClick={() => setTerms([...terms, `${terms.length + 1}. `])}
+                    className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
+                  >
+                    + Add Term
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                  {terms.map((term, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={term}
+                        onChange={e => {
+                          const newTerms = [...terms];
+                          newTerms[idx] = e.target.value;
+                          setTerms(newTerms);
+                        }}
+                        className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setTerms(terms.filter((_, i) => i !== idx))}
+                        className="text-red-400 hover:text-red-600"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Totals */}
@@ -1585,6 +1731,42 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               </div>
             </div>
 
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-semibold text-gray-700">Terms & Conditions</label>
+                  <button
+                    type="button"
+                    onClick={() => setTerms([...terms, `${terms.length + 1}. `])}
+                    className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
+                  >
+                    + Add Term
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                  {terms.map((term, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={term}
+                        onChange={e => {
+                          const newTerms = [...terms];
+                          newTerms[idx] = e.target.value;
+                          setTerms(newTerms);
+                        }}
+                        className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setTerms(terms.filter((_, i) => i !== idx))}
+                        className="text-red-400 hover:text-red-600"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
             {error && (
               <p className="text-red-600 text-sm mt-4 bg-red-50 px-4 py-3 rounded-xl border border-red-200">{error}</p>
             )}
@@ -1605,9 +1787,9 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all flex items-center gap-2"
             >
               {loading ? (
-                <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> Placing Order...</>
+                <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> Placing Request...</>
               ) : (
-                <><FileText className="w-4 h-4" /> Place Order &amp; Generate Invoice</>
+                <><FileText className="w-4 h-4" /> Place Request &amp; Generate Invoice</>
               )}
             </button>
           </div>
@@ -1630,91 +1812,123 @@ const InvoiceModal = ({ invoice, onClose }) => {
     : new Date().toLocaleDateString('en-IN');
 
   const printStyles = `
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,sans-serif;padding:32px;color:#111;font-size:13px;background:#fff}
-    .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #cbd5e1;padding-bottom:24px;margin-bottom:24px}
-    .company-name{font-size:26px;font-weight:900;color:#1e293b;letter-spacing:-0.5px}
-    .company-sub{color:#475569;font-style:italic;font-weight:600;margin-top:2px}
-    .address{margin-top:14px;color:#64748b;font-size:12px;line-height:1.7}
-    .gst-row{margin-top:8px;font-weight:700;color:#334155;font-size:11px}
-    .contact{text-align:right}
-    .contact-name{font-weight:900;font-size:17px;color:#1e293b}
-    .contact-phone{font-weight:700;color:#2563eb;font-size:15px;margin-top:2px}
-    .inv-meta{text-align:right;margin-top:32px}
-    .inv-label{font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:0.15em}
-    .inv-number{font-size:26px;font-weight:900;color:#1e293b;line-height:1}
-    .inv-dates{margin-top:8px;font-size:12px;color:#64748b;font-weight:600}
-    .inv-dates span{color:#ef4444}
-    .billing-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px}
-    .bill-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:18px}
-    .bill-label{font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:10px}
-    .bill-name{font-weight:900;font-size:17px;color:#1e293b}
-    .bill-sub{color:#64748b;font-size:12px;margin-top:3px}
-    .status-badge{display:inline-block;padding:4px 14px;border-radius:999px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;border:2px solid #bfdbfe;background:#eff6ff;color:#1d4ed8}
-    table{width:100%;border-collapse:collapse;margin-bottom:28px}
-    thead tr{background:#1e293b}
-    th{padding:11px 14px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#fff;font-weight:700}
-    th.r{text-align:right}
-    td{padding:11px 14px;border-bottom:1px solid #e2e8f0;font-size:13px;color:#374151}
-    td.r{text-align:right}
-    tr:nth-child(even) td{background:#f8fafc}
-    .tots-wrap{display:flex;justify-content:flex-end;margin-bottom:24px}
-    .tots{width:280px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}
-    .tot-row{display:flex;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #e2e8f0;font-size:13px;color:#374151}
-    .tot-grand{display:flex;justify-content:space-between;padding:13px 16px;background:#f0fdf4;font-size:17px;font-weight:900;color:#166534;border-top:2px solid #bbf7d0}
-    .notes{background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#713f12}
-    .footer{text-align:center;color:#94a3b8;font-size:11px;border-top:1px solid #e2e8f0;padding-top:14px;margin-top:20px}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 11px; color: #000; }
+    .container { width: 100%; border: 1px solid #000; padding: 15px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #000; padding: 5px; }
+    .header-title { text-align: center; font-weight: bold; font-size: 16px; padding: 10px; border-bottom: 1px solid #000; }
+    .bold { font-weight: bold; }
+    .items-table th { background: #f2f2f2; font-weight: bold; }
+    .total-section td { font-weight: bold; }
   `;
 
   const buildPrintContent = () => {
+    const netAmount = (invoice.items || []).reduce((sum, item) => sum + (parseFloat(item.total) || (parseFloat(item.qty) * parseFloat(item.rate)) || 0), 0);
+    const gstAmount = netAmount * 0.18;
+    const totalAmount = netAmount + gstAmount;
+
+    const numberToWords = (num) => {
+      const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+      const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+      const inWords = (n) => {
+        if (n < 20) return a[n];
+        if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
+        if (n < 1000) return a[Math.floor(n / 100)] + 'Hundred ' + (n % 100 !== 0 ? 'and ' + inWords(n % 100) : '');
+        if (n < 100000) return inWords(Math.floor(n / 1000)) + 'Thousand ' + (n % 1000 !== 0 ? inWords(n % 1000) : '');
+        if (n < 10000000) return inWords(Math.floor(n / 100000)) + 'Lakh ' + (n % 100000 !== 0 ? inWords(n % 100000) : '');
+        return inWords(Math.floor(n / 10000000)) + 'Crore ' + (n % 10000000 !== 0 ? inWords(n % 10000000) : '');
+      };
+      return inWords(Math.floor(num)) + ' Rupees Only';
+    };
+
     const itemsHtml = (invoice.items || []).map((item, idx) => `
       <tr>
-        <td style="text-align:center;font-weight:bold;">${idx + 1}</td>
-        <td><strong>${item.name || item.description || ''}</strong></td>
-        <td class="r">${item.qty || item.quantity || 0}</td>
+        <td style="text-align: center;">${idx + 1}</td>
+        <td>${item.name || item.description || ''}</td>
+        <td style="text-align: center;">${item.make || ''}</td>
+        <td style="text-align: center;">${item.hsn_code || ''}</td>
+        <td style="text-align: center;">${String(item.unit || 'NOS').toUpperCase()}</td>
+        <td style="text-align: center;">${item.qty || 0}</td>
       </tr>
     `).join('');
 
     return `
-      <div class="header">
-        <div>
-          <div class="company-name">RATILAL &amp; SONS</div>
-          <div class="company-sub">Retail Approved Distributor Of Petroleum</div>
-          <div class="address">
-            <strong>Regd. Office:</strong><br/>
-            Survey No. 166, Opp. Maruti Weigh Bridge, N.H.-8, Near Arpan, Shapar-360024<br/>
-            Email: ratilalandsons786@gmail.com
-          </div>
-          <div class="gst-row">PAN: AAUFR2909Q | CIN: U51909GJ2019PTC110073<br/>State Code: 24 (Gujarat) | GSTIN: 24AAUFR2909Q1ZT</div>
-        </div>
-        <div class="contact">
-          <div class="contact-name">Ramesh Sorathiya</div>
-          <div class="contact-phone">Mo. 8160110831</div>
-          <div class="inv-meta">
-            <div class="inv-label">Purchase Order</div>
-            <div class="inv-number">${invoice.invoice_number}</div>
-            <div class="inv-dates">Date: ${dateStr}</div>
+      <div class="container">
+        <div style="display: flex; align-items: center; padding: 20px; border-bottom: 1px solid #000;">
+          <img src="/Ratilal & Sons Logo.png" style="height: 80px; margin-right: 30px;" />
+          <div style="flex: 1;">
+            <div style="font-weight: bold; font-size: 28px; color: #70aedb; letter-spacing: 1px;">RATILAL &amp; SONS</div>
+            <div style="font-size: 11px; margin-top: 5px; color: #555;">
+              " Ratilal &amp; Sons House "<br/>
+              Corporate Office : Plot No. 49, Opp. Hanuman Temple, GIDC Anjar - Kachchh (Gujarat). 370110<br/>
+              Regd. Office : Ground Floor, Shop No - 1, Shree Hari Business Park, Bhuj-Bhachu by Pass Road, Anjar - Kachchh, Gujarat - 370110<br/>
+              Email ID : rsinfraprojects2014@gmail.com
+            </div>
           </div>
         </div>
-      </div>
-      <div class="billing-grid">
-        <div class="bill-box">
-          <div class="bill-label">Vendor Details:</div>
-          <div class="bill-name">${invoice.vendor_name || ''}</div>
-          ${invoice.vendor_company ? `<div class="bill-sub">${invoice.vendor_company}</div>` : ''}
-          ${invoice.vendor_email ? `<div class="bill-sub">${invoice.vendor_email}</div>` : ''}
-          ${invoice.vendor_phone ? `<div class="bill-sub">${invoice.vendor_phone}</div>` : ''}
+        
+        <div style="padding: 10px; border-bottom: 1px solid #000;">
+          <div style="text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 15px;">PURCHASE REQUEST</div>
+          <div style="display: flex; justify-content: space-between;">
+            <div style="width: 60%;">
+              <div class="bold" style="font-size: 13px;">${invoice.vendor_company || invoice.vendor_name}</div>
+              <div style="white-space: pre-line;">${invoice.vendor_address || 'Vendor Address'}</div>
+              <div>Phone: ${invoice.vendor_phone}</div>
+              <div>Email: ${invoice.vendor_email || ''}</div>
+              <div>GST NO: ${invoice.vendor_gstin}</div>
+              <div>Contact Person: ${invoice.vendor_contact_person}</div>
+            </div>
+            <div style="width: 35%; text-align: right;">
+              <div class="bold">Date:- ${dateStr}</div>
+              <div class="bold" style="margin-top: 10px;">${invoice.order_number || invoice.invoice_number}</div>
+            </div>
+          </div>
+        </div>
+        
+        <table class="items-table">
+          <thead>
+              <tr>
+                <th style="width: 5%;">NO</th>
+                <th style="width: 55%;">DESCRIPATION</th>
+                <th style="width: 10%;">Make</th>
+                <th style="width: 15%;">HSN CODE</th>
+                <th style="width: 8%;">UNIT</th>
+                <th style="width: 7%;">QTY</th>
+              </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+            ${Array(Math.max(0, 5 - (invoice.items || []).length)).fill(0).map(() => `
+              <tr style="height: 20px;"><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="border-top: 1px solid #000; padding: 10px;">
+          <div class="bold" style="text-decoration: underline; margin-bottom: 5px;">TERMS & CONDITIONS</div>
+          <div style="margin-left: 15px;">
+            ${(Array.isArray(invoice.terms) ? invoice.terms : [
+              "1. GST CHARGES AS APPLICABLE 18%",
+              "2. DELIVERY At Aburoad Rajsthan Site",
+              "3. Transportation As par Actual",
+              "4. PAYMENT- 30 DAY CREDIT"
+            ]).map(t => `${t}<br>`).join('')}
+          </div>
+        </div>
+        <div style="border-top: 1px solid #000; padding: 10px;">
+          <div class="bold" style="text-decoration: underline; margin-bottom: 5px;">DELIVERY ADDRESS</div>
+          <div class="bold">RATILAL & SONS ,</div>
+          <div>RMC PLANT, PKG T8, NWR RAILWAY PROJOECTS,</div>
+          <div>SUVRVEY NO. 655,656, 657,658,658, .</div>
+          <div>ABU AMBAJI ROAD, OPP. SIYAWA PETROL PUMP, BEHIND HAPPY RESTURANT</div>
+          <div>SITE CONTECT PARSON- ANDAND PARMAR-(M) 9825917636</div>
+          <div class="bold">GST NUMBER - 24BFIPS0859D1ZF</div>
+        </div>
+        <div style="margin-top: 30px; display: flex; flex-direction: column; align-items: flex-end; padding-right: 20px; border-top: 1px solid #000; padding-top: 20px;">
+          <div class="bold" style="margin-bottom: 50px;">RATILAL & SONS</div>
+          <div class="bold" style="border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; text-transform: uppercase;">AUTHORISED SIGNATORY</div>
         </div>
       </div>
-      <h3 style="font-size:14px;font-weight:900;color:#1e293b;text-transform:uppercase;letter-spacing:0.15em;border-bottom:2px solid #1e293b;display:inline-block;padding-bottom:3px;margin-bottom:14px">Purchase Order Items</h3>
-      <table>
-        <thead><tr>
-          <th style="width:60px;text-align:center;">Sr. No.</th><th>Item Description</th><th class="r" style="width:100px;">Quantity</th>
-        </tr></thead>
-        <tbody>${itemsHtml}</tbody>
-      </table>
-      ${invoice.notes ? `<div class="notes"><strong>Special Instructions / Notes:</strong> ${invoice.notes}</div>` : ''}
-      <div class="footer">This is a computer-generated purchase order. &nbsp;|&nbsp; For queries: ratilalandsons786@gmail.com or call 8160110831</div>
     `;
   };
 
@@ -1766,7 +1980,7 @@ const InvoiceModal = ({ invoice, onClose }) => {
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       
       // Download the PDF
-      pdf.save(`Purchase_Order_${invoice.invoice_number}.pdf`);
+      pdf.save(`Purchase_Request_${invoice.invoice_number}.pdf`);
       
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -1784,7 +1998,7 @@ const InvoiceModal = ({ invoice, onClose }) => {
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Purchase Order</h2>
+              <h2 className="text-2xl font-bold text-white">Purchase Request</h2>
               <p className="text-purple-100 text-sm">{invoice.invoice_number} &mdash; {invoice.vendor_name}</p>
             </div>
           </div>
@@ -1794,67 +2008,109 @@ const InvoiceModal = ({ invoice, onClose }) => {
         </div>
 
         {/* Invoice Body (preview) */}
-        <div className="overflow-y-auto flex-1 p-8">
-          {/* Company Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start gap-6 pb-8 border-b-2 border-slate-100 mb-8">
-            <div className="flex-1">
-              <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight leading-none">RATILAL &amp; SONS</h2>
-              <p className="text-slate-600 font-semibold italic mt-1">Retail Approved Distributor Of Petroleum</p>
-              <div className="mt-4 space-y-0.5 text-slate-500 text-sm">
-                <p className="font-semibold text-slate-700">Regd. Office:</p>
-                <p>Survey No. 166, Opp. Maruti Weigh Bridge, N.H.-8, Near Arpan, Shapar-360024</p>
-                <p>Email: ratilalandsons786@gmail.com</p>
-                <div className="pt-1 flex flex-wrap gap-x-4 gap-y-0.5 font-semibold text-slate-700 text-xs">
-                  <span>PAN: AAUFR2909Q</span>
-                  <span>CIN: U51909GJ2019PTC110073</span>
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-0.5 font-semibold text-slate-700 text-xs">
-                  <span>State Code: 24 (Gujarat)</span>
-                  <span>GSTIN: 24AAUFR2909Q1ZT</span>
+        <div className="overflow-y-auto flex-1 p-8 bg-gray-50">
+          <div className="bg-white shadow-sm border border-black p-10 max-w-[210mm] mx-auto min-h-[297mm]">
+            {/* Header */}
+            <div className="flex items-center p-6 border border-black mb-0">
+              <img src="/Ratilal & Sons Logo.png" alt="Logo" className="h-20 mr-8" />
+              <div className="flex-1">
+                <div className="font-bold text-3xl text-[#70aedb] tracking-wider">RATILAL & SONS</div>
+                <div className="text-xs text-gray-600 mt-1">
+                  " Ratilal & Sons House "<br/>
+                  Corporate Office : Plot No. 49, Opp. Hanuman Temple, GIDC Anjar - Kachchh (Gujarat). 370110<br/>
+                  Regd. Office : Ground Floor, Shop No - 1, Shree Hari Business Park, Bhuj-Bhachu by Pass Road, Anjar - Kachchh, Gujarat - 370110<br/>
+                  Email ID : rsinfraprojects2014@gmail.com
                 </div>
               </div>
             </div>
-            <div className="text-right min-w-[200px] border-2 border-slate-200 rounded-xl p-4 bg-slate-50">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Purchase Order</p>
-              <p className="text-2xl font-black text-slate-900 leading-none mb-3">{invoice.invoice_number}</p>
-              <div className="text-sm font-bold text-slate-500 space-y-1 mb-4">
-                <p>Date: <span className="text-slate-800">{dateStr}</span></p>
-              </div>
-              <div className="border-t border-slate-300 pt-3 mt-3">
-                <p className="text-xs font-semibold text-slate-500 mb-1">Contact Person:</p>
-                <p className="font-bold text-slate-900">Ramesh Sorathiya</p>
-                <p className="font-bold text-purple-600">Mo: 8160110831</p>
-              </div>
-            </div>
-          </div>
 
-          {/* Billing row */}
-          <div className="grid grid-cols-1 gap-6 mb-8">
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Vendor Details:</p>
-              <p className="font-extrabold text-slate-900 text-xl">{invoice.vendor_name}</p>
-              {invoice.vendor_company && <p className="text-slate-600 text-sm mt-0.5">{invoice.vendor_company}</p>}
-              {invoice.vendor_email && <p className="text-slate-400 text-sm mt-0.5">{invoice.vendor_email}</p>}
-              {invoice.vendor_phone && <p className="text-slate-400 text-sm mt-0.5">{invoice.vendor_phone}</p>}
-            </div>
-          </div>
-
-          {/* Items */}
-          <h3 className="text-base font-black text-slate-800 uppercase tracking-widest border-b-2 border-slate-800 inline-block pb-1 mb-5">Purchase Order Items</h3>
-          <div className="space-y-0 mb-6">
-            {(invoice.items || []).map((item, idx) => (
-              <div key={idx} className="flex items-center gap-4 py-4 border-b border-gray-100">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-purple-700 font-bold text-sm">{idx + 1}</span>
+            <div className="p-4 border border-black border-t-0 mb-0">
+              <div className="text-center font-bold text-lg mb-4 uppercase">Purchase Request</div>
+              <div className="flex justify-between">
+                <div className="w-3/5">
+                  <div className="font-bold text-base mb-1">{invoice.vendor_company || invoice.vendor_name}</div>
+                  <div className="text-sm text-gray-700 whitespace-pre-line space-y-1">
+                    <p>{invoice.vendor_address || 'Vendor Address'}</p>
+                    <p>Phone: {invoice.vendor_phone}</p>
+                    <p>Email: {invoice.vendor_email}</p>
+                    <p className="font-bold">GST NO: {invoice.vendor_gstin}</p>
+                    <p>Contact Person: {invoice.vendor_contact_person}</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900 text-base">{item.name || item.description}</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Quantity: <span className="font-medium text-gray-700">{item.qty || item.quantity}</span>
-                  </p>
+                <div className="w-1/3 text-right">
+                  <div className="font-bold">Date:- {dateStr}</div>
+                  <div className="font-bold text-xl mt-4">
+                    {invoice.order_number || invoice.invoice_number}
+                  </div>
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Table */}
+            <div className="mb-0 overflow-hidden border border-black border-t-0">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100 border-b border-black text-xs font-bold uppercase">
+                    <th className="p-2 border-r border-black w-[5%]">NO</th>
+                    <th className="p-2 border-r border-black w-[55%] text-left">DESCRIPTION</th>
+                    <th className="p-2 border-r border-black w-[10%]">Make</th>
+                    <th className="p-2 border-r border-black w-[15%]">HSN CODE</th>
+                    <th className="p-2 border-r border-black w-[8%]">UNIT</th>
+                    <th className="p-2 w-[7%]">QTY</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {(invoice.items || []).map((item, idx) => (
+                    <tr key={idx} className="border-b border-black">
+                      <td className="p-2 border-r border-black text-center">{idx + 1}</td>
+                      <td className="p-2 border-r border-black font-medium">{item.name || item.description}</td>
+                      <td className="p-2 border-r border-black text-center">{item.make || '-'}</td>
+                      <td className="p-2 border-r border-black text-center">{item.hsn_code || '-'}</td>
+                      <td className="p-2 border-r border-black text-center">{String(item.unit || 'NOS').toUpperCase()}</td>
+                      <td className="p-2 text-center">{item.qty || item.quantity}</td>
+                    </tr>
+                  ))}
+                  {Array(Math.max(0, 5 - (invoice.items || []).length)).fill(0).map((_, i) => (
+                    <tr key={`empty-${i}`} className="border-b border-black h-8">
+                      <td className="border-r border-black"></td><td className="border-r border-black"></td><td className="border-r border-black"></td><td className="border-r border-black"></td><td className="border-r border-black"></td><td></td>
+                    </tr>
+                  ))}
+                  {/* Totals Rows Removed as requested */}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Terms & Conditions and Delivery Address */}
+            <div className="border border-black border-t-0 p-4 mb-6 text-sm">
+              <div className="space-y-1 text-xs mb-4">
+                <p className="font-bold underline uppercase mb-2">Terms & Conditions</p>
+                {(Array.isArray(invoice.terms) ? invoice.terms : [
+                  "1. GST CHARGES AS APPLICABLE 18%",
+                  "2. DELIVERY At Aburoad Rajsthan Site",
+                  "3. Transportation As par Actual",
+                  "4. PAYMENT- 30 DAY CREDIT"
+                ]).map((t, idx) => (
+                  <p key={idx}>{t}</p>
+                ))}
+              </div>
+              
+              <div className="border-t border-black pt-4">
+                <div className="font-bold underline mb-2 uppercase">DELIVERY ADDRESS</div>
+                <div className="text-[10px] space-y-0.5 leading-tight">
+                  <p className="font-bold">RATILAL & SONS ,</p>
+                  <p>RMC PLANT, PKG T8, NWR RAILWAY PROJOECTS,</p>
+                  <p>SUVRVEY NO. 655,656, 657,658,658, .</p>
+                  <p>ABU AMBAJI ROAD, OPP. SIYAWA PETROL PUMP, BEHIND HAPPY RESTURANT</p>
+                  <p>SITE CONTECT PARSON- ANDAND PARMAR-(M) 9825917636</p>
+                  <p className="font-bold">GST NUMBER - 24BFIPS0859D1ZF</p>
+                </div>
+              </div>
+
+              <div className="mt-12 pt-4 border-t border-black flex flex-col items-end">
+                <div className="font-bold text-sm mb-12 mr-4">RATILAL & SONS</div>
+                <div className="font-bold text-sm border-t border-black pt-2 w-48 text-center uppercase">Authorised Signatory</div>
+              </div>
+            </div>
           </div>
 
           {invoice.notes && (
@@ -2335,326 +2591,155 @@ const VendorProfile = () => {
     setFilteredVendors(filtered);
   };
 
-  const generatePurchaseOrderPDF = (order) => {
-    const printWindow = window.open('', '_blank');
+  const generatePurchaseOrderPDF = async (order) => {
+    // Fallback: If order is missing details, try to find the vendor in the local vendors list
+    const orderVendor = vendors.find(v => v.id === order.vendor_id) || {};
     
+    const displayOrder = {
+      ...order,
+      vendor_address: order.vendor_address || orderVendor.address || '',
+      vendor_phone: order.vendor_phone || orderVendor.phone || '',
+      vendor_gstin: order.vendor_gstin || orderVendor.registration_number || '',
+      vendor_contact_person: order.vendor_contact_person || orderVendor.contact_person || '',
+      vendor_company: order.vendor_company || orderVendor.company || order.vendor_name || '',
+    };
+
     const orderDate = new Date(order.invoice_date || order.created_at).toLocaleDateString('en-IN', {
       day: '2-digit',
-      month: 'short',
+      month: '2-digit',
       year: 'numeric'
     });
 
     const itemsHTML = (order.items || []).map((item, idx) => `
       <tr>
-        <td style="padding: 12px 8px; border: 1px solid #000; text-align: center; font-size: 11px;">${idx + 1}</td>
-        <td style="padding: 12px 8px; border: 1px solid #000; font-size: 11px;">${item.name || ''}</td>
-        <td style="padding: 12px 8px; border: 1px solid #000; text-align: center; font-size: 11px;">${item.qty || 0}</td>
+        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${idx + 1}</td>
+        <td style="border: 1px solid #000; padding: 5px;">${item.name || item.description || ''}</td>
+        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${item.make || ''}</td>
+        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${item.hsn_code || ''}</td>
+        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${String(item.unit || 'NOS').toUpperCase()}</td>
+        <td style="border: 1px solid #000; padding: 5px; text-align: center;">${item.qty || 0}</td>
       </tr>
     `).join('');
 
+    const termsHTML = (Array.isArray(order.terms) ? order.terms : [
+      "1. GST CHARGES AS APPLICABLE 18%",
+      "2. DELIVERY At Aburoad Rajsthan Site",
+      "3. Transportation As par Actual",
+      "4. PAYMENT- 30 DAY CREDIT"
+    ]).map(t => `${t}<br>`).join('');
+
     const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Purchase Order ${order.order_number || order.invoice_number}</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { 
-            font-family: 'Times New Roman', Times, serif; 
-            padding: 30px; 
-            color: #000; 
-            background: #fff; 
-            font-size: 12px; 
-            line-height: 1.4;
-          }
-          
-          .document-container { 
-            max-width: 210mm; 
-            margin: 0 auto; 
-            border: 2px solid #000; 
-            padding: 25px;
-            background: #fff;
-          }
-          
-          .header-section { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
-            margin-bottom: 25px; 
-            padding-bottom: 20px; 
-            border-bottom: 3px double #000; 
-          }
-          
-          .company-info { flex: 1; padding-right: 20px; }
-          .company-name { 
-            font-size: 24px; 
-            font-weight: bold; 
-            margin-bottom: 5px; 
-            letter-spacing: 1px;
-            text-transform: uppercase;
-          }
-          .company-tagline { 
-            font-size: 11px; 
-            font-style: italic; 
-            margin-bottom: 12px; 
-            color: #333;
-          }
-          .company-address { 
-            font-size: 10px; 
-            line-height: 1.6; 
-            margin-bottom: 8px;
-          }
-          .company-details { 
-            font-size: 9px; 
-            line-height: 1.5; 
-            color: #444;
-          }
-          
-          .po-info { 
-            text-align: right; 
-            min-width: 200px;
-            border: 2px solid #000;
-            padding: 15px;
-            background: #f9f9f9;
-          }
-          .po-title { 
-            font-size: 18px; 
-            font-weight: bold; 
-            margin-bottom: 8px; 
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          }
-          .po-number { 
-            font-size: 16px; 
-            font-weight: bold; 
-            color: #000; 
-            margin-bottom: 8px; 
-            padding: 5px;
-            background: #fff;
-            border: 1px solid #000;
-          }
-          .po-date { 
-            font-size: 11px; 
-            margin-bottom: 10px;
-          }
-          .contact-person { 
-            font-size: 10px; 
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid #ccc;
-          }
-          
-          .vendor-section { 
-            margin-bottom: 20px; 
-            padding: 15px;
-            border: 2px solid #000;
-            background: #f9f9f9;
-          }
-          .section-label { 
-            font-size: 12px; 
-            font-weight: bold; 
-            margin-bottom: 8px; 
-            text-transform: uppercase;
-            text-decoration: underline;
-          }
-          .vendor-name { 
-            font-size: 14px; 
-            font-weight: bold; 
-            margin-bottom: 5px; 
-          }
-          .vendor-details { 
-            font-size: 11px; 
-            line-height: 1.6; 
-          }
-          
-          .items-section { 
-            margin-bottom: 20px; 
-          }
-          .items-heading { 
-            font-size: 14px; 
-            font-weight: bold; 
-            margin-bottom: 12px; 
-            text-transform: uppercase;
-            text-align: center;
-            padding: 8px;
-            background: #000;
-            color: #fff;
-            letter-spacing: 1px;
-          }
-          
-          .items-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-bottom: 20px;
-          }
-          .items-table thead { 
-            background: #e0e0e0; 
-          }
-          .items-table th { 
-            padding: 12px 8px; 
-            text-align: left; 
-            font-size: 11px; 
-            font-weight: bold; 
-            border: 2px solid #000; 
-            text-transform: uppercase;
-          }
-          .items-table th.center { text-align: center; }
-          .items-table td { 
-            padding: 12px 8px; 
-            font-size: 11px; 
-            border: 1px solid #000; 
-          }
-          
-          .notes-section {
-            margin-top: 25px;
-            padding: 15px;
-            border: 2px solid #000;
-            background: #fffef0;
-          }
-          .notes-title {
-            font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 8px;
-            text-decoration: underline;
-          }
-          .notes-content {
-            font-size: 11px;
-            line-height: 1.6;
-          }
-          
-          .signature-section {
-            margin-top: 40px;
-            display: flex;
-            justify-content: space-between;
-          }
-          .signature-box {
-            width: 45%;
-            text-align: center;
-            padding-top: 50px;
-            border-top: 2px solid #000;
-          }
-          .signature-label {
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-          }
-          
-          .footer-section { 
-            margin-top: 30px; 
-            padding-top: 15px; 
-            border-top: 2px solid #000; 
-            text-align: center; 
-            font-size: 9px; 
-            color: #666;
-            font-style: italic;
-          }
-          
-          @media print {
-            body { padding: 0; }
-            .no-print { display: none; }
-            .document-container { border: none; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="document-container">
-          <!-- Header Section -->
-          <div class="header-section">
-            <div class="company-info">
-              <div class="company-name">RATILAL & SONS</div>
-              <div class="company-tagline">Retail Approved Distributor Of Petroleum</div>
-              <div class="company-address">
-                <strong>Regd. Office:</strong> Survey No. 166, Opp. Maruti Weigh Bridge,<br>
-                N.H.-8, Near Arpan, Shapar-360024
-              </div>
-              <div class="company-details">
-                <strong>Email:</strong> ratilalandsons786@gmail.com<br>
-                <strong>PAN:</strong> AAUFR2909Q | <strong>CIN:</strong> U51909GJ2019PTC110073<br>
-                <strong>State Code:</strong> 24 (Gujarat) | <strong>GSTIN:</strong> 24AAUFR2909Q1ZT
+      <div style="width: 210mm; padding: 15mm; background: white; font-family: Arial, sans-serif; font-size: 11px; color: #000;">
+        <div style="border: 1px solid #000; padding: 15px;">
+          <!-- Header -->
+          <div style="display: flex; align-items: center; padding: 20px; border-bottom: 1px solid #000;">
+            <img src="/Ratilal & Sons Logo.png" style="height: 80px; margin-right: 30px;" />
+            <div style="flex: 1;">
+              <div style="font-weight: bold; font-size: 28px; color: #70aedb; letter-spacing: 1px;">RATILAL &amp; SONS</div>
+              <div style="font-size: 11px; margin-top: 5px; color: #555;">
+                " Ratilal &amp; Sons House "<br/>
+                Corporate Office : Plot No. 49, Opp. Hanuman Temple, GIDC Anjar - Kachchh (Gujarat). 370110<br/>
+                Regd. Office : Ground Floor, Shop No - 1, Shree Hari Business Park, Bhuj-Bhachu by Pass Road, Anjar - Kachchh, Gujarat - 370110<br/>
+                Email ID : rsinfraprojects2014@gmail.com
               </div>
             </div>
-            <div class="po-info">
-              <div class="po-title">Purchase Order</div>
-              <div class="po-number">${order.order_number || order.invoice_number}</div>
-              <div class="po-date">
-                <strong>Date:</strong> ${orderDate}
+          </div>
+          
+          <div style="padding: 10px; border-bottom: 1px solid #000;">
+            <div style="text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 15px;">PURCHASE REQUEST</div>
+            <div style="display: flex; justify-content: space-between;">
+              <div style="width: 60%;">
+                <div style="font-weight: bold; font-size: 13px;">${displayOrder.vendor_company || displayOrder.vendor_name}</div>
+                <div style="white-space: pre-line;">${displayOrder.vendor_address || 'Vendor Address'}</div>
+                <div>Phone: ${displayOrder.vendor_phone}</div>
+                <div>Email: ${displayOrder.vendor_email || ''}</div>
+                <div>GST NO: ${displayOrder.vendor_gstin}</div>
+                <div>Contact Person: ${displayOrder.vendor_contact_person}</div>
               </div>
-              <div class="contact-person">
-                <strong>Contact Person:</strong><br>
-                Ramesh Sorathiya<br>
-                Mo: 8160110831
+              <div style="width: 35%; text-align: right;">
+                <div style="font-weight: bold;">Date:- ${orderDate}</div>
+                <div style="font-weight: bold; margin-top: 10px; font-size: 16px;">PO NO: ${order.order_number || order.invoice_number}</div>
               </div>
             </div>
           </div>
 
-          <!-- Vendor Section -->
-          <div class="vendor-section">
-            <div class="section-label">Vendor Details:</div>
-            <div class="vendor-name">${order.vendor_company || order.vendor_name || 'VENDOR NAME'}</div>
-            <div class="vendor-details">
-              ${order.vendor_name && order.vendor_company && order.vendor_name !== order.vendor_company ? '<strong>Contact:</strong> ' + order.vendor_name + '<br>' : ''}
-              ${order.vendor_email ? '<strong>Email:</strong> ' + order.vendor_email + '<br>' : ''}
-              ${order.vendor_phone ? '<strong>Phone:</strong> ' + order.vendor_phone : ''}
-            </div>
-          </div>
-
-          <!-- Items Section -->
-          <div class="items-section">
-            <div class="items-heading">Purchase Order Items</div>
-            <table class="items-table">
-              <thead>
-                <tr>
-                  <th style="width: 60px;" class="center">Sr. No.</th>
-                  <th>Item Description</th>
-                  <th style="width: 100px;" class="center">Quantity</th>
+          <!-- Items Table -->
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr>
+                <th style="width: 5%; border: 1px solid #000; padding: 4px; background: #f2f2f2;">NO</th>
+                <th style="width: 55%; border: 1px solid #000; padding: 4px; background: #f2f2f2;">DESCRIPATION</th>
+                <th style="width: 10%; border: 1px solid #000; padding: 4px; background: #f2f2f2;">Make</th>
+                <th style="width: 15%; border: 1px solid #000; padding: 4px; background: #f2f2f2;">HSN CODE</th>
+                <th style="width: 8%; border: 1px solid #000; padding: 4px; background: #f2f2f2;">UNIT</th>
+                <th style="width: 7%; border: 1px solid #000; padding: 4px; background: #f2f2f2;">QTY</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHTML}
+              ${Array(Math.max(0, 5 - (order.items || []).length)).fill(0).map(() => `
+                <tr style="height: 20px;">
+                  <td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td>
                 </tr>
-              </thead>
-              <tbody>
-                ${itemsHTML}
-              </tbody>
-            </table>
-          </div>
+              `).join('')}
+            </tbody>
+          </table>
 
-          <!-- Notes Section (if any) -->
-          ${order.notes ? `
-            <div class="notes-section">
-              <div class="notes-title">Special Instructions / Notes:</div>
-              <div class="notes-content">${order.notes}</div>
-            </div>
-          ` : ''}
-
-          <!-- Signature Section -->
-          <div class="signature-section">
-            <div class="signature-box">
-              <div class="signature-label">Vendor Signature</div>
-            </div>
-            <div class="signature-box">
-              <div class="signature-label">Authorized Signature<br>(Ratilal & Sons)</div>
+          <!-- Terms & Conditions -->
+          <div style="border-top: 1px solid #000; padding: 10px;">
+            <div style="font-weight: bold; text-decoration: underline; margin-bottom: 5px;">TERMS & CONDITIONS</div>
+            <div style="margin-left: 15px;">
+              ${termsHTML}
             </div>
           </div>
 
-          <!-- Footer -->
-          <div class="footer-section">
-            This is a computer-generated purchase order and does not require a physical signature.<br>
-            For any queries, please contact us at ratilalandsons786@gmail.com or call 8160110831
+          <!-- Delivery Address -->
+          <div style="border-top: 1px solid #000; padding: 10px;">
+            <div style="font-weight: bold; text-decoration: underline; margin-bottom: 5px;">DELIVERY ADDRESS</div>
+            <div style="font-weight: bold;">RATILAL & SONS ,</div>
+            <div>RMC PLANT, PKG T8, NWR RAILWAY PROJOECTS,</div>
+            <div>SUVRVEY NO. 655,656, 657,658,658, .</div>
+            <div>ABU AMBAJI ROAD, OPP. SIYAWA PETROL PUMP, BEHIND HAPPY RESTURANT</div>
+            <div>SITE CONTECT PARSON- ANDAND PARMAR-(M) 9825917636</div>
+            <div style="font-weight: bold;">GST NUMBER - 24BFIPS0859D1ZF</div>
+          </div>
+
+          <!-- Footer Signature -->
+          <div style="margin-top: 30px; display: flex; flex-direction: column; align-items: flex-end; padding-right: 20px;">
+            <div style="font-weight: bold; margin-bottom: 50px;">RATILAL & SONS</div>
+            <div style="font-weight: bold; border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; text-transform: uppercase;">AUTHORISED SIGNATORY</div>
           </div>
         </div>
-
-        <!-- Print Controls -->
-        <div class="no-print" style="margin-top: 30px; text-align: center; padding: 20px;">
-          <button onclick="window.print()" style="background: #7C3AED; color: white; padding: 14px 28px; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600; margin-right: 12px; box-shadow: 0 4px 6px rgba(124, 58, 237, 0.3);">
-            🖨️ Print / Save as PDF
-          </button>
-          <button onclick="window.close()" style="background: #6B7280; color: white; padding: 14px 28px; border: none; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: 600; box-shadow: 0 4px 6px rgba(107, 114, 128, 0.3);">
-            ✕ Close
-          </button>
-        </div>
-      </body>
-      </html>
+      </div>
     `;
 
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    try {
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.innerHTML = htmlContent;
+      document.body.appendChild(tempContainer);
+
+      const canvas = await html2canvas(tempContainer, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      document.body.removeChild(tempContainer);
+
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`Purchase_Request_${order.order_number || order.invoice_number}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
   // Metrics
@@ -2765,7 +2850,7 @@ const VendorProfile = () => {
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            Purchase Orders
+            Purchase Requests
           </button>
         </div>
 
@@ -2785,13 +2870,13 @@ const VendorProfile = () => {
               onClick={() => setPurchaseOrderModal(true)}
               className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
             >
-              <ShoppingCart className="w-5 h-5" /> Purchase Order
+              <ShoppingCart className="w-5 h-5" /> Purchase Request
             </button>
             <button
               onClick={() => setOrderModal(true)}
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
             >
-              <ShoppingCart className="w-5 h-5" /> Place Order
+              <ShoppingCart className="w-5 h-5" /> Place Request
             </button>
             <button
               onClick={() => {
@@ -2969,7 +3054,7 @@ const VendorProfile = () => {
       </div>
       )}
 
-      {/* Purchase Orders Table */}
+      {/* Purchase Requests Table */}
       {activeTab === "purchase-orders" && (
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">

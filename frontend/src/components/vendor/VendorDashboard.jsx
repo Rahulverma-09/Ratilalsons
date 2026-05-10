@@ -31,7 +31,7 @@ export default function VendorDashboard() {
     (sum, p) => sum + (p.warehouse_qty || 0) * (p.price || 0),
     0
   );
-  
+
   // Additional metrics
   const avgPrice = totalProducts > 0 ? totalValue / totalStock : 0;
   const lowStockItems = products.filter(p => (p.warehouse_qty || 0) < 10).length;
@@ -65,7 +65,7 @@ export default function VendorDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <div className="max-w-7xl mx-auto p-6 sm:p-8">
         {/* Header Section with Gradient */}
-        <motion.div 
+        <motion.div
           className="bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 rounded-3xl shadow-2xl p-8 mb-8 text-white relative overflow-hidden"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -73,11 +73,11 @@ export default function VendorDashboard() {
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-white bg-opacity-10 rounded-full -translate-y-16 translate-x-16"></div>
           <div className="absolute bottom-0 left-0 w-20 h-20 bg-white bg-opacity-10 rounded-full translate-y-10 -translate-x-10"></div>
-          
+
           <div className="relative z-10">
             <div className="flex items-center justify-between">
               <div>
-                <motion.h1 
+                <motion.h1
                   className="text-4xl font-bold mb-3 tracking-tight"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -85,7 +85,7 @@ export default function VendorDashboard() {
                 >
                   Vendor Dashboard
                 </motion.h1>
-                <motion.p 
+                <motion.p
                   className="text-green-100 text-lg"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -94,7 +94,7 @@ export default function VendorDashboard() {
                   Monitor your inventory, track performance, and manage your products efficiently
                 </motion.p>
               </div>
-              <motion.div 
+              <motion.div
                 className="hidden lg:block"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -109,7 +109,7 @@ export default function VendorDashboard() {
         </motion.div>
 
         {loading ? (
-          <motion.div 
+          <motion.div
             className="flex flex-col items-center justify-center py-20"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -128,7 +128,7 @@ export default function VendorDashboard() {
           >
             {/* Main Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <motion.div 
+              <motion.div
                 variants={cardVariants}
                 className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 shadow-xl text-white relative overflow-hidden group hover:scale-105 transition-all duration-300"
               >
@@ -143,12 +143,12 @@ export default function VendorDashboard() {
                   <div className="text-3xl font-bold mb-1">{totalProducts}</div>
                   <div className="text-blue-100 font-medium">Products Added</div>
                   <div className="w-full bg-white bg-opacity-20 rounded-full h-2 mt-3">
-                    <div className="bg-white bg-opacity-60 h-2 rounded-full" style={{width: '85%'}}></div>
+                    <div className="bg-white bg-opacity-60 h-2 rounded-full" style={{ width: '85%' }}></div>
                   </div>
                 </div>
               </motion.div>
 
-              <motion.div 
+              <motion.div
                 variants={cardVariants}
                 className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 shadow-xl text-white relative overflow-hidden group hover:scale-105 transition-all duration-300"
               >
@@ -163,12 +163,12 @@ export default function VendorDashboard() {
                   <div className="text-3xl font-bold mb-1">{totalStock.toLocaleString()}</div>
                   <div className="text-emerald-100 font-medium">Total Stock Qty</div>
                   <div className="w-full bg-white bg-opacity-20 rounded-full h-2 mt-3">
-                    <div className="bg-white bg-opacity-60 h-2 rounded-full" style={{width: '92%'}}></div>
+                    <div className="bg-white bg-opacity-60 h-2 rounded-full" style={{ width: '92%' }}></div>
                   </div>
                 </div>
               </motion.div>
 
-              <motion.div 
+              <motion.div
                 variants={cardVariants}
                 className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 shadow-xl text-white relative overflow-hidden group hover:scale-105 transition-all duration-300"
               >
@@ -183,12 +183,12 @@ export default function VendorDashboard() {
                   <div className="text-3xl font-bold mb-1">₹{totalValue.toLocaleString()}</div>
                   <div className="text-purple-100 font-medium">Total Stock Value</div>
                   <div className="w-full bg-white bg-opacity-20 rounded-full h-2 mt-3">
-                    <div className="bg-white bg-opacity-60 h-2 rounded-full" style={{width: '78%'}}></div>
+                    <div className="bg-white bg-opacity-60 h-2 rounded-full" style={{ width: '78%' }}></div>
                   </div>
                 </div>
               </motion.div>
 
-              <motion.div 
+              <motion.div
                 variants={cardVariants}
                 className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 shadow-xl text-white relative overflow-hidden group hover:scale-105 transition-all duration-300"
               >
@@ -203,7 +203,7 @@ export default function VendorDashboard() {
                   <div className="text-3xl font-bold mb-1">₹{avgPrice.toFixed(0)}</div>
                   <div className="text-orange-100 font-medium">Avg Product Price</div>
                   <div className="w-full bg-white bg-opacity-20 rounded-full h-2 mt-3">
-                    <div className="bg-white bg-opacity-60 h-2 rounded-full" style={{width: '65%'}}></div>
+                    <div className="bg-white bg-opacity-60 h-2 rounded-full" style={{ width: '65%' }}></div>
                   </div>
                 </div>
               </motion.div>
@@ -211,7 +211,7 @@ export default function VendorDashboard() {
 
             {/* Secondary Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <motion.div 
+              <motion.div
                 variants={cardVariants}
                 className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300"
               >
@@ -226,7 +226,7 @@ export default function VendorDashboard() {
                 </div>
               </motion.div>
 
-              <motion.div 
+              <motion.div
                 variants={cardVariants}
                 className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300"
               >
@@ -241,7 +241,7 @@ export default function VendorDashboard() {
                 </div>
               </motion.div>
 
-              <motion.div 
+              <motion.div
                 variants={cardVariants}
                 className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300"
               >
@@ -273,7 +273,7 @@ export default function VendorDashboard() {
                       <Plus className="w-4 h-4" />
                       Add Product
                     </button> */}
-                    <button 
+                    <button
                       onClick={handleViewAllProducts}
                       className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-gray-50 transition-all duration-200"
                     >
@@ -292,7 +292,7 @@ export default function VendorDashboard() {
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">No Products Found</h3>
                     <p className="text-gray-500">Start by adding your first product to see it here.</p>
-                    <button 
+                    <button
                       onClick={handleViewAllProducts}
                       className="mt-4 bg-gradient-to-r from-emerald-600 to-green-600 text-white px-6 py-2 rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200"
                     >
@@ -345,22 +345,20 @@ export default function VendorDashboard() {
                                 <span className="font-bold text-gray-900">₹{product.price?.toFixed(2) || "0.00"}</span>
                               </td>
                               <td className="py-4 px-4 text-center">
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                  (product.warehouse_qty || 0) < 10 
-                                    ? 'bg-red-100 text-red-700'
-                                    : (product.warehouse_qty || 0) < 50
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${(product.warehouse_qty || 0) < 10
+                                  ? 'bg-red-100 text-red-700'
+                                  : (product.warehouse_qty || 0) < 50
                                     ? 'bg-yellow-100 text-yellow-700'
                                     : 'bg-green-100 text-green-700'
-                                }`}>
+                                  }`}>
                                   {product.warehouse_qty || 0}
                                 </span>
                               </td>
                               <td className="py-4 px-4 text-center">
-                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                  (product.warehouse_qty || 0) === 0
-                                    ? 'bg-red-100 text-red-700'
-                                    : 'bg-green-100 text-green-700'
-                                }`}>
+                                <span className={`px-3 py-1 rounded-full text-sm font-medium ${(product.warehouse_qty || 0) === 0
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-green-100 text-green-700'
+                                  }`}>
                                   {(product.warehouse_qty || 0) === 0 ? 'Out of Stock' : 'In Stock'}
                                 </span>
                               </td>

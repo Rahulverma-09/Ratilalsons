@@ -13,7 +13,7 @@ const REPORTS_API_BASE = "https://ratilalsons-backend-api.onrender.com/api/gener
 const PAGE_SIZE = 10;
 const CHART_COLORS = {
   primary: "#3B82F6",
-  secondary: "#10B981", 
+  secondary: "#10B981",
   accent: "#F59E0B",
   danger: "#EF4444",
   info: "#06B6D4",
@@ -91,7 +91,7 @@ function SiteModal({ open, record, equipment, employees, sites, onSave, onClose,
   if (!open) return null;
   return (
     <AnimatePresence>
-      <motion.div 
+      <motion.div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -133,7 +133,7 @@ function SiteModal({ open, record, equipment, employees, sites, onSave, onClose,
                   )}
                 </label>
                 {f.type === "select" ? (
-                  <select 
+                  <select
                     className="w-full border border-gray-300 rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent shadow-inner text-sm"
                     value={form[f.key] || ""}
                     onChange={e => handleInput(f.key, e.target.value)}
@@ -181,10 +181,10 @@ function SiteModal({ open, record, equipment, employees, sites, onSave, onClose,
                         </button>
                       </div>
                     ) : (
-                      <select 
+                      <select
                         className="w-full border border-gray-300 rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-inner text-sm"
-                        multiple 
-                        value={form[f.key] || []} 
+                        multiple
+                        value={form[f.key] || []}
                         onChange={handleMultiSelect}
                         size="6"
                         disabled={loadingGenerators || loadingVehicles}
@@ -220,9 +220,8 @@ function SiteModal({ open, record, equipment, employees, sites, onSave, onClose,
                           {form[f.key].map(equipId => {
                             const equip = f.options.find(opt => opt.id === equipId);
                             return (
-                              <span key={equipId} className={`inline-block text-xs px-2 py-1 rounded-full ${
-                                equip?.type === 'Generator' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
-                              }`}>
+                              <span key={equipId} className={`inline-block text-xs px-2 py-1 rounded-full ${equip?.type === 'Generator' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                                }`}>
                                 {equip ? `${equip.name} (${equip.type})` : equipId}
                               </span>
                             );
@@ -232,18 +231,18 @@ function SiteModal({ open, record, equipment, employees, sites, onSave, onClose,
                     )}
                   </div>
                 ) : (
-                  <input 
+                  <input
                     className="w-full border border-gray-300 rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent shadow-inner text-sm"
                     value={form[f.key] || ""}
                     onChange={e => handleInput(f.key, e.target.value)}
-                    type={f.type} 
+                    type={f.type}
                     required={f.required}
                   />
                 )}
               </div>
             ))}
             {error && (
-              <motion.div 
+              <motion.div
                 className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -352,11 +351,10 @@ function PaginationControl({ page, setPage, hasPrev, hasNext }) {
       <motion.button
         onClick={() => setPage(p => Math.max(1, p - 1))}
         disabled={!hasPrev}
-        className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-          hasPrev 
-            ? "bg-gradient-to-r from-yellow-500 to-yellow-700 text-white hover:from-yellow-600 hover:to-yellow-800 shadow-lg hover:shadow-xl" 
-            : "bg-gray-200 text-gray-400 cursor-not-allowed"
-        }`}
+        className={`px-6 py-3 rounded-lg font-semibold transition-all ${hasPrev
+          ? "bg-gradient-to-r from-yellow-500 to-yellow-700 text-white hover:from-yellow-600 hover:to-yellow-800 shadow-lg hover:shadow-xl"
+          : "bg-gray-200 text-gray-400 cursor-not-allowed"
+          }`}
         style={{ minWidth: 100 }}
         whileTap={{ scale: 0.96 }}
       >
@@ -366,11 +364,10 @@ function PaginationControl({ page, setPage, hasPrev, hasNext }) {
       <motion.button
         onClick={() => setPage(p => p + 1)}
         disabled={!hasNext}
-        className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-          hasNext 
-            ? "bg-gradient-to-r from-yellow-500 to-yellow-700 text-white hover:from-yellow-600 hover:to-yellow-800 shadow-lg hover:shadow-xl" 
-            : "bg-gray-200 text-gray-400 cursor-not-allowed"
-        }`}
+        className={`px-6 py-3 rounded-lg font-semibold transition-all ${hasNext
+          ? "bg-gradient-to-r from-yellow-500 to-yellow-700 text-white hover:from-yellow-600 hover:to-yellow-800 shadow-lg hover:shadow-xl"
+          : "bg-gray-200 text-gray-400 cursor-not-allowed"
+          }`}
         style={{ minWidth: 100 }}
         whileTap={{ scale: 0.96 }}
       >
@@ -396,10 +393,10 @@ function getSummary(stats) {
 
 function downloadCSV(siteReport, sites, selectedSite) {
   if (!siteReport) return;
-  
+
   const siteName = sites.find(s => s.id === selectedSite)?.site_name || 'Unknown';
   const currentDate = new Date().toISOString().split('T')[0];
-  
+
   // Prepare CSV data
   const headers = ['Equipment ID', 'Equipment Name', 'Total Usage (L)', 'Total Cost (INR)', 'Efficiency (%)'];
   const rows = siteReport.generators?.map(gen => [
@@ -409,7 +406,7 @@ function downloadCSV(siteReport, sites, selectedSite) {
     gen.total_cost || 0,
     ((gen.total_usage || 0) / (gen.total_cost || 1) * 100).toFixed(2)
   ]) || [];
-  
+
   // Create CSV content
   const csvContent = [
     `Site Report - ${siteName}`,
@@ -421,7 +418,7 @@ function downloadCSV(siteReport, sites, selectedSite) {
     headers.join(','),
     ...rows.map(row => row.join(','))
   ].join('\n');
-  
+
   // Create and download file
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
@@ -435,11 +432,11 @@ function downloadCSV(siteReport, sites, selectedSite) {
 }
 
 function generateDailyData(generators) {
-  const days = Array.from({length: 30}, (_, i) => {
+  const days = Array.from({ length: 30 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - (29 - i));
     return {
-      day: date.toLocaleDateString('en-GB', {day: '2-digit', month: 'short'}),
+      day: date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
       date: date.toISOString().split('T')[0],
       usage: Math.floor(Math.random() * 100) + 50,
       cost: Math.floor(Math.random() * 5000) + 2000,
@@ -532,7 +529,7 @@ export default function SiteManagement() {
         originalData: vehicle
       }))
     ];
-    
+
     console.log("Combined equipment:", combinedEquipment);
     setEquipment(combinedEquipment);
   }, [generators, vehicles]);
@@ -557,7 +554,7 @@ export default function SiteManagement() {
   const refreshEquipment = () => {
     setLoadingGenerators(true);
     setLoadingVehicles(true);
-    
+
     // Fetch generators
     const generatorsPromise = fetchWithAuth(GENERATOR_API_BASE)
       .then(data => {
@@ -663,11 +660,11 @@ export default function SiteManagement() {
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, "0");
     const dd = String(today.getDate()).padStart(2, "0");
-    
+
     // Get start of year instead of start of month to capture all data
     const start = `${yyyy}-01-01`;
     const end = `${yyyy}-${mm}-${dd}`;
-    
+
     try {
       const data = await fetchWithAuth(`${REPORTS_API_BASE}?start=${start}&end=${end}&site_id=${selectedSite}`);
       console.log('Raw API Response:', data);
@@ -683,7 +680,7 @@ export default function SiteManagement() {
           // First check if backend already calculated totals
           let totalUsage = gen.total_usage || 0;
           let totalCost = gen.total_cost || 0;
-          
+
           // If usage array exists and totals are not set, calculate them
           if (Array.isArray(gen.usage) && gen.usage.length > 0) {
             let calculatedUsage = 0, calculatedCost = 0;
@@ -696,7 +693,7 @@ export default function SiteManagement() {
             totalCost = Math.max(totalCost, calculatedCost);
             console.log('Calculated from usage array:', { calculatedUsage, calculatedCost, usageCount: gen.usage.length });
           }
-          
+
           const processedGen = {
             ...gen,
             generator_name: gen.generator_name || gen.name || "-",
@@ -745,22 +742,20 @@ export default function SiteManagement() {
         <div className="flex border-b border-gray-200">
           <motion.button
             onClick={() => setTab("manage")}
-            className={`flex-1 py-4 px-6 font-semibold text-sm focus:outline-none transition-all ${
-              tab === "manage"
-                ? "bg-yellow-50 border-b-2 border-yellow-500 text-yellow-700 shadow-md"
-                : "text-gray-600 hover:text-yellow-700 hover:bg-yellow-50 hover:shadow-sm"
-            }`}
+            className={`flex-1 py-4 px-6 font-semibold text-sm focus:outline-none transition-all ${tab === "manage"
+              ? "bg-yellow-50 border-b-2 border-yellow-500 text-yellow-700 shadow-md"
+              : "text-gray-600 hover:text-yellow-700 hover:bg-yellow-50 hover:shadow-sm"
+              }`}
             whileTap={{ scale: 0.98 }}
           >
             Manage Sites
           </motion.button>
           <motion.button
             onClick={() => setTab("reports")}
-            className={`flex-1 py-4 px-6 font-semibold text-sm focus:outline-none transition-all ${
-              tab === "reports"
-                ? "bg-yellow-50 border-b-2 border-yellow-500 text-yellow-700 shadow-md"
-                : "text-gray-600 hover:text-yellow-700 hover:bg-yellow-50 hover:shadow-sm"
-            }`}
+            className={`flex-1 py-4 px-6 font-semibold text-sm focus:outline-none transition-all ${tab === "reports"
+              ? "bg-yellow-50 border-b-2 border-yellow-500 text-yellow-700 shadow-md"
+              : "text-gray-600 hover:text-yellow-700 hover:bg-yellow-50 hover:shadow-sm"
+              }`}
             whileTap={{ scale: 0.98 }}
           >
             Site Reports
@@ -825,7 +820,7 @@ export default function SiteManagement() {
             transition={{ type: "spring", stiffness: 120, damping: 18 }}
           >
             {/* Enhanced Professional Header Section */}
-            <motion.div 
+            <motion.div
               className="relative bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 shadow-2xl rounded-3xl border border-slate-200/80 p-5 mb-6 overflow-hidden backdrop-blur-sm"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -835,7 +830,7 @@ export default function SiteManagement() {
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-indigo-600/5"></div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-indigo-500/10 rounded-full -translate-y-16 translate-x-16"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-indigo-400/10 to-purple-500/10 rounded-full translate-y-12 -translate-x-12"></div>
-              
+
               <div className="relative z-10">
                 <div className="text-center mb-4">
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg mb-3 transform rotate-3 hover:rotate-6 transition-transform duration-300">
@@ -848,7 +843,7 @@ export default function SiteManagement() {
                   </h2>
                   <p className="text-slate-500 font-medium text-sm">Real-time Performance Intelligence</p>
                 </div>
-                
+
                 <div className="flex flex-col lg:flex-row gap-4 items-center justify-center">
                   <div className="flex flex-col group">
                     <label className="text-xs font-bold text-slate-600 mb-2 uppercase tracking-wider">Analytics Target</label>
@@ -870,7 +865,7 @@ export default function SiteManagement() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-3">
                     <motion.button
                       onClick={fetchSiteReport}
@@ -886,7 +881,7 @@ export default function SiteManagement() {
                       </div>
                       <div className="absolute inset-0 -top-2 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                     </motion.button>
-                    
+
                     <motion.button
                       onClick={() => downloadCSV(siteReport, sites, selectedSite)}
                       disabled={!siteReport}
@@ -910,7 +905,7 @@ export default function SiteManagement() {
             {siteReport && (
               <>
                 {/* Executive Summary Cards */}
-                <motion.div 
+                <motion.div
                   className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1042,7 +1037,7 @@ export default function SiteManagement() {
                 </motion.div>
 
                 {/* Site Information Panel */}
-                <motion.div 
+                <motion.div
                   className="bg-white shadow-xl rounded-2xl border border-gray-100 p-8 mb-8"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1060,9 +1055,8 @@ export default function SiteManagement() {
                     </div>
                     <div className="text-center p-4 bg-gray-50 rounded-xl">
                       <div className="text-sm text-gray-500 uppercase tracking-wide font-semibold mb-2">Status</div>
-                      <span className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${
-                        siteReport.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${siteReport.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
                         {siteReport.status || "Inactive"}
                       </span>
                     </div>
@@ -1075,7 +1069,7 @@ export default function SiteManagement() {
 
                 {/* Daily Performance Charts */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
-                  <motion.div 
+                  <motion.div
                     className="bg-white shadow-xl rounded-2xl border border-gray-100 p-8"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1092,14 +1086,14 @@ export default function SiteManagement() {
                       <AreaChart data={generateDailyData(siteReport.generators)}>
                         <defs>
                           <linearGradient id="colorUsage" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0}/>
+                            <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.3} />
+                            <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis dataKey="day" tick={{fontSize: 12}} />
-                        <YAxis tick={{fontSize: 12}} />
-                        <Tooltip 
+                        <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                        <YAxis tick={{ fontSize: 12 }} />
+                        <Tooltip
                           contentStyle={{
                             backgroundColor: 'white',
                             border: '1px solid #e5e7eb',
@@ -1107,9 +1101,9 @@ export default function SiteManagement() {
                             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                           }}
                         />
-                        <Area 
-                          type="monotone" 
-                          dataKey="usage" 
+                        <Area
+                          type="monotone"
+                          dataKey="usage"
                           stroke={CHART_COLORS.primary}
                           strokeWidth={3}
                           fillOpacity={1}
@@ -1118,8 +1112,8 @@ export default function SiteManagement() {
                       </AreaChart>
                     </ResponsiveContainer>
                   </motion.div>
-                  
-                  <motion.div 
+
+                  <motion.div
                     className="bg-white shadow-xl rounded-2xl border border-gray-100 p-8"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -1141,10 +1135,10 @@ export default function SiteManagement() {
                     <ResponsiveContainer width="100%" height={250}>
                       <LineChart data={generateDailyData(siteReport.generators)}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis dataKey="day" tick={{fontSize: 12}} />
-                        <YAxis yAxisId="left" tick={{fontSize: 12}} />
-                        <YAxis yAxisId="right" orientation="right" tick={{fontSize: 12}} />
-                        <Tooltip 
+                        <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+                        <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
+                        <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+                        <Tooltip
                           contentStyle={{
                             backgroundColor: 'white',
                             border: '1px solid #e5e7eb',
@@ -1152,22 +1146,22 @@ export default function SiteManagement() {
                             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                           }}
                         />
-                        <Line 
+                        <Line
                           yAxisId="left"
-                          type="monotone" 
-                          dataKey="cost" 
+                          type="monotone"
+                          dataKey="cost"
                           stroke={CHART_COLORS.secondary}
                           strokeWidth={3}
-                          dot={{fill: CHART_COLORS.secondary, strokeWidth: 2, r: 4}}
+                          dot={{ fill: CHART_COLORS.secondary, strokeWidth: 2, r: 4 }}
                         />
-                        <Line 
+                        <Line
                           yAxisId="right"
-                          type="monotone" 
-                          dataKey="efficiency" 
+                          type="monotone"
+                          dataKey="efficiency"
                           stroke={CHART_COLORS.accent}
                           strokeWidth={3}
                           strokeDasharray="5 5"
-                          dot={{fill: CHART_COLORS.accent, strokeWidth: 2, r: 4}}
+                          dot={{ fill: CHART_COLORS.accent, strokeWidth: 2, r: 4 }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -1175,7 +1169,7 @@ export default function SiteManagement() {
                 </div>
 
                 {/* Equipment Performance Table */}
-                <motion.div 
+                <motion.div
                   className="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden mb-8"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1220,40 +1214,38 @@ export default function SiteManagement() {
                                 <div className="text-sm text-gray-500">Operating cost</div>
                               </td>
                               <td className="px-6 py-4 text-center">
-                                <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                                  efficiency > 80 ? 'bg-green-100 text-green-800' :
+                                <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${efficiency > 80 ? 'bg-green-100 text-green-800' :
                                   efficiency > 60 ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}>
+                                    'bg-red-100 text-red-800'
+                                  }`}>
                                   {efficiency}%
                                 </div>
                               </td>
                               <td className="px-6 py-4 text-center">
-                                <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                                  status === 'Optimal' ? 'bg-green-100 text-green-800' :
+                                <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${status === 'Optimal' ? 'bg-green-100 text-green-800' :
                                   status === 'Moderate' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-red-100 text-red-800'
-                                }`}>
+                                    'bg-red-100 text-red-800'
+                                  }`}>
                                   {status}
                                 </span>
                               </td>
                             </tr>
                           );
                         }) || (
-                          <tr>
-                            <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                              <div className="text-4xl mb-4">📊</div>
-                              <p>No equipment data available for this site.</p>
-                            </td>
-                          </tr>
-                        )}
+                            <tr>
+                              <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                                <div className="text-4xl mb-4">📊</div>
+                                <p>No equipment data available for this site.</p>
+                              </td>
+                            </tr>
+                          )}
                       </tbody>
                     </table>
                   </div>
                 </motion.div>
 
                 {/* Detailed Usage Logs per Equipment */}
-                <motion.div 
+                <motion.div
                   className="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden mb-8"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1274,7 +1266,7 @@ export default function SiteManagement() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {siteReport.generators?.flatMap((gen) => 
+                        {siteReport.generators?.flatMap((gen) =>
                           (gen.usage || []).map((usageEntry, idx) => ({
                             ...usageEntry,
                             generator_name: gen.generator_name,
@@ -1287,9 +1279,8 @@ export default function SiteManagement() {
                           const dateB = new Date(b.date || '1970-01-01');
                           return dateB - dateA;
                         }).map((entry, index) => (
-                          <tr key={entry.uniqueKey} className={`hover:bg-green-50 transition-colors ${
-                            index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                          }`}>
+                          <tr key={entry.uniqueKey} className={`hover:bg-green-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
+                            }`}>
                             <td className="px-6 py-4">
                               <div className="font-semibold text-gray-900">{entry.date || 'N/A'}</div>
                             </td>
@@ -1314,20 +1305,20 @@ export default function SiteManagement() {
                             </td>
                           </tr>
                         )) || (
-                          <tr>
-                            <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                              <div className="text-4xl mb-4">📋</div>
-                              <p>No usage logs available for this site.</p>
-                            </td>
-                          </tr>
-                        )}
+                            <tr>
+                              <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                                <div className="text-4xl mb-4">📋</div>
+                                <p>No usage logs available for this site.</p>
+                              </td>
+                            </tr>
+                          )}
                       </tbody>
                     </table>
                   </div>
                 </motion.div>
 
                 {/* Daily Performance Table */}
-                <motion.div 
+                <motion.div
                   className="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1350,9 +1341,8 @@ export default function SiteManagement() {
                       </thead>
                       <tbody className="divide-y divide-gray-200">
                         {generateDailyData(siteReport.generators).reverse().map((day, index) => (
-                          <tr key={index} className={`hover:bg-gray-50 transition-colors ${
-                            index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                          }`}>
+                          <tr key={index} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
+                            }`}>
                             <td className="px-6 py-4">
                               <div className="font-semibold text-gray-900">{day.day}</div>
                               <div className="text-sm text-gray-500">{day.date}</div>
@@ -1364,11 +1354,10 @@ export default function SiteManagement() {
                               <div className="text-lg font-semibold text-gray-900">{formatCurrency(day.cost)}</div>
                             </td>
                             <td className="px-6 py-4 text-center">
-                              <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                                day.efficiency >= 85 ? 'bg-green-100 text-green-800' :
+                              <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${day.efficiency >= 85 ? 'bg-green-100 text-green-800' :
                                 day.efficiency >= 70 ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
+                                  'bg-red-100 text-red-800'
+                                }`}>
                                 {day.efficiency}%
                               </div>
                             </td>
@@ -1399,7 +1388,7 @@ export default function SiteManagement() {
             )}
 
             {!siteReport && selectedSite && (
-              <motion.div 
+              <motion.div
                 className="text-center py-20 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl shadow-xl border border-gray-200"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -1411,7 +1400,7 @@ export default function SiteManagement() {
             )}
 
             {!siteReport && !selectedSite && (
-              <motion.div 
+              <motion.div
                 className="text-center py-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl shadow-xl border border-blue-100"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}

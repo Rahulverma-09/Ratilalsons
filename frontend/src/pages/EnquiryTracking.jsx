@@ -116,13 +116,13 @@ function EnquiryTracking({ onBack }) {
     >
       {/* <td className="px-4 py-2 whitespace-nowrap align-middle font-bold text-indigo-700">{getEnquiryId(enquiry)}</td> */}
       <td className="px-4 py-2 whitespace-nowrap align-middle font-bold text-indigo-700">
-      <button
-        className="text-blue-700 hover:underline"
-        onClick={() => navigate(`/enquiries/${getEnquiryId(enquiry)}`)}
-        style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-      >
-        {getEnquiryId(enquiry)}
-      </button>
+        <button
+          className="text-blue-700 hover:underline"
+          onClick={() => navigate(`/enquiries/${getEnquiryId(enquiry)}`)}
+          style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+        >
+          {getEnquiryId(enquiry)}
+        </button>
       </td>
 
       <td className="px-4 py-2 whitespace-nowrap align-middle font-medium text-gray-900">
@@ -133,10 +133,10 @@ function EnquiryTracking({ onBack }) {
       <td className="px-4 py-2 whitespace-nowrap align-middle">₹{enquiry.total_cash}</td>
       <td className="px-4 py-2 whitespace-nowrap align-middle">
         <span className={`px-2 py-1 rounded text-xs font-bold ${(enquiry.status || "").toLowerCase() === "approved"
-            ? "bg-green-100 text-green-700"
-            : (enquiry.status || "").toLowerCase() === "rejected"
-              ? "bg-red-100 text-red-700"
-              : "bg-yellow-100 text-yellow-700"
+          ? "bg-green-100 text-green-700"
+          : (enquiry.status || "").toLowerCase() === "rejected"
+            ? "bg-red-100 text-red-700"
+            : "bg-yellow-100 text-yellow-700"
           }`}>
           {enquiry.status}
         </span>
@@ -180,10 +180,10 @@ function EnquiryTracking({ onBack }) {
           {getEnquiryId(enquiry)}
         </button>
         <span className={`px-3 py-1 rounded text-xs font-bold ${(enquiry.status || "").toLowerCase() === "approved"
-            ? "bg-green-100 text-green-700"
-            : (enquiry.status || "").toLowerCase() === "rejected"
-              ? "bg-red-100 text-red-700"
-              : "bg-yellow-100 text-yellow-700"
+          ? "bg-green-100 text-green-700"
+          : (enquiry.status || "").toLowerCase() === "rejected"
+            ? "bg-red-100 text-red-700"
+            : "bg-yellow-100 text-yellow-700"
           }`}>{enquiry.status}</span>
       </div>
       <div className="font-semibold text-[#101828]">
@@ -351,8 +351,8 @@ function EnquiryTracking({ onBack }) {
             <div className="flex gap-4 justify-center mt-4">
               <button
                 className={`px-8 py-2 rounded-2xl font-semibold text-lg ${actionModal.type === "approved"
-                    ? "bg-green-600 text-white hover:bg-green-700"
-                    : "bg-red-600 text-white hover:bg-red-700"
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-red-600 text-white hover:bg-red-700"
                   }`}
                 onClick={() => handleStatus(actionModal.enq, actionModal.type)}
               >

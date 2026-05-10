@@ -93,7 +93,7 @@ const EmployeeManagementModule = () => {
       try {
         const user = JSON.parse(userStr);
         setCurrentUser(user);
-      } catch {}
+      } catch { }
     }
   }, []);
 
@@ -201,22 +201,20 @@ const EmployeeManagementModule = () => {
                     {employee.department || 'No department'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      employee.is_active !== false
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.is_active !== false
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                      }`}>
                       {employee.is_active !== false ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          employee.attendance_status?.status === 'present'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${employee.attendance_status?.status === 'present'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                          }`}>
                           {employee.attendance_status?.status || 'absent'}
                         </span>
                       </div>
