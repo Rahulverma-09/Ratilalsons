@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '../config.js';
 
 // Get base URL without /api suffix for static files
-const BASE_URL = 'http://127.0.0.1:8000';
+const BASE_URL = 'https://ratilalsons-backend-api.onrender.com';
 
 /**
  * HR Document Management Component

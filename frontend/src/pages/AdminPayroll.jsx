@@ -6,7 +6,7 @@ import {
   FaFileAlt, FaListAlt, FaSearch
 } from 'react-icons/fa';
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = 'https://ratilalsons-backend-api.onrender.com';
 const PAGE_SIZE = 10;
 
 const PayrollAdmin = () => {
@@ -137,15 +137,15 @@ const PayrollAdmin = () => {
         prev.map((item) =>
           item.id === editingPayrollRecord.id
             ? {
-                ...item,
-                employee_name: empName,
-                employee_email: empEmail,
-                gross_salary: gross,
-                deductions: ded,
-                net_pay: net,
-                created_by: payrollForm.created_by || 'Admin',
-                created_on: payrollForm.created_on || new Date().toISOString().split('T')[0],
-              }
+              ...item,
+              employee_name: empName,
+              employee_email: empEmail,
+              gross_salary: gross,
+              deductions: ded,
+              net_pay: net,
+              created_by: payrollForm.created_by || 'Admin',
+              created_on: payrollForm.created_on || new Date().toISOString().split('T')[0],
+            }
             : item
         )
       );
@@ -242,33 +242,30 @@ const PayrollAdmin = () => {
         <div className="flex border-b border-gray-200">
           <motion.button
             onClick={() => setActiveTab('payrollData')}
-            className={`flex-1 py-4 px-6 font-bold text-sm focus:outline-none transition-all ${
-              activeTab === 'payrollData'
+            className={`flex-1 py-4 px-6 font-bold text-sm focus:outline-none transition-all ${activeTab === 'payrollData'
                 ? 'bg-violet-50 border-b-2 border-violet-600 text-violet-700 shadow-md'
                 : 'text-gray-600 hover:text-violet-700 hover:bg-violet-50'
-            }`}
+              }`}
             whileTap={{ scale: 0.98 }}
           >
             Payroll Data
           </motion.button>
           <motion.button
             onClick={() => setActiveTab('salaryStructure')}
-            className={`flex-1 py-4 px-6 font-bold text-sm focus:outline-none transition-all ${
-              activeTab === 'salaryStructure'
+            className={`flex-1 py-4 px-6 font-bold text-sm focus:outline-none transition-all ${activeTab === 'salaryStructure'
                 ? 'bg-emerald-50 border-b-2 border-emerald-600 text-emerald-700 shadow-md'
                 : 'text-gray-600 hover:text-emerald-700 hover:bg-emerald-50'
-            }`}
+              }`}
             whileTap={{ scale: 0.98 }}
           >
             Salary Structure
           </motion.button>
           <motion.button
             onClick={() => setActiveTab('salarySlip')}
-            className={`flex-1 py-4 px-6 font-bold text-sm focus:outline-none transition-all ${
-              activeTab === 'salarySlip'
+            className={`flex-1 py-4 px-6 font-bold text-sm focus:outline-none transition-all ${activeTab === 'salarySlip'
                 ? 'bg-blue-50 border-b-2 border-blue-600 text-blue-700 shadow-md'
                 : 'text-gray-600 hover:text-blue-700 hover:bg-blue-50'
-            }`}
+              }`}
             whileTap={{ scale: 0.98 }}
           >
             Salary Slip
@@ -436,11 +433,10 @@ const PayrollAdmin = () => {
                 <motion.button
                   onClick={() => setPayrollPage((p) => Math.max(1, p - 1))}
                   disabled={safePage === 1}
-                  className={`px-6 py-2.5 rounded-lg font-semibold transition-all ${
-                    safePage > 1
+                  className={`px-6 py-2.5 rounded-lg font-semibold transition-all ${safePage > 1
                       ? 'bg-gradient-to-r from-violet-500 to-violet-700 text-white hover:from-violet-600 hover:to-violet-800 shadow-md'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
+                    }`}
                   style={{ minWidth: 100 }}
                   whileTap={{ scale: 0.96 }}
                 >
@@ -452,11 +448,10 @@ const PayrollAdmin = () => {
                 <motion.button
                   onClick={() => setPayrollPage((p) => Math.min(totalPages, p + 1))}
                   disabled={safePage >= totalPages}
-                  className={`px-6 py-2.5 rounded-lg font-semibold transition-all ${
-                    safePage < totalPages
+                  className={`px-6 py-2.5 rounded-lg font-semibold transition-all ${safePage < totalPages
                       ? 'bg-gradient-to-r from-violet-500 to-violet-700 text-white hover:from-violet-600 hover:to-violet-800 shadow-md'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
+                    }`}
                   style={{ minWidth: 100 }}
                   whileTap={{ scale: 0.96 }}
                 >

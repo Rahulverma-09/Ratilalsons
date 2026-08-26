@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Dashboard from './Dashboard';
 import EmployeeDashboard from './EmployeeDashboard';
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = 'https://ratilalsons-backend-api.onrender.com';
 
 const DashboardContainer = () => {
   // State Management

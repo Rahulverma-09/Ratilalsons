@@ -5,7 +5,7 @@ import { AddNewFranchiseForm as AddNewFranchise } from "./FranchiseCard";
 
 
 // --- API Helper Functions ---
-const API_BASE = "http://127.0.0.1:8000/api/franchises";
+const API_BASE = "https://ratilalsons-backend-api.onrender.com/api/franchises";
 
 // ENQUIRIES
 async function fetchEnquiries() {
@@ -833,7 +833,7 @@ function Modal({ open, onClose, children, fullscreen }) {
 }
 
 function FilePreview({ doc, fullscreen }) {
-  const BASE_URL = "http://127.0.0.1:8000";
+  const BASE_URL = "https://ratilalsons-backend-api.onrender.com";
   const [imgError, setImgError] = useState(false);
   const [iframeError, setIframeError] = useState(false);
 
@@ -1671,7 +1671,7 @@ function FranchiseMap() {
   // API GET
   function fetchLocations() {
     setLoading(true);
-    fetch("http://127.0.0.1:8000/api/franchises")
+    fetch("https://ratilalsons-backend-api.onrender.com/api/franchises")
       .then(res => res.json())
       .then(data => {
         setFranchiseLocations(data);
@@ -1705,7 +1705,7 @@ function FranchiseMap() {
       // Update address of existing franchise
       try {
         const res = await fetch(
-          "http://127.0.0.1:8000/api/franchises/update-address",
+          "https://ratilalsons-backend-api.onrender.com/api/franchises/update-address",
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },

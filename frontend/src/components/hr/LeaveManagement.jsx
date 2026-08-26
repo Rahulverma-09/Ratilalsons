@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "https://ratilalsons-backend-api.onrender.com";
 
 const HRLeaveManagement = () => {
   const [currentUser, setCurrentUser] = useState(null);

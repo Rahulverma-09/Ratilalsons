@@ -1,5 +1,5 @@
 // Employee API utilities for dynamic data fetching
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "https://ratilalsons-backend-api.onrender.com";
 
 /**
  * Get authentication token from localStorage

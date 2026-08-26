@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const API_BASE = "http://127.0.0.1:8000/api/vendors";
+const API_BASE = "https://ratilalsons-backend-api.onrender.com/api/vendors";
 
 const DOCUMENT_TYPES = [
   { key: "business_license", label: "Business License", required: true },

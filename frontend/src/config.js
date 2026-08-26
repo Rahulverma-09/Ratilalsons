@@ -1,7 +1,7 @@
 // API configuration
 const API_CONFIG = {
   // Use empty string for development (Vite proxy), full URL for production
-  BASE_URL: import.meta.env.DEV ? '' : 'http://127.0.0.1:8000',
+  BASE_URL: import.meta.env.DEV ? '' : 'https://ratilalsons-backend-api.onrender.com',
 };
 
 // Full API URL
