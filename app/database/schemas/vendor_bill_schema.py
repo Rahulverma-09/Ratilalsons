@@ -56,6 +56,12 @@ class VendorBillBase(BaseModel):
     reference_number: Optional[str] = None  # Vendor's reference
     items: List[BillItem] = Field(default_factory=list, max_items=100)
     subtotal: float = Field(0.0, ge=0)
+    igst_percent: Optional[float] = Field(0.0, ge=0)
+    cgst_percent: Optional[float] = Field(0.0, ge=0)
+    sgst_percent: Optional[float] = Field(0.0, ge=0)
+    igst_amount: Optional[float] = Field(0.0, ge=0)
+    cgst_amount: Optional[float] = Field(0.0, ge=0)
+    sgst_amount: Optional[float] = Field(0.0, ge=0)
     tax_amount: float = Field(0.0, ge=0)
     total_amount: float = Field(0.0, ge=0)
     due_date: Optional[datetime] = None
@@ -74,6 +80,12 @@ class VendorBillCreate(BaseModel):
     reference_number: Optional[str] = None
     items: Optional[List[BillItem]] = Field(default_factory=list, max_items=100)
     subtotal: float = Field(0.0, ge=0)
+    igst_percent: Optional[float] = Field(0.0, ge=0)
+    cgst_percent: Optional[float] = Field(0.0, ge=0)
+    sgst_percent: Optional[float] = Field(0.0, ge=0)
+    igst_amount: Optional[float] = Field(0.0, ge=0)
+    cgst_amount: Optional[float] = Field(0.0, ge=0)
+    sgst_amount: Optional[float] = Field(0.0, ge=0)
     tax_amount: float = Field(0.0, ge=0)
     total_amount: float = Field(0.0, ge=0)
     due_date: Optional[datetime] = None
@@ -90,6 +102,12 @@ class VendorBillUpdate(BaseModel):
     reference_number: Optional[str] = None
     items: Optional[List[BillItem]] = None
     subtotal: Optional[float] = None
+    igst_percent: Optional[float] = None
+    cgst_percent: Optional[float] = None
+    sgst_percent: Optional[float] = None
+    igst_amount: Optional[float] = None
+    cgst_amount: Optional[float] = None
+    sgst_amount: Optional[float] = None
     tax_amount: Optional[float] = None
     total_amount: Optional[float] = None
     due_date: Optional[datetime] = None

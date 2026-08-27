@@ -1351,6 +1351,7 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
                           >
                             <option value="nos">nos</option>
                             <option value="kgs">kgs</option>
+                            <option value="litre">litre</option>
                             <option value="case">case</option>
                             <option value="pack">pack</option>
                           </select>
@@ -1411,6 +1412,7 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
                               >
                                 <option value="nos">nos</option>
                                 <option value="kgs">kgs</option>
+                                <option value="litre">litre</option>
                                 <option value="case">case</option>
                                 <option value="pack">pack</option>
                               </select>
@@ -1703,6 +1705,7 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
                             >
                               <option value="nos">nos</option>
                               <option value="kgs">kgs</option>
+                              <option value="litre">litre</option>
                               <option value="case">case</option>
                               <option value="pack">pack</option>
                             </select>
@@ -2223,8 +2226,374 @@ const InvoiceModal = ({ invoice, onClose }) => {
 };
 
 
+// Helper function to extract and format attachment file URL
+const getAttachmentUrl = (bill) => {
+  if (!bill) return null;
+  const file = bill.attachment || bill.uploaded_file_path || bill.file_path || bill.file || bill.document;
+  if (!file) return null;
+  if (file.startsWith("data:") || file.startsWith("http://") || file.startsWith("https://")) {
+    return file;
+  }
+  const API_BASE = API_URL.replace("/api", "");
+  return file.startsWith("/") ? `${API_BASE}${file}` : `${API_BASE}/${file}`;
+};
+
+// Helper to extract first material name and extra items count badge
+const getBillMaterialDisplay = (bill) => {
+  if (bill.items && bill.items.length > 0) {
+    const firstMat = bill.items[0].description || bill.items[0].name || "Material";
+    const extraCount = bill.items.length - 1;
+    return { firstMat, extraCount };
+  }
+  if (bill.material_description) {
+    const itemsList = bill.material_description
+      .split(/;\s*|\d+\.\s*/)
+      .map(s => s.trim())
+      .filter(Boolean);
+    if (itemsList.length > 1) {
+      return { firstMat: itemsList[0], extraCount: itemsList.length - 1 };
+    }
+    return { firstMat: bill.material_description, extraCount: 0 };
+  }
+  return { firstMat: "-", extraCount: 0 };
+};
+
+// Helper to extract first UOM and extra UOMs/items count badge
+const getBillUomDisplay = (bill) => {
+  if (bill.items && bill.items.length > 0) {
+    const firstUom = bill.items[0].uom || bill.uom || "-";
+    const extraCount = bill.items.length - 1;
+    return { firstUom, extraCount };
+  }
+  return { firstUom: bill.uom || "-", extraCount: 0 };
+};
+
+// Modal component for viewing image/PDF file attachments directly
+const AttachmentPreviewModal = ({ url, onClose }) => {
+  if (!url) return null;
+  const isImage = url.startsWith("data:image/") || /\.(jpg|jpeg|png|gif|webp|svg)($|\?)/i.test(url);
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-4 text-white flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-emerald-400" />
+            <span className="font-bold text-sm">Attachment File Preview</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1 shadow-sm"
+            >
+              Open in New Tab
+            </a>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content Preview */}
+        <div className="p-6 flex-1 overflow-auto flex items-center justify-center bg-gray-100 min-h-[450px]">
+          {isImage ? (
+            <img
+              src={url}
+              alt="Attachment File"
+              className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-lg border border-gray-200"
+            />
+          ) : (
+            <iframe
+              src={url}
+              title="Attachment Document"
+              className="w-full h-[75vh] rounded-xl border border-gray-300 bg-white"
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// Comprehensive Modal for viewing full Vendor Bill details
+const VendorBillDetailModal = ({ bill, onClose }) => {
+  const [previewAttachment, setPreviewAttachment] = useState(null);
+  if (!bill) return null;
+
+  const handleDownloadPDF = async () => {
+    try {
+      const container = document.getElementById("vendor-bill-modal-content");
+      if (!container) return;
+      const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdf = new jsPDF("p", "mm", "a4");
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save(`Vendor_Bill_${bill.sr_no || bill.bill_number}.pdf`);
+    } catch (e) {
+      console.error("Failed to generate PDF", e);
+      alert("Error generating PDF");
+    }
+  };
+
+  const billItems = bill.items && bill.items.length > 0 ? bill.items : [
+    {
+      description: bill.material_description || "Material",
+      uom: bill.uom || "MT",
+      quantity: "-",
+      amount: bill.total_amount || 0
+    }
+  ];
+
+  const attachmentUrl = getAttachmentUrl(bill);
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden max-h-[92vh] flex flex-col">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Vendor Bill Details</h2>
+              <p className="text-emerald-100 text-xs mt-0.5">{bill.sr_no || bill.bill_number} &mdash; {bill.vendor_name || "Vendor"}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+        </div>
+
+        {/* Modal Content / Printable Area */}
+        <div id="vendor-bill-modal-content" className="p-8 space-y-6 overflow-y-auto flex-1 bg-gray-50">
+          {/* Header Info Card */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+              <div>
+                <span className="text-xs uppercase font-bold text-emerald-600 tracking-wider">Vendor Details</span>
+                <h3 className="text-xl font-bold text-gray-900 mt-1">{bill.vendor_name || "Vendor Name"}</h3>
+                {bill.vendor_company && <p className="text-sm text-gray-500 font-medium">{bill.vendor_company}</p>}
+                {bill.vendor_email && <p className="text-xs text-gray-400 mt-0.5">{bill.vendor_email} {bill.vendor_phone ? `| ${bill.vendor_phone}` : ""}</p>}
+              </div>
+              <div className="sm:text-right">
+                <span className="text-xs text-gray-400 font-medium uppercase block">Bill Number</span>
+                <span className="inline-block px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-mono font-bold text-sm mt-1">
+                  {bill.sr_no || bill.bill_number}
+                </span>
+                <p className="text-xs text-gray-500 mt-1">
+                  Date: {new Date(bill.created_at || bill.bill_date || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </p>
+              </div>
+            </div>
+
+            {/* Complete Itemized Materials Table */}
+            <div>
+              <h4 className="text-xs font-bold uppercase text-gray-600 tracking-wider mb-3">Itemized Bill Details</h4>
+              <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100/80 text-gray-700 font-semibold border-b border-gray-200">
+                    <tr>
+                      <th className="py-3 px-4 text-left w-12">#</th>
+                      <th className="py-3 px-4 text-left">Material Description</th>
+                      <th className="py-3 px-4 text-center">UOM</th>
+                      <th className="py-3 px-4 text-right">Quantity</th>
+                      <th className="py-3 px-4 text-right">Amount (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {billItems.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="py-3 px-4 font-bold text-gray-400">{idx + 1}</td>
+                        <td className="py-3 px-4 font-medium text-gray-800">{item.description || item.name || "-"}</td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 rounded-md text-xs font-semibold border border-emerald-200">
+                            {item.uom || bill.uom || "-"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right font-medium text-gray-900">{item.quantity ?? "-"}</td>
+                        <td className="py-3 px-4 text-right font-bold text-gray-900">
+                          ₹{(parseFloat(item.amount || item.unit_price) || 0).toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Financial Summary with Subtotal, Taxes, and Grand Total */}
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 space-y-2">
+              <div className="flex items-center justify-between text-xs text-emerald-800">
+                <span>Subtotal (Before Tax):</span>
+                <span className="font-semibold">
+                  ₹{(bill.subtotal || billItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) || bill.total_amount || 0).toFixed(2)}
+                </span>
+              </div>
+
+              {(bill.igst_percent > 0 || bill.igst_amount > 0) && (
+                <div className="flex items-center justify-between text-xs text-emerald-800">
+                  <span>IGST ({bill.igst_percent || 0}%):</span>
+                  <span className="font-medium">+₹{(bill.igst_amount || 0).toFixed(2)}</span>
+                </div>
+              )}
+
+              {(bill.cgst_percent > 0 || bill.cgst_amount > 0) && (
+                <div className="flex items-center justify-between text-xs text-emerald-800">
+                  <span>CGST ({bill.cgst_percent || 0}%):</span>
+                  <span className="font-medium">+₹{(bill.cgst_amount || 0).toFixed(2)}</span>
+                </div>
+              )}
+
+              {(bill.sgst_percent > 0 || bill.sgst_amount > 0) && (
+                <div className="flex items-center justify-between text-xs text-emerald-800">
+                  <span>SGST ({bill.sgst_percent || 0}%):</span>
+                  <span className="font-medium">+₹{(bill.sgst_amount || 0).toFixed(2)}</span>
+                </div>
+              )}
+
+              {bill.tax_amount > 0 && !(bill.igst_percent > 0 || bill.cgst_percent > 0 || bill.sgst_percent > 0) && (
+                <div className="flex items-center justify-between text-xs text-emerald-800">
+                  <span>Total Tax Amount:</span>
+                  <span className="font-medium">+₹{(bill.tax_amount || 0).toFixed(2)}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-emerald-200/80">
+                <span className="font-bold text-sm">Total Bill Amount (Incl. Taxes):</span>
+                <span className="text-xl font-black text-emerald-700">₹{(bill.total_amount || 0).toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Notes if any */}
+            {bill.notes && (
+              <div className="p-3.5 bg-yellow-50/70 border border-yellow-200 rounded-xl">
+                <span className="text-xs font-bold text-yellow-800 uppercase block mb-1">Notes / Remarks:</span>
+                <p className="text-xs text-gray-700">{bill.notes}</p>
+              </div>
+            )}
+
+            {/* Attachment preview / link section */}
+            {attachmentUrl && (
+              <div className="p-4 bg-emerald-50/80 rounded-2xl border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Bill Attachment File</h5>
+                    <p className="text-xs text-emerald-700">Click button to view uploaded file</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewAttachment(attachmentUrl)}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                  >
+                    <Eye className="w-4 h-4" /> View File
+                  </button>
+                  <a
+                    href={attachmentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-2 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-4 border-t border-gray-200 bg-white flex items-center justify-between flex-shrink-0 gap-3">
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 border border-gray-300 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            Close
+          </button>
+          <div className="flex items-center gap-3">
+            {attachmentUrl && (
+              <button
+                type="button"
+                onClick={() => setPreviewAttachment(attachmentUrl)}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+              >
+                <Eye className="w-4 h-4" /> View File
+              </button>
+            )}
+            <button
+              onClick={handleDownloadPDF}
+              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
+            >
+              <Download className="w-4 h-4" /> Download PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {previewAttachment && (
+        <AttachmentPreviewModal
+          url={previewAttachment}
+          onClose={() => setPreviewAttachment(null)}
+        />
+      )}
+    </div>
+  );
+};
+
+
 // Vendor Detail Card
 const VendorDetailCard = ({ vendor, onClose }) => {
+  const [vendorBills, setVendorBills] = useState([]);
+  const [loadingBills, setLoadingBills] = useState(false);
+  const [selectedBill, setSelectedBill] = useState(null);
+  const [previewAttachmentCard, setPreviewAttachmentCard] = useState(null);
+
+  useEffect(() => {
+    if (vendor) {
+      fetchVendorBills();
+    }
+  }, [vendor]);
+
+  const fetchVendorBills = async () => {
+    setLoadingBills(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_URL}/api/vendor-bills/?limit=100`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const allBills = data.bills || [];
+        const filtered = allBills.filter(
+          b => String(b.vendor_id) === String(vendor.id) ||
+               String(b.vendor_id) === String(vendor._id) ||
+               (b.vendor_name && b.vendor_name.toLowerCase() === vendor.name.toLowerCase())
+        );
+        setVendorBills(filtered);
+      }
+    } catch (e) {
+      console.error("Error fetching bills for vendor:", e);
+    } finally {
+      setLoadingBills(false);
+    }
+  };
+
   if (!vendor) return null;
 
   return (
@@ -2355,6 +2724,140 @@ const VendorDetailCard = ({ vendor, onClose }) => {
             </div>
           </div>
 
+          {/* Vendor Bills Section */}
+          <div className="mt-8 bg-gradient-to-br from-emerald-50/50 to-teal-50/30 rounded-2xl p-6 border border-emerald-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-xl flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800">Vendor Bills & Invoices</h3>
+                  <p className="text-xs text-gray-500">Complete itemized bills recorded for {vendor.name}</p>
+                </div>
+              </div>
+              <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
+                {vendorBills.length} Bill{vendorBills.length === 1 ? "" : "s"}
+              </span>
+            </div>
+
+            {loadingBills ? (
+              <div className="py-8 text-center text-sm text-gray-500 flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                Loading vendor bills...
+              </div>
+            ) : vendorBills.length === 0 ? (
+              <div className="py-8 text-center text-sm text-gray-400 bg-white/60 rounded-xl border border-gray-200">
+                No bills created for this vendor yet.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {vendorBills.map((bill, bIdx) => (
+                  <div key={bill.id || bill._id || bIdx} className="bg-white rounded-xl border border-emerald-100 shadow-sm p-4 hover:shadow-md transition-shadow">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                          {bill.sr_no || bill.bill_number}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {new Date(bill.created_at || bill.bill_date || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-emerald-700">₹{bill.total_amount ? bill.total_amount.toFixed(2) : "0.00"}</span>
+                        <button
+                          onClick={() => setSelectedBill(bill)}
+                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> Complete Details
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Itemized list for this bill */}
+                    <div className="mt-3 overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
+                            <th className="py-2 px-3 text-left">#</th>
+                            <th className="py-2 px-3 text-left">Material Description</th>
+                            <th className="py-2 px-3 text-center">UOM</th>
+                            <th className="py-2 px-3 text-right">Quantity</th>
+                            <th className="py-2 px-3 text-right">Amount (₹)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {bill.items && bill.items.length > 0 ? (
+                            bill.items.map((item, iIdx) => (
+                              <tr key={iIdx} className="hover:bg-gray-50/50">
+                                <td className="py-2 px-3 font-medium text-gray-500">{iIdx + 1}</td>
+                                <td className="py-2 px-3 font-medium text-gray-800">{item.description || item.name || "-"}</td>
+                                <td className="py-2 px-3 text-center">
+                                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-[11px] font-medium">
+                                    {item.uom || bill.uom || "-"}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3 text-right font-medium text-gray-800">{item.quantity ?? "-"}</td>
+                                <td className="py-2 px-3 text-right font-semibold text-gray-900">₹{(item.amount || item.unit_price || 0).toFixed(2)}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td className="py-2 px-3 font-medium text-gray-500">1</td>
+                              <td className="py-2 px-3 font-medium text-gray-800">{bill.material_description || "-"}</td>
+                              <td className="py-2 px-3 text-center">
+                                <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-[11px] font-medium">
+                                  {bill.uom || "-"}
+                                </span>
+                              </td>
+                              <td className="py-2 px-3 text-right font-medium text-gray-800">-</td>
+                              <td className="py-2 px-3 text-right font-semibold text-gray-900">₹{(bill.total_amount || 0).toFixed(2)}</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {bill.notes && (
+                      <p className="mt-2 text-xs text-gray-500 italic bg-gray-50 p-2 rounded-lg border border-gray-100">
+                        Note: {bill.notes}
+                      </p>
+                    )}
+
+                    {(() => {
+                      const attUrl = getAttachmentUrl(bill);
+                      if (!attUrl) return null;
+                      return (
+                        <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between text-xs">
+                          <span className="font-semibold text-gray-700 flex items-center gap-1">
+                            <FileText className="w-3.5 h-3.5 text-emerald-600" /> Attachment File Available
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setPreviewAttachmentCard(attUrl)}
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-bold text-xs flex items-center gap-1 transition-colors shadow-sm"
+                            >
+                              <Eye className="w-3 h-3" /> View File
+                            </button>
+                            <a
+                              href={attUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md font-medium text-xs transition-colors"
+                            >
+                              Open
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Additional Info */}
           <div className="mt-8 bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200">
             <div className="flex items-center gap-3 mb-4">
@@ -2385,6 +2888,20 @@ const VendorDetailCard = ({ vendor, onClose }) => {
             </div>
           </div>
         </div>
+
+        {selectedBill && (
+          <VendorBillDetailModal
+            bill={selectedBill}
+            onClose={() => setSelectedBill(null)}
+          />
+        )}
+
+        {previewAttachmentCard && (
+          <AttachmentPreviewModal
+            url={previewAttachmentCard}
+            onClose={() => setPreviewAttachmentCard(null)}
+          />
+        )}
       </div>
     </div>
   );
@@ -2398,6 +2915,9 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
   const [materials, setMaterials] = useState([
     { id: 1, description: "", uom: "MT", quantity: "", amount: "" }
   ]);
+  const [igstPercent, setIgstPercent] = useState("");
+  const [cgstPercent, setCgstPercent] = useState("");
+  const [sgstPercent, setSgstPercent] = useState("");
   const [attachment, setAttachment] = useState("");
   const [attachmentName, setAttachmentName] = useState("");
   const [notes, setNotes] = useState("");
@@ -2405,17 +2925,18 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const UOM_OPTIONS = ["MT", "KGs", "Case", "Set", "Bundle", "NOS"];
+  const UOM_OPTIONS = ["MT", "KGs", "Litre", "Case", "Set", "Bundle", "NOS"];
 
   useEffect(() => {
     if (open) {
-      const randomNum = Math.floor(1000 + Math.random() * 9000);
-      const autoBillNo = `BILL-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${randomNum}`;
-      setBillNumber(autoBillNo);
+      setBillNumber("");
       setVendorId(vendors.length > 0 ? (vendors[0].id || vendors[0]._id) : "");
       setMaterials([
         { id: Date.now(), description: "", uom: "MT", quantity: "", amount: "" }
       ]);
+      setIgstPercent("");
+      setCgstPercent("");
+      setSgstPercent("");
       setAttachment("");
       setAttachmentName("");
       setNotes("");
@@ -2445,7 +2966,16 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
     });
   };
 
-  const calculatedTotalAmount = materials.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0);
+  const itemsSubtotal = materials.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0);
+  const igstVal = parseFloat(igstPercent) || 0;
+  const cgstVal = parseFloat(cgstPercent) || 0;
+  const sgstVal = parseFloat(sgstPercent) || 0;
+
+  const igstAmount = (itemsSubtotal * igstVal) / 100;
+  const cgstAmount = (itemsSubtotal * cgstVal) / 100;
+  const sgstAmount = (itemsSubtotal * sgstVal) / 100;
+  const totalTaxAmount = igstAmount + cgstAmount + sgstAmount;
+  const grandTotalAmount = itemsSubtotal + totalTaxAmount;
 
   const handleFileChange = (e) => {
     const file = e.target.files && e.target.files[0];
@@ -2466,6 +2996,15 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const cleanedBillNumber = billNumber ? billNumber.trim() : "";
+    if (!cleanedBillNumber) {
+      setError("Please enter bill number.");
+      return;
+    }
+    if (!/^\d+$/.test(cleanedBillNumber)) {
+      setError("Bill number must be numeric only (digits 0-9).");
+      return;
+    }
     if (!vendorId) {
       setError("Please select a vendor.");
       return;
@@ -2502,13 +3041,21 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
       const payload = {
         vendor_id: vendorId,
         vendor_name: selectedVendor ? selectedVendor.name : "",
-        bill_number: billNumber,
-        sr_no: billNumber,
+        vendor_company: selectedVendor ? selectedVendor.company : "",
+        bill_number: cleanedBillNumber,
+        sr_no: cleanedBillNumber,
         material_description: materialDescriptionSummary,
         uom: validMaterials[0]?.uom || "MT",
         attachment: attachment,
-        total_amount: calculatedTotalAmount,
-        subtotal: calculatedTotalAmount,
+        subtotal: itemsSubtotal,
+        igst_percent: igstVal,
+        cgst_percent: cgstVal,
+        sgst_percent: sgstVal,
+        igst_amount: igstAmount,
+        cgst_amount: cgstAmount,
+        sgst_amount: sgstAmount,
+        tax_amount: totalTaxAmount,
+        total_amount: grandTotalAmount,
         items: items,
         notes: notes
       };
@@ -2568,16 +3115,20 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Bill Number (Auto-generated) */}
+            {/* Bill Number (Manual Input - Numeric Only) */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5">
-                Bill Number <span className="text-emerald-600 font-normal">(Auto Generated)</span>
+                Bill Number <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={billNumber}
-                readOnly
-                className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-xl font-mono text-sm text-gray-700 font-bold focus:outline-none cursor-not-allowed"
+                onChange={(e) => setBillNumber(e.target.value.replace(/\D/g, ""))}
+                placeholder="Enter bill number"
+                required
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl font-mono text-sm text-gray-800 font-bold focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
 
@@ -2628,7 +3179,7 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
                         type="text"
                         value={mat.description}
                         onChange={(e) => updateMaterialRow(idx, "description", e.target.value)}
-                        placeholder="Enter material description..."
+                        placeholder="Enter material description"
                         required
                         className="flex-1 px-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
@@ -2671,7 +3222,7 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
                         step="any"
                         value={mat.quantity}
                         onChange={(e) => updateMaterialRow(idx, "quantity", e.target.value)}
-                        placeholder="e.g. 10"
+                        placeholder="Enter quantity"
                         className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                       />
                     </div>
@@ -2684,7 +3235,7 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
                         step="any"
                         value={mat.amount}
                         onChange={(e) => updateMaterialRow(idx, "amount", e.target.value)}
-                        placeholder="e.g. 5000"
+                        placeholder="Enter amount"
                         className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-medium"
                       />
                     </div>
@@ -2693,10 +3244,83 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
               ))}
             </div>
 
-            {/* Total Amount Summary */}
-            <div className="flex items-center justify-between p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl text-sm font-semibold text-emerald-900">
-              <span>Calculated Total Amount:</span>
-              <span className="text-base font-bold text-emerald-700">₹{calculatedTotalAmount.toFixed(2)}</span>
+            {/* Taxes Section (IGST %, CGST %, SGST %) */}
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
+              <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Taxes (%)</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">
+                    IGST (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={igstPercent}
+                    onChange={(e) => setIgstPercent(e.target.value)}
+                    placeholder="Enter IGST %"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">
+                    CGST (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={cgstPercent}
+                    onChange={(e) => setCgstPercent(e.target.value)}
+                    placeholder="Enter CGST %"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">
+                    SGST (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={sgstPercent}
+                    onChange={(e) => setSgstPercent(e.target.value)}
+                    placeholder="Enter SGST %"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Total Amount Summary with Tax Calculation */}
+            <div className="p-4 bg-emerald-50/90 border border-emerald-200 rounded-xl space-y-2 text-sm text-emerald-900">
+              <div className="flex items-center justify-between text-xs text-emerald-800">
+                <span>Subtotal (Before Tax):</span>
+                <span className="font-semibold">₹{itemsSubtotal.toFixed(2)}</span>
+              </div>
+              {igstVal > 0 && (
+                <div className="flex items-center justify-between text-xs text-emerald-800">
+                  <span>IGST ({igstVal}%):</span>
+                  <span className="font-medium">+₹{igstAmount.toFixed(2)}</span>
+                </div>
+              )}
+              {cgstVal > 0 && (
+                <div className="flex items-center justify-between text-xs text-emerald-800">
+                  <span>CGST ({cgstVal}%):</span>
+                  <span className="font-medium">+₹{cgstAmount.toFixed(2)}</span>
+                </div>
+              )}
+              {sgstVal > 0 && (
+                <div className="flex items-center justify-between text-xs text-emerald-800">
+                  <span>SGST ({sgstVal}%):</span>
+                  <span className="font-medium">+₹{sgstAmount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-2 border-t border-emerald-200/80">
+                <span className="font-bold text-sm">Calculated Total Amount (Incl. Taxes):</span>
+                <span className="text-lg font-black text-emerald-700">₹{grandTotalAmount.toFixed(2)}</span>
+              </div>
             </div>
           </div>
 
@@ -2789,6 +3413,7 @@ const VendorProfile = () => {
   const [purchaseOrderModal, setPurchaseOrderModal] = useState(false);
   const [addBillModal, setAddBillModal] = useState(false);
   const [currentInvoice, setCurrentInvoice] = useState(null);
+  const [selectedBillModal, setSelectedBillModal] = useState(null);
   const [invoiceLoading, setInvoiceLoading] = useState(null); // vendor id being loaded
   const [activeTab, setActiveTab] = useState("vendors"); // "vendors" or "purchase-orders"
   const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -2798,22 +3423,42 @@ const VendorProfile = () => {
     setInvoiceLoading(vendor.id);
     try {
       const token = localStorage.getItem("access_token");
-      const res = await fetch(`${API_URL}/api/vendors/${vendor.id}/orders?limit=50`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to fetch orders");
-      const orders = await res.json();
-      if (!orders || orders.length === 0) {
-        alert("No invoice found for this vendor.");
-        return;
+      const [billsRes, ordersRes] = await Promise.all([
+        fetch(`${API_URL}/api/vendor-bills/?limit=100`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/api/vendors/${vendor.id}/orders?limit=50`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+
+      let vendorBills = [];
+      if (billsRes.ok) {
+        const billsData = await billsRes.json();
+        const allBills = billsData.bills || [];
+        vendorBills = allBills.filter(
+          b => String(b.vendor_id) === String(vendor.id) ||
+               String(b.vendor_id) === String(vendor._id) ||
+               (b.vendor_name && b.vendor_name.toLowerCase() === vendor.name.toLowerCase())
+        );
       }
-      // Sort by created_at descending to get the latest
-      const sorted = [...orders].sort((a, b) =>
-        new Date(b.created_at || b.invoice_date || 0) - new Date(a.created_at || a.invoice_date || 0)
-      );
-      setCurrentInvoice(sorted[0]);
+
+      let orders = [];
+      if (ordersRes.ok) {
+        orders = await ordersRes.json();
+      }
+
+      if (vendorBills.length > 0) {
+        const sortedBills = [...vendorBills].sort(
+          (a, b) => new Date(b.created_at || b.bill_date || 0) - new Date(a.created_at || a.bill_date || 0)
+        );
+        setSelectedBillModal(sortedBills[0]);
+      } else if (orders && orders.length > 0) {
+        const sortedOrders = [...orders].sort(
+          (a, b) => new Date(b.created_at || b.invoice_date || 0) - new Date(a.created_at || a.invoice_date || 0)
+        );
+        setCurrentInvoice(sortedOrders[0]);
+      } else {
+        alert("No bills or invoices found for this vendor.");
+      }
     } catch (e) {
-      alert("Could not load invoice: " + e.message);
+      alert("Could not load bill details: " + e.message);
     } finally {
       setInvoiceLoading(null);
     }
@@ -2829,11 +3474,22 @@ const VendorProfile = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("access_token");
-      const res = await fetch(`${API_URL}/api/vendors/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to fetch vendors");
-      const data = await res.json();
+
+      // Fetch vendors, bills, and purchase orders in parallel for real-time aggregate stats
+      const [vendorsRes, billsRes, poRes] = await Promise.all([
+        fetch(`${API_URL}/api/vendors/`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/api/vendor-bills/?limit=1000`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/api/vendors/purchase-orders/all`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+
+      if (!vendorsRes.ok) throw new Error("Failed to fetch vendors");
+
+      const data = await vendorsRes.json();
+      const billsData = billsRes.ok ? await billsRes.json() : { bills: [] };
+      const poData = poRes.ok ? await poRes.json() : [];
+
+      const allBills = billsData.bills || [];
+      const allPOs = Array.isArray(poData) ? poData : [];
 
       const API_BASE = API_URL.replace("/api", "");
       const processed = Array.isArray(data)
@@ -2842,19 +3498,48 @@ const VendorProfile = () => {
           if (avatar_url && avatar_url.startsWith("/")) {
             avatar_url = API_BASE + avatar_url;
           }
+
+          const vIdStr = String(v.id || v._id || "");
+          const vNameLower = (v.name || "").toLowerCase();
+
+          // Match bills for this vendor
+          const matchingBills = allBills.filter(
+            (b) =>
+              String(b.vendor_id) === vIdStr ||
+              String(b.vendor_id) === String(v._id) ||
+              (b.vendor_name && b.vendor_name.toLowerCase() === vNameLower)
+          );
+
+          // Match purchase orders for this vendor
+          const matchingPOs = allPOs.filter(
+            (po) =>
+              String(po.vendor_id) === vIdStr ||
+              String(po.vendor_id) === String(v._id) ||
+              (po.vendor_name && po.vendor_name.toLowerCase() === vNameLower)
+          );
+
+          const billsSpend = matchingBills.reduce((sum, b) => sum + (parseFloat(b.total_amount) || 0), 0);
+          const poSpend = matchingPOs.reduce((sum, po) => sum + (parseFloat(po.total_amount || po.totalAmount) || 0), 0);
+
+          const calculatedTotalSpend = (billsSpend + poSpend) > 0 ? (billsSpend + poSpend) : (v.total_spend || 0);
+          const calculatedOrdersCount = (matchingBills.length + matchingPOs.length) > 0 ? (matchingBills.length + matchingPOs.length) : (v.orders_count || 0);
+
           return {
             ...v,
             id: v.id || v._id,
             name: v.name,
             avatar_url,
-            total_spend: v.total_spend || 0,
-            orders_count: v.orders_count || 0,
+            total_spend: calculatedTotalSpend,
+            orders_count: calculatedOrdersCount,
             status: v.status || "active",
           };
         })
         : [];
+
       setVendors(processed);
       setFilteredVendors(processed);
+      setVendorBills(allBills);
+      setPurchaseOrders(allPOs);
     } catch (e) {
       console.error("Error fetching vendors:", e);
       setVendors([]);
@@ -3750,31 +4435,50 @@ const VendorProfile = () => {
                     );
                   })
                   .slice((billsPage - 1) * PAGE_SIZE, billsPage * PAGE_SIZE)
-                  .map((bill) => (
-                    <tr key={bill.id || bill._id || bill.sr_no} className="hover:bg-emerald-50/40 transition-colors">
-                      <td className="px-6 py-4 font-mono font-bold text-xs text-emerald-800">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200">
-                          {bill.sr_no || bill.bill_number || "-"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-gray-900">{bill.vendor_name || "Vendor"}</div>
-                        {bill.vendor_company && <div className="text-xs text-gray-400">{bill.vendor_company}</div>}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate" title={bill.material_description || (bill.items && bill.items[0]?.description)}>
-                        {bill.material_description || (bill.items && bill.items[0]?.description) || "-"}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
-                          {bill.uom || "-"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                        {bill.items && bill.items[0]?.quantity ? bill.items[0].quantity : "-"}
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-gray-900 text-sm">
-                        ₹{bill.total_amount ? bill.total_amount.toFixed(2) : "0.00"}
-                      </td>
+                  .map((bill) => {
+                    const matDisplay = getBillMaterialDisplay(bill);
+                    const uomDisplay = getBillUomDisplay(bill);
+                    return (
+                      <tr key={bill.id || bill._id || bill.sr_no} className="hover:bg-emerald-50/40 transition-colors">
+                        <td className="px-6 py-4 font-mono font-bold text-xs text-emerald-800">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200">
+                            {bill.sr_no || bill.bill_number || "-"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-semibold text-gray-900">{bill.vendor_name || "Vendor"}</div>
+                          {bill.vendor_company && <div className="text-xs text-gray-400">{bill.vendor_company}</div>}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700 max-w-xs" title={bill.material_description || (bill.items && bill.items.map(i => i.description || i.name).join(", "))}>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-900 border border-purple-200 max-w-[180px] truncate">
+                              {matDisplay.firstMat}
+                            </span>
+                            {matDisplay.extraCount > 0 && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-purple-600 text-white border border-purple-700 shadow-xs" title={`+${matDisplay.extraCount} more items`}>
+                                +{matDisplay.extraCount}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-900 border border-emerald-200">
+                              {uomDisplay.firstUom}
+                            </span>
+                            {uomDisplay.extraCount > 0 && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white border border-emerald-700 shadow-xs" title={`+${uomDisplay.extraCount} more UOMs`}>
+                                +{uomDisplay.extraCount}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                          {bill.items && bill.items.length > 0 && bill.items[0].quantity !== undefined ? bill.items[0].quantity : (bill.quantity || "-")}
+                        </td>
+                        <td className="px-6 py-4 font-semibold text-gray-900 text-sm">
+                          ₹{bill.total_amount ? bill.total_amount.toFixed(2) : "0.00"}
+                        </td>
                       <td className="px-6 py-4 text-xs text-gray-500">
                         {bill.created_at || bill.bill_date ? new Date(bill.created_at || bill.bill_date).toLocaleDateString('en-US', {
                           year: 'numeric',
@@ -3798,33 +4502,43 @@ const VendorProfile = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={async () => {
-                            if (window.confirm("Are you sure you want to delete this bill?")) {
-                              try {
-                                const token = localStorage.getItem("access_token");
-                                const res = await fetch(`${API_URL}/api/vendor-bills/${bill.id}`, {
-                                  method: "DELETE",
-                                  headers: { Authorization: `Bearer ${token}` }
-                                });
-                                if (res.ok) {
-                                  fetchVendorBills();
-                                } else {
-                                  alert("Failed to delete bill");
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => setSelectedBillModal(bill)}
+                            title="View Complete Bill Details"
+                            className="p-2 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-colors"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (window.confirm("Are you sure you want to delete this bill?")) {
+                                try {
+                                  const token = localStorage.getItem("access_token");
+                                  const res = await fetch(`${API_URL}/api/vendor-bills/${bill.id}`, {
+                                    method: "DELETE",
+                                    headers: { Authorization: `Bearer ${token}` }
+                                  });
+                                  if (res.ok) {
+                                    fetchVendorBills();
+                                  } else {
+                                    alert("Failed to delete bill");
+                                  }
+                                } catch (e) {
+                                  alert("Error deleting bill");
                                 }
-                              } catch (e) {
-                                alert("Error deleting bill");
                               }
-                            }
-                          }}
-                          title="Delete Bill"
-                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                            }}
+                            title="Delete Bill"
+                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ))
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -3878,6 +4592,13 @@ const VendorProfile = () => {
         <VendorDetailCard
           vendor={detailViewVendor}
           onClose={() => setDetailViewVendor(null)}
+        />
+      )}
+
+      {selectedBillModal && (
+        <VendorBillDetailModal
+          bill={selectedBillModal}
+          onClose={() => setSelectedBillModal(null)}
         />
       )}
 

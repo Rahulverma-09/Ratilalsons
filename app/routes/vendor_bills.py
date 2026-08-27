@@ -85,6 +85,39 @@ async def create_vendor_bill(
             pass
     
     bill = repo.create_bill(bill_dict, uploaded_by=current_user.get("user_id"))
+
+    # Recalculate and update vendor's total_spend and orders_count in database
+    if bill_dict.get("vendor_id"):
+        try:
+            db = get_database()
+            vendors_collection = db["vendors"]
+            bills_collection = db["vendor_bills"]
+            v_id = str(bill_dict["vendor_id"])
+
+            all_v_bills = list(bills_collection.find({
+                "$or": [
+                    {"vendor_id": v_id},
+                    {"vendor_name": bill_dict.get("vendor_name")}
+                ]
+            }))
+            tot_spend = sum(float(b.get("total_amount", 0) or 0) for b in all_v_bills)
+            orders_cnt = len(all_v_bills)
+
+            from bson import ObjectId
+            query_conds = [{"id": v_id}]
+            if len(v_id) == 24:
+                try:
+                    query_conds.append({"_id": ObjectId(v_id)})
+                except:
+                    pass
+
+            vendors_collection.update_one(
+                {"$or": query_conds},
+                {"$set": {"total_spend": tot_spend, "orders_count": orders_cnt}}
+            )
+        except Exception as e:
+            print("Error updating vendor total spend & order count in DB:", e)
+
     return bill
 
 @vendor_bill_router.post("/upload", response_model=VendorBillModel, status_code=status.HTTP_201_CREATED)
