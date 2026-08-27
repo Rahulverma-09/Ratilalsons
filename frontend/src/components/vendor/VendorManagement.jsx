@@ -2408,6 +2408,7 @@ const VendorBillDetailModal = ({ bill, onClose }) => {
                       <th className="py-3 px-4 text-left w-12">#</th>
                       <th className="py-3 px-4 text-left">Material Description</th>
                       <th className="py-3 px-4 text-center">UOM</th>
+                      <th className="py-3 px-4 text-right">Unit Price (₹)</th>
                       <th className="py-3 px-4 text-right">Quantity</th>
                       <th className="py-3 px-4 text-right">Amount (₹)</th>
                     </tr>
@@ -2422,9 +2423,12 @@ const VendorBillDetailModal = ({ bill, onClose }) => {
                             {item.uom || bill.uom || "-"}
                           </span>
                         </td>
+                        <td className="py-3 px-4 text-right font-medium text-gray-800">
+                          {item.unit_price ? `₹${parseFloat(item.unit_price).toFixed(2)}` : "-"}
+                        </td>
                         <td className="py-3 px-4 text-right font-medium text-gray-900">{item.quantity ?? "-"}</td>
                         <td className="py-3 px-4 text-right font-bold text-gray-900">
-                          ₹{(parseFloat(item.amount || item.unit_price) || 0).toFixed(2)}
+                          ₹{(parseFloat(item.amount) || (parseFloat(item.unit_price || 0) * parseFloat(item.quantity || 0)) || 0).toFixed(2)}
                         </td>
                       </tr>
                     ))}
@@ -2913,7 +2917,7 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
   const [billNumber, setBillNumber] = useState("");
   const [vendorId, setVendorId] = useState("");
   const [materials, setMaterials] = useState([
-    { id: 1, description: "", uom: "MT", quantity: "", amount: "" }
+    { id: 1, description: "", uom: "MT", unitPrice: "", quantity: "", amount: "" }
   ]);
   const [igstPercent, setIgstPercent] = useState("");
   const [cgstPercent, setCgstPercent] = useState("");
@@ -2932,7 +2936,7 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
       setBillNumber("");
       setVendorId(vendors.length > 0 ? (vendors[0].id || vendors[0]._id) : "");
       setMaterials([
-        { id: Date.now(), description: "", uom: "MT", quantity: "", amount: "" }
+        { id: Date.now(), description: "", uom: "MT", unitPrice: "", quantity: "", amount: "" }
       ]);
       setIgstPercent("");
       setCgstPercent("");
@@ -2949,7 +2953,7 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
   const addMaterialRow = () => {
     setMaterials(prev => [
       ...prev,
-      { id: Date.now() + Math.random(), description: "", uom: "MT", quantity: "", amount: "" }
+      { id: Date.now() + Math.random(), description: "", uom: "MT", unitPrice: "", quantity: "", amount: "" }
     ]);
   };
 
@@ -2961,7 +2965,15 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
   const updateMaterialRow = (index, field, value) => {
     setMaterials(prev => {
       const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
+      const current = { ...updated[index], [field]: value };
+      if (field === "unitPrice" || field === "quantity") {
+        const uPrice = parseFloat(field === "unitPrice" ? value : current.unitPrice);
+        const qty = parseFloat(field === "quantity" ? value : current.quantity);
+        if (!isNaN(uPrice) && !isNaN(qty)) {
+          current.amount = (uPrice * qty).toFixed(2);
+        }
+      }
+      updated[index] = current;
       return updated;
     });
   };
@@ -3024,15 +3036,21 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
 
       const validMaterials = materials.filter(m => m.description && m.description.trim() !== "");
 
-      const items = validMaterials.map((m, idx) => ({
-        sr_no: idx + 1,
-        name: m.description.slice(0, 50),
-        description: m.description,
-        uom: m.uom || "MT",
-        quantity: parseFloat(m.quantity || 1),
-        unit_price: parseFloat(m.amount || 0),
-        tax_rate: 0
-      }));
+      const items = validMaterials.map((m, idx) => {
+        const qty = parseFloat(m.quantity || 1);
+        const uPrice = parseFloat(m.unitPrice || 0);
+        const amt = parseFloat(m.amount) || (uPrice * qty);
+        return {
+          sr_no: idx + 1,
+          name: m.description.slice(0, 50),
+          description: m.description,
+          uom: m.uom || "MT",
+          quantity: qty,
+          unit_price: uPrice,
+          amount: amt,
+          tax_rate: 0
+        };
+      });
 
       const materialDescriptionSummary = validMaterials
         .map((m, i) => `${i + 1}. ${m.description}`)
@@ -3196,7 +3214,7 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pl-7">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pl-7">
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">
                         UOM
@@ -3212,6 +3230,19 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
                           </option>
                         ))}
                       </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">
+                        Unit Price (₹)
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={mat.unitPrice}
+                        onChange={(e) => updateMaterialRow(idx, "unitPrice", e.target.value)}
+                        placeholder="Enter unit price"
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-medium"
+                      />
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">
@@ -3236,7 +3267,7 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
                         value={mat.amount}
                         onChange={(e) => updateMaterialRow(idx, "amount", e.target.value)}
                         placeholder="Enter amount"
-                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-medium"
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold text-emerald-800"
                       />
                     </div>
                   </div>
