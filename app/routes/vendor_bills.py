@@ -50,6 +50,12 @@ async def create_vendor_bill(
 ):
     """Create new vendor bill (can be uploaded by vendor or admin)"""
     bill_dict = bill_data.dict()
+    if not bill_dict.get("bill_number"):
+        bill_dict["bill_number"] = bill_dict.get("sr_no") or f"BILL-{uuid.uuid4().hex[:6].upper()}"
+    if not bill_dict.get("bill_date"):
+        bill_dict["bill_date"] = datetime.utcnow()
+    if not bill_dict.get("due_date"):
+        bill_dict["due_date"] = datetime.utcnow()
     
     # Always populate vendor information from vendor profiles
     if bill_dict.get("vendor_id"):
@@ -255,9 +261,9 @@ async def list_vendor_bills(
     vendor_id: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(100, ge=1, le=500),
     repo: VendorBillRepository = Depends(get_vendor_bill_repo),
-    current_user: dict = Depends(accounts_required)
+    current_user: dict = Depends(get_current_user)
 ):
     """List vendor bills with filters (Admin dashboard)"""
     skip = (page - 1) * limit

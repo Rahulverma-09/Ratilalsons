@@ -5,6 +5,87 @@ import { API_URL } from '../../config';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
+const PAGE_SIZE = 10;
+
+const PaginationControl = ({ page, setPage, total, colorTheme = "green" }) => {
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  if (totalPages <= 1) return null;
+
+  const startItem = (page - 1) * PAGE_SIZE + 1;
+  const endItem = Math.min(page * PAGE_SIZE, total);
+
+  const getThemeClasses = () => {
+    switch (colorTheme) {
+      case "purple":
+        return {
+          btn: "bg-purple-600 hover:bg-purple-700 text-white shadow-sm",
+          activeText: "text-purple-700"
+        };
+      case "emerald":
+        return {
+          btn: "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm",
+          activeText: "text-emerald-700"
+        };
+      default:
+        return {
+          btn: "bg-green-600 hover:bg-green-700 text-white shadow-sm",
+          activeText: "text-green-700"
+        };
+    }
+  };
+
+  const theme = getThemeClasses();
+
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white border-t border-gray-100">
+      <div className="text-xs text-gray-500">
+        Showing <span className="font-semibold text-gray-900">{startItem}</span> to{" "}
+        <span className="font-semibold text-gray-900">{endItem}</span> of{" "}
+        <span className="font-semibold text-gray-900">{total}</span> entries
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setPage(p => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            page === 1
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+          }`}
+        >
+          Previous
+        </button>
+        <div className="flex items-center gap-1">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+            <button
+              key={pageNum}
+              onClick={() => setPage(pageNum)}
+              className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all ${
+                pageNum === page
+                  ? theme.btn
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+              }`}
+            >
+              {pageNum}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+          disabled={page === totalPages}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            page === totalPages
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+          }`}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // Comprehensive Vendor Registration Modal for Admin
 const AddVendorModal = ({ open, onClose, onAdd, loading, vendors, editMode = false, existingVendor = null }) => {
   const [form, setForm] = useState({
@@ -2310,6 +2391,389 @@ const VendorDetailCard = ({ vendor, onClose }) => {
 };
 
 
+// Modal for Adding Vendor Bill
+const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
+  const [billNumber, setBillNumber] = useState("");
+  const [vendorId, setVendorId] = useState("");
+  const [materials, setMaterials] = useState([
+    { id: 1, description: "", uom: "MT", quantity: "", amount: "" }
+  ]);
+  const [attachment, setAttachment] = useState("");
+  const [attachmentName, setAttachmentName] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const UOM_OPTIONS = ["MT", "KGs", "Case", "Set", "Bundle", "NOS"];
+
+  useEffect(() => {
+    if (open) {
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const autoBillNo = `BILL-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${randomNum}`;
+      setBillNumber(autoBillNo);
+      setVendorId(vendors.length > 0 ? (vendors[0].id || vendors[0]._id) : "");
+      setMaterials([
+        { id: Date.now(), description: "", uom: "MT", quantity: "", amount: "" }
+      ]);
+      setAttachment("");
+      setAttachmentName("");
+      setNotes("");
+      setError("");
+    }
+  }, [open, vendors]);
+
+  if (!open) return null;
+
+  const addMaterialRow = () => {
+    setMaterials(prev => [
+      ...prev,
+      { id: Date.now() + Math.random(), description: "", uom: "MT", quantity: "", amount: "" }
+    ]);
+  };
+
+  const removeMaterialRow = (index) => {
+    if (materials.length <= 1) return;
+    setMaterials(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateMaterialRow = (index, field, value) => {
+    setMaterials(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const calculatedTotalAmount = materials.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File size exceeds 5MB limit.");
+      e.target.value = "";
+      return;
+    }
+    setError("");
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAttachment(reader.result);
+      setAttachmentName(file.name);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!vendorId) {
+      setError("Please select a vendor.");
+      return;
+    }
+    const hasValidMaterial = materials.some(m => m.description && m.description.trim() !== "");
+    if (!hasValidMaterial) {
+      setError("Please enter at least one material description.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const token = localStorage.getItem("access_token");
+      const selectedVendor = vendors.find(v => (v.id || v._id) === vendorId);
+
+      const validMaterials = materials.filter(m => m.description && m.description.trim() !== "");
+
+      const items = validMaterials.map((m, idx) => ({
+        sr_no: idx + 1,
+        name: m.description.slice(0, 50),
+        description: m.description,
+        uom: m.uom || "MT",
+        quantity: parseFloat(m.quantity || 1),
+        unit_price: parseFloat(m.amount || 0),
+        tax_rate: 0
+      }));
+
+      const materialDescriptionSummary = validMaterials
+        .map((m, i) => `${i + 1}. ${m.description}`)
+        .join("; ");
+
+      const payload = {
+        vendor_id: vendorId,
+        vendor_name: selectedVendor ? selectedVendor.name : "",
+        bill_number: billNumber,
+        sr_no: billNumber,
+        material_description: materialDescriptionSummary,
+        uom: validMaterials[0]?.uom || "MT",
+        attachment: attachment,
+        total_amount: calculatedTotalAmount,
+        subtotal: calculatedTotalAmount,
+        items: items,
+        notes: notes
+      };
+
+      const response = await fetch(`${API_URL}/api/vendor-bills/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || "Failed to add bill");
+      }
+
+      const result = await response.json();
+      if (onBillAdded) onBillAdded(result);
+      onClose();
+    } catch (err) {
+      setError(err.message || "Failed to submit bill");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden my-6 transform transition-all max-h-[85vh] flex flex-col">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Add Vendor Bill</h2>
+              <p className="text-emerald-100 text-xs mt-0.5">Submit new vendor bill details and attachments</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+        </div>
+
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1">
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium">
+              {error}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Bill Number (Auto-generated) */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5">
+                Bill Number <span className="text-emerald-600 font-normal">(Auto Generated)</span>
+              </label>
+              <input
+                type="text"
+                value={billNumber}
+                readOnly
+                className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-xl font-mono text-sm text-gray-700 font-bold focus:outline-none cursor-not-allowed"
+              />
+            </div>
+
+            {/* Vendor Dropdown */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5">
+                Select Vendor <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={vendorId}
+                onChange={(e) => setVendorId(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+              >
+                <option value="">-- Choose Vendor --</option>
+                {vendors.map((v) => (
+                  <option key={v.id || v._id} value={v.id || v._id}>
+                    {v.name} ({v.company || "Vendor"})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Dynamic Multi-Material Section */}
+          <div className="space-y-4 pt-2 border-t border-gray-100">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
+                <span>Materials / Items List</span>
+                <span className="text-xs font-normal text-gray-500">({materials.length} item{materials.length > 1 ? "s" : ""})</span>
+              </h3>
+              <button
+                type="button"
+                onClick={addMaterialRow}
+                className="bg-purple-100 hover:bg-purple-200 text-purple-700 px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Add Material
+              </button>
+            </div>
+
+            <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 border border-gray-100 rounded-xl p-2 bg-gray-50/50">
+              {materials.map((mat, idx) => (
+                <div key={mat.id || idx} className="p-4 bg-gray-50/80 border border-gray-200 rounded-xl space-y-3 relative group">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-1">
+                      <span className="font-bold text-gray-700 text-sm min-w-[20px]">{idx + 1}.</span>
+                      <input
+                        type="text"
+                        value={mat.description}
+                        onChange={(e) => updateMaterialRow(idx, "description", e.target.value)}
+                        placeholder="Enter material description..."
+                        required
+                        className="flex-1 px-3.5 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      />
+                    </div>
+                    {materials.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeMaterialRow(idx)}
+                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Remove Material"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pl-7">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">
+                        UOM
+                      </label>
+                      <select
+                        value={mat.uom}
+                        onChange={(e) => updateMaterialRow(idx, "uom", e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      >
+                        {UOM_OPTIONS.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">
+                        Quantity
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={mat.quantity}
+                        onChange={(e) => updateMaterialRow(idx, "quantity", e.target.value)}
+                        placeholder="e.g. 10"
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 uppercase mb-1">
+                        Amount (₹)
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={mat.amount}
+                        onChange={(e) => updateMaterialRow(idx, "amount", e.target.value)}
+                        placeholder="e.g. 5000"
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-medium"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Total Amount Summary */}
+            <div className="flex items-center justify-between p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-xl text-sm font-semibold text-emerald-900">
+              <span>Calculated Total Amount:</span>
+              <span className="text-base font-bold text-emerald-700">₹{calculatedTotalAmount.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {/* Attachment Upload */}
+          <div className="pt-2 border-t border-gray-100">
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5">
+              Attachment <span className="text-gray-400 font-normal lowercase">(max 5MB)</span>
+            </label>
+            <div className="border-2 border-dashed border-gray-300 hover:border-emerald-500 rounded-2xl p-4 text-center bg-gray-50 hover:bg-emerald-50/50 transition-colors relative cursor-pointer group">
+              <input
+                type="file"
+                accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+                onChange={handleFileChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <div className="flex flex-col items-center justify-center space-y-1">
+                <FileText className="w-7 h-7 text-gray-400 group-hover:text-emerald-600 transition-colors" />
+                <span className="text-xs font-medium text-gray-700 group-hover:text-emerald-700">
+                  {attachment ? "Click or drag to replace attachment" : "Upload attachment (PDF, Image, etc.)"}
+                </span>
+                <span className="text-[11px] text-gray-400">Supported formats: PDF, JPG, PNG, DOC (Up to 5MB)</span>
+              </div>
+            </div>
+
+            {attachment && (
+              <div className="mt-3 flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm">
+                <div className="flex items-center space-x-2 text-emerald-800 font-medium truncate">
+                  <FileText className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+                  <span className="truncate">{attachmentName || "Attachment Ready"}</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <a
+                    href={attachment}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 underline"
+                  >
+                    View
+                  </a>
+                  <button
+                    type="button"
+                    className="text-xs text-red-600 hover:text-red-800 font-semibold"
+                    onClick={() => {
+                      setAttachment("");
+                      setAttachmentName("");
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer Actions */}
+          <div className="pt-4 flex items-center justify-end gap-3 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {loading ? "Submitting..." : "Add Bill"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // Main Vendor Profile Component
 const VendorProfile = () => {
   const [vendors, setVendors] = useState([]);
@@ -2323,6 +2787,7 @@ const VendorProfile = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [orderModal, setOrderModal] = useState(false);
   const [purchaseOrderModal, setPurchaseOrderModal] = useState(false);
+  const [addBillModal, setAddBillModal] = useState(false);
   const [currentInvoice, setCurrentInvoice] = useState(null);
   const [invoiceLoading, setInvoiceLoading] = useState(null); // vendor id being loaded
   const [activeTab, setActiveTab] = useState("vendors"); // "vendors" or "purchase-orders"
@@ -2354,61 +2819,11 @@ const VendorProfile = () => {
     }
   };
 
-  // Fetch vendors on mount
-  useEffect(() => {
-    fetchVendors();
-  }, []);
-
-  const fetchPurchaseOrders = async () => {
-    setPurchaseOrdersLoading(true);
-    try {
-      const token = localStorage.getItem("access_token");
-      const res = await fetch(`${API_URL}/api/vendors/purchase-orders/all`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setPurchaseOrders(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch purchase orders:", err);
-    }
-    setPurchaseOrdersLoading(false);
-  };
-
-  const deletePurchaseOrder = async (orderNumber) => {
-    if (!confirm(`Are you sure you want to delete purchase order ${orderNumber}?`)) {
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("access_token");
-      const res = await fetch(`${API_URL}/api/vendors/purchase-orders/${orderNumber}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (res.ok) {
-        // Remove from local state
-        setPurchaseOrders(prev => prev.filter(order => 
-          (order.order_number || order.invoice_number) !== orderNumber
-        ));
-        alert('Purchase order deleted successfully');
-      } else {
-        const error = await res.json();
-        alert(`Failed to delete purchase order: ${error.detail || 'Unknown error'}`);
-      }
-    } catch (err) {
-      console.error("Failed to delete purchase order:", err);
-      alert('Failed to delete purchase order. Please try again.');
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === "purchase-orders") {
-      fetchPurchaseOrders();
-    }
-  }, [activeTab]);
+  const [vendorBills, setVendorBills] = useState([]);
+  const [vendorBillsLoading, setVendorBillsLoading] = useState(false);
+  const [vendorPage, setVendorPage] = useState(1);
+  const [poPage, setPoPage] = useState(1);
+  const [billsPage, setBillsPage] = useState(1);
 
   const fetchVendors = async () => {
     setLoading(true);
@@ -2447,6 +2862,83 @@ const VendorProfile = () => {
     }
     setLoading(false);
   };
+
+  const fetchVendorBills = async () => {
+    setVendorBillsLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_URL}/api/vendor-bills/?limit=100`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setVendorBills(data.bills || []);
+      }
+    } catch (e) {
+      console.error("Error fetching vendor bills:", e);
+    } finally {
+      setVendorBillsLoading(false);
+    }
+  };
+
+  const fetchPurchaseOrders = async () => {
+    setPurchaseOrdersLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_URL}/api/vendors/purchase-orders/all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPurchaseOrders(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch purchase orders:", err);
+    }
+    setPurchaseOrdersLoading(false);
+  };
+
+  const deletePurchaseOrder = async (orderNumber) => {
+    if (!confirm(`Are you sure you want to delete purchase order ${orderNumber}?`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${API_URL}/api/vendors/purchase-orders/${orderNumber}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        setPurchaseOrders(prev => prev.filter(order => 
+          (order.order_number || order.invoice_number) !== orderNumber
+        ));
+        alert('Purchase order deleted successfully');
+      } else {
+        const error = await res.json();
+        alert(`Failed to delete purchase order: ${error.detail || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error("Failed to delete purchase order:", err);
+      alert('Failed to delete purchase order. Please try again.');
+    }
+  };
+
+  // Fetch vendors on mount
+  useEffect(() => {
+    fetchVendors();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "bills") {
+      fetchVendorBills();
+    } else if (activeTab === "purchase-orders") {
+      fetchPurchaseOrders();
+    } else if (activeTab === "vendors") {
+      fetchVendors();
+    }
+  }, [activeTab]);
 
   const handleAddVendor = async (vendor) => {
     setAdding(true);
@@ -2578,6 +3070,9 @@ const VendorProfile = () => {
   const handleSearch = (e) => {
     const term = e.target.value.toLowerCase();
     setSearchTerm(term);
+    setVendorPage(1);
+    setPoPage(1);
+    setBillsPage(1);
     if (!term) {
       setFilteredVendors(vendors);
       return;
@@ -2852,6 +3347,16 @@ const VendorProfile = () => {
           >
             Purchase Requests
           </button>
+          <button
+            onClick={() => setActiveTab("bills")}
+            className={`px-6 py-3 font-semibold transition-all ${
+              activeTab === "bills"
+                ? "text-emerald-600 border-b-2 border-emerald-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Vendor Bills
+          </button>
         </div>
 
         <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
@@ -2871,6 +3376,12 @@ const VendorProfile = () => {
               className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               <ShoppingCart className="w-5 h-5" /> Purchase Request
+            </button>
+            <button
+              onClick={() => setAddBillModal(true)}
+              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
+            >
+              <FileText className="w-5 h-5" /> Add Bill
             </button>
             <button
               onClick={() => setOrderModal(true)}
@@ -2948,7 +3459,9 @@ const VendorProfile = () => {
                   </td>
                 </tr>
               ) : (
-                filteredVendors.map((vendor) => (
+                filteredVendors
+                  .slice((vendorPage - 1) * PAGE_SIZE, vendorPage * PAGE_SIZE)
+                  .map((vendor) => (
                   <tr key={vendor.id} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-green-50 transition-all duration-200">
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
@@ -3051,6 +3564,7 @@ const VendorProfile = () => {
             </tbody>
           </table>
         </div>
+        <PaginationControl page={vendorPage} setPage={setVendorPage} total={filteredVendors.length} colorTheme="green" />
       </div>
       )}
 
@@ -3091,7 +3605,19 @@ const VendorProfile = () => {
                   </td>
                 </tr>
               ) : (
-                purchaseOrders.map((order) => (
+                purchaseOrders
+                  .filter(order => {
+                    if (!searchTerm) return true;
+                    const term = searchTerm.toLowerCase();
+                    return (
+                      (order.order_number && order.order_number.toLowerCase().includes(term)) ||
+                      (order.invoice_number && order.invoice_number.toLowerCase().includes(term)) ||
+                      (order.vendor_name && order.vendor_name.toLowerCase().includes(term)) ||
+                      (order.vendor_company && order.vendor_company.toLowerCase().includes(term))
+                    );
+                  })
+                  .slice((poPage - 1) * PAGE_SIZE, poPage * PAGE_SIZE)
+                  .map((order) => (
                   <tr key={order.order_number || order.invoice_number} className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-200">
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -3151,6 +3677,175 @@ const VendorProfile = () => {
             </tbody>
           </table>
         </div>
+        <PaginationControl
+          page={poPage}
+          setPage={setPoPage}
+          total={
+            purchaseOrders.filter(order => {
+              if (!searchTerm) return true;
+              const term = searchTerm.toLowerCase();
+              return (
+                (order.order_number && order.order_number.toLowerCase().includes(term)) ||
+                (order.invoice_number && order.invoice_number.toLowerCase().includes(term)) ||
+                (order.vendor_name && order.vendor_name.toLowerCase().includes(term)) ||
+                (order.vendor_company && order.vendor_company.toLowerCase().includes(term))
+              );
+            }).length
+          }
+          colorTheme="purple"
+        />
+      </div>
+      )}
+
+      {/* Vendor Bills Table */}
+      {activeTab === "bills" && (
+      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Sr. No.</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Vendor</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Material Description</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">UOM</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Quantity</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Total Amount</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Date</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Attachment</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {vendorBillsLoading ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+                      <p className="text-gray-500 font-medium">Loading vendor bills...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : vendorBills.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                        <FileText className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="text-gray-500 font-medium">No vendor bills found</p>
+                      <p className="text-gray-400 text-sm">Click "+ Add Bill" to record your first vendor bill</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                vendorBills
+                  .filter(bill => {
+                    if (!searchTerm) return true;
+                    const term = searchTerm.toLowerCase();
+                    return (
+                      (bill.sr_no && bill.sr_no.toLowerCase().includes(term)) ||
+                      (bill.bill_number && bill.bill_number.toLowerCase().includes(term)) ||
+                      (bill.vendor_name && bill.vendor_name.toLowerCase().includes(term)) ||
+                      (bill.material_description && bill.material_description.toLowerCase().includes(term))
+                    );
+                  })
+                  .slice((billsPage - 1) * PAGE_SIZE, billsPage * PAGE_SIZE)
+                  .map((bill) => (
+                    <tr key={bill.id || bill._id || bill.sr_no} className="hover:bg-emerald-50/40 transition-colors">
+                      <td className="px-6 py-4 font-mono font-bold text-xs text-emerald-800">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200">
+                          {bill.sr_no || bill.bill_number || "-"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-semibold text-gray-900">{bill.vendor_name || "Vendor"}</div>
+                        {bill.vendor_company && <div className="text-xs text-gray-400">{bill.vendor_company}</div>}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700 max-w-xs truncate" title={bill.material_description || (bill.items && bill.items[0]?.description)}>
+                        {bill.material_description || (bill.items && bill.items[0]?.description) || "-"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">
+                          {bill.uom || "-"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                        {bill.items && bill.items[0]?.quantity ? bill.items[0].quantity : "-"}
+                      </td>
+                      <td className="px-6 py-4 font-semibold text-gray-900 text-sm">
+                        ₹{bill.total_amount ? bill.total_amount.toFixed(2) : "0.00"}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-gray-500">
+                        {bill.created_at || bill.bill_date ? new Date(bill.created_at || bill.bill_date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        }) : "-"}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {bill.attachment || bill.uploaded_file_path ? (
+                          <a
+                            href={bill.attachment || bill.uploaded_file_path}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors shadow-sm"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            View Attachment
+                          </a>
+                        ) : (
+                          <span className="text-gray-400 font-mono text-xs">-</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={async () => {
+                            if (window.confirm("Are you sure you want to delete this bill?")) {
+                              try {
+                                const token = localStorage.getItem("access_token");
+                                const res = await fetch(`${API_URL}/api/vendor-bills/${bill.id}`, {
+                                  method: "DELETE",
+                                  headers: { Authorization: `Bearer ${token}` }
+                                });
+                                if (res.ok) {
+                                  fetchVendorBills();
+                                } else {
+                                  alert("Failed to delete bill");
+                                }
+                              } catch (e) {
+                                alert("Error deleting bill");
+                              }
+                            }
+                          }}
+                          title="Delete Bill"
+                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <PaginationControl
+          page={billsPage}
+          setPage={setBillsPage}
+          total={
+            vendorBills.filter(bill => {
+              if (!searchTerm) return true;
+              const term = searchTerm.toLowerCase();
+              return (
+                (bill.sr_no && bill.sr_no.toLowerCase().includes(term)) ||
+                (bill.bill_number && bill.bill_number.toLowerCase().includes(term)) ||
+                (bill.vendor_name && bill.vendor_name.toLowerCase().includes(term)) ||
+                (bill.material_description && bill.material_description.toLowerCase().includes(term))
+              );
+            }).length
+          }
+          colorTheme="emerald"
+        />
       </div>
       )}
 
@@ -3215,6 +3910,17 @@ const VendorProfile = () => {
           onClose={() => setCurrentInvoice(null)}
         />
       )}
+
+      <AddBillModal
+        open={addBillModal}
+        onClose={() => setAddBillModal(false)}
+        vendors={vendors}
+        onBillAdded={(bill) => {
+          setAddBillModal(false);
+          alert("Bill added successfully!");
+          fetchVendors();
+        }}
+      />
     </div>
   );
 };

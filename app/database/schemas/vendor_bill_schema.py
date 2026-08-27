@@ -13,21 +13,26 @@ class VendorBillStatusEnum(str, Enum):
     rejected = "rejected"     # Admin rejected bill
 
 class BillItem(BaseModel):
-    name: str = Field(..., max_length=100)
+    sr_no: Optional[int] = None
+    name: Optional[str] = Field(None, max_length=100)
     description: Optional[str] = None
-    quantity: float = Field(..., ge=0.01)
-    unit_price: float = Field(..., ge=0)
-    tax_rate: float = Field(0.0, ge=0, le=100)
+    uom: Optional[str] = None
+    quantity: Optional[float] = Field(1.0, ge=0)
+    unit_price: Optional[float] = Field(0.0, ge=0)
+    tax_rate: Optional[float] = Field(0.0, ge=0, le=100)
     
     @validator('unit_price')
     def validate_unit_price(cls, v):
-        if v < 0:
+        if v is not None and v < 0:
             raise ValueError('Unit price cannot be negative')
         return v
     
     @property
     def total(self) -> float:
-        return self.quantity * self.unit_price * (1 + self.tax_rate / 100)
+        qty = self.quantity or 0.0
+        price = self.unit_price or 0.0
+        tax = self.tax_rate or 0.0
+        return qty * price * (1 + tax / 100)
 
 class VendorBillFilter(BaseModel):
     vendor_id: Optional[str] = None
@@ -44,27 +49,35 @@ class VendorBillBase(BaseModel):
     vendor_phone: Optional[str] = None
     vendor_address: Optional[str] = None
     bill_number: str = Field(..., max_length=50)
+    sr_no: Optional[str] = None
+    material_description: Optional[str] = None
+    uom: Optional[str] = None
+    attachment: Optional[str] = None
     reference_number: Optional[str] = None  # Vendor's reference
-    items: List[BillItem] = Field(..., min_items=1, max_items=100)
-    subtotal: float = Field(..., ge=0)
+    items: List[BillItem] = Field(default_factory=list, max_items=100)
+    subtotal: float = Field(0.0, ge=0)
     tax_amount: float = Field(0.0, ge=0)
-    total_amount: float = Field(..., ge=0)
-    due_date: datetime
-    bill_date: datetime
+    total_amount: float = Field(0.0, ge=0)
+    due_date: Optional[datetime] = None
+    bill_date: Optional[datetime] = None
     notes: Optional[str] = None
     status: VendorBillStatusEnum = VendorBillStatusEnum.uploaded
     uploaded_file_path: Optional[str] = None  # Path to uploaded bill document
 
 class VendorBillCreate(BaseModel):
     vendor_id: str
-    bill_number: str = Field(..., max_length=50)
+    bill_number: Optional[str] = None
+    sr_no: Optional[str] = None
+    material_description: Optional[str] = None
+    uom: Optional[str] = None
+    attachment: Optional[str] = None
     reference_number: Optional[str] = None
-    items: List[BillItem] = Field(..., min_items=1, max_items=100)
-    subtotal: float = Field(..., ge=0)
+    items: Optional[List[BillItem]] = Field(default_factory=list, max_items=100)
+    subtotal: float = Field(0.0, ge=0)
     tax_amount: float = Field(0.0, ge=0)
-    total_amount: float = Field(..., ge=0)
-    due_date: datetime
-    bill_date: datetime
+    total_amount: float = Field(0.0, ge=0)
+    due_date: Optional[datetime] = None
+    bill_date: Optional[datetime] = None
     notes: Optional[str] = None
     uploaded_file_path: Optional[str] = None
 
