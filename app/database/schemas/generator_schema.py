@@ -14,6 +14,7 @@ class GeneratorModel(BaseModel):
     installation_date: Optional[str] = Field(None, example="2025-11-04")
     ownership: Optional[str] = Field(None, example="Owned")
     description: Optional[str] = None
+    attachment: Optional[str] = Field(None, example="Base64 encoded string or URL")
     created_at: Optional[datetime] = None
 
     class Config:
@@ -89,6 +90,7 @@ class VehicleModel(BaseModel):
     fuel_type: Optional[str] = Field(None, example="Diesel")
     date: Optional[str] = Field(None, example="2026-04-10")
     ownership: Optional[str] = Field(None, example="Owned")
+    attachment: Optional[str] = Field(None, example="Base64 encoded string or URL")
     created_at: Optional[datetime] = None
 
     class Config:
