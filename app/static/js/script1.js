@@ -1,5 +1,5 @@
 // API Configuration
-const API_URL = 'https://ratilalsons-backend-api.onrender.com';
+const API_URL = 'http://127.0.0.1:8000';
 
 // DOM Elements
 const sections = document.querySelectorAll('.section');

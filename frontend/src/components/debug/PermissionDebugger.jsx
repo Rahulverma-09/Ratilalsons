@@ -20,7 +20,7 @@ const PermissionDebugger = () => {
       console.log('Checking user permissions...');
 
       // Try to fetch user info from the backend
-      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/auth/me', {
+      const response = await fetch('http://127.0.0.1:8000/api/auth/me', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -58,7 +58,7 @@ const PermissionDebugger = () => {
 
       console.log('Testing employee creation with payload:', testPayload);
 
-      const response = await fetch('https://ratilalsons-backend-api.onrender.com/api/employees-auth/create', {
+      const response = await fetch('http://127.0.0.1:8000/api/employees-auth/create', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

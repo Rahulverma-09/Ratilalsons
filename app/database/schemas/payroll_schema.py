@@ -36,24 +36,70 @@ class PayrollConfigCreate(BaseModel):
 
 class SalaryStructure(BaseModel):
     id: Optional[str] = None
-    position: str = Field(..., min_length=1, description="Job position")
-    basic_salary: float = Field(..., ge=0, description="Monthly basic salary")
-    hra_rate: float = Field(40.0, ge=0, le=100)
-    allowance_rate: float = Field(20.0, ge=0, le=100)
+    employee_id: Optional[str] = None
+    employee_name: Optional[str] = None
+    position: Optional[str] = "Staff"
+    basic_salary: float = Field(0.0, ge=0, description="Monthly basic salary")
+    hra: Optional[float] = 0.0
+    incentive: Optional[float] = 0.0
+    meal: Optional[float] = 0.0
+    bonus: Optional[float] = 0.0
+    professional_tax: Optional[float] = 0.0
+    pf_percentage: Optional[float] = 0.0
+    pf_amount: Optional[float] = 0.0
+    esi_percentage: Optional[float] = 0.0
+    esi_amount: Optional[float] = 0.0
+    advance_salary: Optional[float] = 0.0
+    loan: Optional[float] = 0.0
+    notice_recovery: Optional[float] = 0.0
+    gross_salary: Optional[float] = 0.0
+    total_deductions: Optional[float] = 0.0
+    net_salary: Optional[float] = 0.0
+    # Backwards compatibility
+    hra_rate: Optional[float] = Field(40.0, ge=0, le=100)
+    allowance_rate: Optional[float] = Field(20.0, ge=0, le=100)
+    allowance: Optional[float] = 0.0
+    pf: Optional[float] = 0.0
+    tds: Optional[float] = 0.0
     created_at: Optional[datetime] = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = Field(default_factory=datetime.now)
     is_active: bool = Field(True)
 
     class Config:
+        extra = "allow"
         json_encoders = {
             datetime: lambda dt: dt.isoformat()
         }
 
 class SalaryStructureCreate(BaseModel):
-    position: str = Field(..., min_length=1)
-    basic_salary: float = Field(..., ge=0)
-    hra_rate: float = Field(40.0, ge=0, le=100)
-    allowance_rate: float = Field(20.0, ge=0, le=100)
+    employee_id: Optional[str] = None
+    employee_name: Optional[str] = None
+    position: Optional[str] = "Staff"
+    basic_salary: float = Field(0.0, ge=0)
+    hra: Optional[float] = 0.0
+    incentive: Optional[float] = 0.0
+    meal: Optional[float] = 0.0
+    bonus: Optional[float] = 0.0
+    professional_tax: Optional[float] = 0.0
+    pf_percentage: Optional[float] = 0.0
+    pf_amount: Optional[float] = 0.0
+    esi_percentage: Optional[float] = 0.0
+    esi_amount: Optional[float] = 0.0
+    advance_salary: Optional[float] = 0.0
+    loan: Optional[float] = 0.0
+    notice_recovery: Optional[float] = 0.0
+    gross_salary: Optional[float] = 0.0
+    total_deductions: Optional[float] = 0.0
+    net_salary: Optional[float] = 0.0
+    # Backwards compatibility
+    hra_rate: Optional[float] = Field(40.0, ge=0, le=100)
+    allowance_rate: Optional[float] = Field(20.0, ge=0, le=100)
+    allowance: Optional[float] = 0.0
+    pf: Optional[float] = 0.0
+    tds: Optional[float] = 0.0
+
+    class Config:
+        extra = "allow"
 
 class PayrollCalculation(BaseModel):
     employee_id: str

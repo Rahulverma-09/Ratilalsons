@@ -48,6 +48,8 @@ class VendorBillBase(BaseModel):
     vendor_email: Optional[str] = None
     vendor_phone: Optional[str] = None
     vendor_address: Optional[str] = None
+    grn_no: Optional[str] = None
+    grn_number: Optional[str] = None
     bill_number: str = Field(..., max_length=50)
     sr_no: Optional[str] = None
     material_description: Optional[str] = None
@@ -72,6 +74,8 @@ class VendorBillBase(BaseModel):
 
 class VendorBillCreate(BaseModel):
     vendor_id: str
+    grn_no: Optional[str] = None
+    grn_number: Optional[str] = None
     bill_number: Optional[str] = None
     sr_no: Optional[str] = None
     material_description: Optional[str] = None
@@ -98,6 +102,8 @@ class VendorBillUpdate(BaseModel):
     vendor_email: Optional[str] = None
     vendor_phone: Optional[str] = None
     vendor_address: Optional[str] = None
+    grn_no: Optional[str] = None
+    grn_number: Optional[str] = None
     bill_number: Optional[str] = None
     reference_number: Optional[str] = None
     items: Optional[List[BillItem]] = None

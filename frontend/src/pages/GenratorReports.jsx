@@ -91,7 +91,7 @@ export default function GeneratorsReport({ onDataUpdateRef }) {
       const token = localStorage.getItem("access_token");
       // Change URL to fetch combined report without site_id filter
       const resp = await fetch(
-        `https://ratilalsons-backend-api.onrender.com/api/generators-utilities/reports?start=${start}&end=${end}`,
+        `http://127.0.0.1:8000/api/generators-utilities/reports?start=${start}&end=${end}`,
         {
           headers: {
             Authorization: `Bearer ${token}`

@@ -59,7 +59,9 @@ payroll_router = APIRouter(
     tags=["Payroll Management"]
 )
 
-# Helper function to convert MongoDB ObjectId to string
+from datetime import datetime, date
+
+# Helper function to convert MongoDB ObjectId and datetime to JSON-serializable types
 def convert_objectid_to_str(data):
     """Convert MongoDB document to JSON-serializable dictionary."""
     if data is None:
@@ -70,6 +72,8 @@ def convert_objectid_to_str(data):
         for key, value in data.items():
             if isinstance(value, ObjectId):
                 result[key] = str(value)
+            elif isinstance(value, (datetime, date)):
+                result[key] = value.isoformat()
             elif isinstance(value, (dict, list)):
                 result[key] = convert_objectid_to_str(value)
             else:
@@ -79,6 +83,8 @@ def convert_objectid_to_str(data):
         return [convert_objectid_to_str(item) for item in data]
     elif isinstance(data, ObjectId):
         return str(data)
+    elif isinstance(data, (datetime, date)):
+        return data.isoformat()
     else:
         return data
 
@@ -161,7 +167,7 @@ async def get_payroll_config(
             )
         
         # Fetch config from database
-        config_doc = await db.payroll_configs.find_one({})
+        config_doc = db.payroll_configs.find_one({})
         
         if not config_doc:
             # Return default config if none exists
@@ -219,7 +225,7 @@ async def update_payroll_config(
         update_data['updated_by'] = current_user.get('user_id', current_user.get('username'))
         
         # Update or create config
-        result = await db.payroll_configs.find_one_and_update(
+        result = db.payroll_configs.find_one_and_update(
             {},  # Update the single config document
             {"$set": update_data},
             upsert=True,
@@ -261,7 +267,7 @@ async def get_salary_structures(
         
         # Fetch structures from database
         structures_cursor = db.salary_structures.find({"is_active": True})
-        structures_list = await structures_cursor.to_list(length=None)
+        structures_list = list(structures_cursor)
         
         # Convert ObjectIds
         structures_data = []
@@ -298,29 +304,38 @@ async def create_salary_structure(
                 detail="Insufficient permissions to create salary structures"
             )
         
-        # Check if position already exists
-        existing_structure = await db.salary_structures.find_one({
-            "position": structure_data.position,
-            "is_active": True
-        })
-        
-        if existing_structure:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Salary structure for position '{structure_data.position}' already exists"
-            )
-        
         # Prepare insert data
         insert_data = structure_data.dict()
         insert_data['created_at'] = datetime.now()
         insert_data['updated_at'] = datetime.now()
         insert_data['is_active'] = True
-        
+
+        # If employee_id provided, check if structure already exists for this employee
+        if structure_data.employee_id:
+            existing = db.salary_structures.find_one({
+                "employee_id": structure_data.employee_id,
+                "is_active": True
+            })
+            if existing:
+                db.salary_structures.update_one(
+                    {"_id": existing["_id"]},
+                    {"$set": insert_data}
+                )
+                updated_structure = db.salary_structures.find_one({"_id": existing["_id"]})
+                structure_copy = dict(updated_structure)
+                structure_data_out = convert_objectid_to_str(structure_copy)
+                structure_data_out['id'] = str(existing['_id'])
+                return {
+                    "success": True,
+                    "message": "Salary structure updated successfully",
+                    "data": structure_data_out
+                }
+
         # Insert new structure
-        result = await db.salary_structures.insert_one(insert_data)
+        result = db.salary_structures.insert_one(insert_data)
         
         # Fetch the created structure
-        created_structure = await db.salary_structures.find_one({"_id": result.inserted_id})
+        created_structure = db.salary_structures.find_one({"_id": result.inserted_id})
         
         # Convert ObjectId and return
         structure_copy = dict(created_structure)  # Create a copy
@@ -362,29 +377,29 @@ async def update_salary_structure(
             raise HTTPException(status_code=400, detail="Invalid structure ID")
         
         # Check if structure exists
-        existing_structure = await db.salary_structures.find_one({"_id": structure_object_id})
+        existing_structure = db.salary_structures.find_one({"_id": structure_object_id})
         if not existing_structure:
             raise HTTPException(status_code=404, detail="Salary structure not found")
         
         # Check if position name conflicts (excluding current structure)
-        position_conflict = await db.salary_structures.find_one({
-            "position": structure_data.position,
-            "is_active": True,
-            "_id": {"$ne": structure_object_id}
-        })
-        
-        if position_conflict:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Another salary structure with position '{structure_data.position}' already exists"
-            )
+        if structure_data.position:
+            position_conflict = db.salary_structures.find_one({
+                "position": structure_data.position,
+                "is_active": True,
+                "_id": {"$ne": structure_object_id}
+            })
+            if position_conflict:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Another salary structure with position '{structure_data.position}' already exists"
+                )
         
         # Prepare update data
         update_data = structure_data.dict()
         update_data['updated_at'] = datetime.now()
         
         # Update structure
-        result = await db.salary_structures.find_one_and_update(
+        result = db.salary_structures.find_one_and_update(
             {"_id": structure_object_id},
             {"$set": update_data},
             return_document=True
@@ -429,12 +444,12 @@ async def delete_salary_structure(
             raise HTTPException(status_code=400, detail="Invalid structure ID")
         
         # Check if structure exists
-        existing_structure = await db.salary_structures.find_one({"_id": structure_object_id})
+        existing_structure = db.salary_structures.find_one({"_id": structure_object_id})
         if not existing_structure:
             raise HTTPException(status_code=404, detail="Salary structure not found")
         
         # Soft delete (mark as inactive)
-        await db.salary_structures.update_one(
+        db.salary_structures.update_one(
             {"_id": structure_object_id},
             {
                 "$set": {
@@ -486,7 +501,7 @@ async def generate_draft_payslip(
         }
         
         # Check if draft already exists for this employee and period
-        existing_draft = await db.payroll_records.find_one({
+        existing_draft = db.payroll_records.find_one({
             "employee_id": payroll_data.employee_id,
             "period": payroll_data.period,
             "status": "draft"
@@ -494,15 +509,15 @@ async def generate_draft_payslip(
         
         if existing_draft:
             # Update existing draft
-            result = await db.payroll_records.find_one_and_update(
+            result = db.payroll_records.find_one_and_update(
                 {"_id": existing_draft["_id"]},
                 {"$set": draft_record},
                 return_document=True
             )
         else:
             # Create new draft
-            insert_result = await db.payroll_records.insert_one(draft_record)
-            result = await db.payroll_records.find_one({"_id": insert_result.inserted_id})
+            insert_result = db.payroll_records.insert_one(draft_record)
+            result = db.payroll_records.find_one({"_id": insert_result.inserted_id})
         
         # Convert ObjectId
         result_data = convert_objectid_to_str(result)
@@ -552,11 +567,11 @@ async def add_bonus_deduction(
         bonus_deduction_dict['status'] = 'approved' if has_admin_permission(current_user) else 'pending'
         
         # Insert bonus/deduction
-        result = await db.bonus_deductions.insert_one(bonus_deduction_dict)
+        result = db.bonus_deductions.insert_one(bonus_deduction_dict)
         
         # If it's approved, update the relevant payroll record
         if bonus_deduction_dict['status'] == 'approved':
-            await update_payroll_with_bonus_deduction(db, bonus_deduction)
+            update_payroll_with_bonus_deduction(db, bonus_deduction)
         
         return JSONResponse(
             content={
@@ -594,7 +609,7 @@ async def get_pending_approvals(
         
         # Get pending items
         pending_cursor = db.bonus_deductions.find({"status": "pending"})
-        pending_list = await pending_cursor.to_list(length=None)
+        pending_list = list(pending_cursor)
         
         # Convert ObjectIds
         pending_data = convert_objectid_to_str(pending_list)
@@ -614,11 +629,11 @@ async def get_pending_approvals(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 # Helper function to update payroll with bonus/deduction
-async def update_payroll_with_bonus_deduction(db, bonus_deduction: BonusDeduction):
+def update_payroll_with_bonus_deduction(db, bonus_deduction: BonusDeduction):
     """Update payroll record with approved bonus/deduction"""
     try:
         # Find the payroll record for the period
-        payroll_record = await db.payroll_records.find_one({
+        payroll_record = db.payroll_records.find_one({
             "employee_id": bonus_deduction.employee_id,
             "period": bonus_deduction.period
         })
@@ -636,7 +651,7 @@ async def update_payroll_with_bonus_deduction(db, bonus_deduction: BonusDeductio
                 calculation["net_pay"] -= bonus_deduction.amount
             
             # Update the record
-            await db.payroll_records.update_one(
+            db.payroll_records.update_one(
                 {"_id": payroll_record["_id"]},
                 {"$set": {"calculation": calculation}}
             )
@@ -664,17 +679,17 @@ async def calculate_employee_payroll(
             )
         
         # Get payroll config
-        config_doc = await db.payroll_configs.find_one({})
+        config_doc = db.payroll_configs.find_one({})
         if not config_doc:
             raise HTTPException(status_code=404, detail="Payroll configuration not found")
         
         # Get employee data
-        employee = await db.employees.find_one({"userid": employee_id})
+        employee = db.employees.find_one({"userid": employee_id})
         if not employee:
             raise HTTPException(status_code=404, detail="Employee not found")
         
         # Get employee's salary structure or use basic salary
-        salary_structure = await db.salary_structures.find_one({
+        salary_structure = db.salary_structures.find_one({
             "position": employee.get("position"),
             "is_active": True
         })
@@ -761,25 +776,31 @@ async def get_all_payment_slips(
             query["status"] = status
         
         # Get total count
-        total_count = await db.payroll_records.count_documents(query)
+        total_count = db.payroll_records.count_documents(query)
         
         # Calculate pagination
         skip = (page - 1) * limit
         
         # Get paginated results
         records_cursor = db.payroll_records.find(query).skip(skip).limit(limit).sort("created_at", -1)
-        records_list = await records_cursor.to_list(length=None)
+        records_list = list(records_cursor)
         
         # Enrich with employee details
         enriched_records = []
         for record in records_list:
             # Get employee info
-            employee = await db.employees.find_one({"userid": record["employee_id"]})
+            employee = db.employees.find_one({"userid": record.get("employee_id")})
+            if not employee:
+                try:
+                    employee = db.users.find_one({"_id": ObjectId(record.get("employee_id"))})
+                except Exception:
+                    employee = db.users.find_one({"username": record.get("employee_id")})
             
             record_data = convert_objectid_to_str(record)
             record_data['id'] = str(record['_id'])
             record_data['employee_info'] = {
-                "name": employee.get("name", "Unknown") if employee else "Unknown",
+                "name": employee.get("name") or employee.get("full_name") or employee.get("username", "Unknown") if employee else "Unknown",
+                "email": employee.get("email", "") if employee else "",
                 "department": employee.get("department", "N/A") if employee else "N/A",
                 "position": employee.get("position", "N/A") if employee else "N/A"
             }
@@ -793,7 +814,7 @@ async def get_all_payment_slips(
                     "records": enriched_records,
                     "pagination": {
                         "current_page": page,
-                        "total_pages": (total_count + limit - 1) // limit,
+                        "total_pages": (total_count + limit - 1) // limit if limit else 1,
                         "total_records": total_count,
                         "records_per_page": limit
                     }
@@ -803,9 +824,67 @@ async def get_all_payment_slips(
         
     except HTTPException:
         raise
+@payroll_router.post("/records")
+def save_payroll_record(
+    record_data: dict = Body(...),
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_database)
+):
+    """Save or update payroll record (HR/Admin only)"""
+    try:
+        if not has_hr_permission(current_user):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+        
+        data = dict(record_data)
+        data['created_at'] = datetime.now()
+        data['updated_at'] = datetime.now()
+        data['is_active'] = True
+        
+        rec_id = data.get('id') or data.get('_id')
+        if rec_id and not str(rec_id).startswith('pay-'):
+            try:
+                obj_id = ObjectId(rec_id)
+                data.pop('id', None)
+                data.pop('_id', None)
+                db.payroll_records.update_one({"_id": obj_id}, {"$set": data})
+                updated = db.payroll_records.find_one({"_id": obj_id})
+                res_data = convert_objectid_to_str(updated)
+                res_data['id'] = str(updated['_id'])
+                return JSONResponse(content={"success": True, "message": "Payroll record updated", "data": res_data})
+            except Exception:
+                pass
+        
+        data.pop('id', None)
+        data.pop('_id', None)
+        result = db.payroll_records.insert_one(data)
+        created = db.payroll_records.find_one({"_id": result.inserted_id})
+        res_data = convert_objectid_to_str(created)
+        res_data['id'] = str(created['_id'])
+        return JSONResponse(content={"success": True, "message": "Payroll record created", "data": res_data})
     except Exception as e:
-        logger.error(f"Error fetching all payment slips: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        logger.error(f"Error saving payroll record: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@payroll_router.delete("/records/{record_id}")
+def delete_payroll_record(
+    record_id: str,
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_database)
+):
+    """Delete a payroll record (HR/Admin only)"""
+    try:
+        if not has_hr_permission(current_user):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+        
+        try:
+            obj_id = ObjectId(record_id)
+            db.payroll_records.delete_one({"_id": obj_id})
+        except Exception:
+            db.payroll_records.delete_one({"id": record_id})
+        return JSONResponse(content={"success": True, "message": "Payroll record deleted"})
+    except Exception as e:
+        logger.error(f"Error deleting payroll record: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @payroll_router.post("/admin/release-payment/{payroll_record_id}")
 async def release_payment(
@@ -830,7 +909,7 @@ async def release_payment(
             raise HTTPException(status_code=400, detail="Invalid payroll record ID")
         
         # Check if payroll record exists
-        payroll_record = await db.payroll_records.find_one({"_id": record_object_id})
+        payroll_record = db.payroll_records.find_one({"_id": record_object_id})
         if not payroll_record:
             raise HTTPException(status_code=404, detail="Payroll record not found")
         
@@ -851,7 +930,7 @@ async def release_payment(
             "updated_at": datetime.now()
         }
         
-        result = await db.payroll_records.find_one_and_update(
+        result = db.payroll_records.find_one_and_update(
             {"_id": record_object_id},
             {"$set": update_data},
             return_document=True
@@ -869,7 +948,7 @@ async def release_payment(
             "transaction_id": payment_dict.get('transaction_id')
         }
         
-        await db.payment_releases.insert_one(payment_log)
+        db.payment_releases.insert_one(payment_log)
         
         # Convert ObjectId
         result_data = convert_objectid_to_str(result)
@@ -915,14 +994,14 @@ async def get_payment_releases(
             query["period"] = period
         
         # Get total count
-        total_count = await db.payment_releases.count_documents(query)
+        total_count = db.payment_releases.count_documents(query)
         
         # Calculate pagination
         skip = (page - 1) * limit
         
         # Get paginated results
         releases_cursor = db.payment_releases.find(query).skip(skip).limit(limit).sort("released_at", -1)
-        releases_list = await releases_cursor.to_list(length=None)
+        releases_list = list(releases_cursor)
         
         # Convert ObjectIds
         releases_data = convert_objectid_to_str(releases_list)
@@ -935,7 +1014,7 @@ async def get_payment_releases(
                     "releases": releases_data,
                     "pagination": {
                         "current_page": page,
-                        "total_pages": (total_count + limit - 1) // limit,
+                        "total_pages": (total_count + limit - 1) // limit if limit else 1,
                         "total_records": total_count,
                         "records_per_page": limit
                     }
@@ -967,7 +1046,6 @@ async def generate_payslip_pdf(
             )
         
         # For now, return a success response (you can integrate PDF generation later)
-        # This would typically use libraries like reportlab or weasyprint
         return JSONResponse(
             content={
                 "success": True,
@@ -1004,7 +1082,7 @@ async def get_payroll_summary(
         
         # Get all payroll records for the period
         records_cursor = db.payroll_records.find({"period": period})
-        records_list = await records_cursor.to_list(length=None)
+        records_list = list(records_cursor)
         
         if not records_list:
             return JSONResponse(
@@ -1024,9 +1102,9 @@ async def get_payroll_summary(
         
         # Calculate summary
         total_employees = len(records_list)
-        total_gross_pay = sum(record["calculation"]["total_earnings"] for record in records_list)
-        total_deductions = sum(record["calculation"]["total_deductions"] for record in records_list)
-        total_net_pay = sum(record["calculation"]["net_pay"] for record in records_list)
+        total_gross_pay = sum(record.get("calculation", {}).get("total_earnings", 0) for record in records_list)
+        total_deductions = sum(record.get("calculation", {}).get("total_deductions", 0) for record in records_list)
+        total_net_pay = sum(record.get("calculation", {}).get("net_pay", 0) for record in records_list)
         
         # Convert ObjectIds
         records_data = convert_objectid_to_str(records_list)
@@ -1070,12 +1148,12 @@ async def get_employee_salary_structure(
             )
         
         # Get employee data
-        employee = await db.employees.find_one({"userid": employee_id})
+        employee = db.employees.find_one({"userid": employee_id})
         if not employee:
             raise HTTPException(status_code=404, detail="Employee not found")
         
         # Get employee's salary structure
-        salary_structure = await db.salary_structures.find_one({
+        salary_structure = db.salary_structures.find_one({
             "position": employee.get("position"),
             "is_active": True
         })
@@ -1143,7 +1221,7 @@ async def get_employee_payslips(
         
         # Get payslips
         payslips_cursor = db.payroll_records.find(query).sort("period", -1).limit(limit)
-        payslips_list = await payslips_cursor.to_list(length=None)
+        payslips_list = list(payslips_cursor)
         
         # Convert ObjectIds
         payslips_data = convert_objectid_to_str(payslips_list)
@@ -1200,14 +1278,14 @@ async def get_employee_tax_deductions(
         }
         
         records_cursor = db.payroll_records.find(query)
-        records_list = await records_cursor.to_list(length=None)
+        records_list = list(records_cursor)
         
         # Calculate totals
-        total_earnings = sum(record["calculation"]["total_earnings"] for record in records_list)
-        total_pf = sum(record["calculation"]["pf"] for record in records_list)
-        total_professional_tax = sum(record["calculation"]["professional_tax"] for record in records_list)
-        total_tds = sum(record["calculation"]["tds"] for record in records_list)
-        total_deductions = sum(record["calculation"]["total_deductions"] for record in records_list)
+        total_earnings = sum(record.get("calculation", {}).get("total_earnings", 0) for record in records_list)
+        total_pf = sum(record.get("calculation", {}).get("pf", 0) for record in records_list)
+        total_professional_tax = sum(record.get("calculation", {}).get("professional_tax", 0) for record in records_list)
+        total_tds = sum(record.get("calculation", {}).get("tds", 0) for record in records_list)
+        total_deductions = sum(record.get("calculation", {}).get("total_deductions", 0) for record in records_list)
         
         return JSONResponse(
             content={
@@ -1225,11 +1303,11 @@ async def get_employee_tax_deductions(
                     },
                     "monthly_breakdown": [
                         {
-                            "period": record["period"],
-                            "pf": record["calculation"]["pf"],
-                            "professional_tax": record["calculation"]["professional_tax"],
-                            "tds": record["calculation"]["tds"],
-                            "total_deductions": record["calculation"]["total_deductions"]
+                            "period": record.get("period"),
+                            "pf": record.get("calculation", {}).get("pf", 0),
+                            "professional_tax": record.get("calculation", {}).get("professional_tax", 0),
+                            "tds": record.get("calculation", {}).get("tds", 0),
+                            "total_deductions": record.get("calculation", {}).get("total_deductions", 0)
                         } for record in records_list
                     ]
                 }
@@ -1271,7 +1349,7 @@ async def raise_payroll_ticket(
         ticket_dict['ticket_id'] = f"PAY-{datetime.now().strftime('%Y%m%d')}-{current_user_id}"
         
         # Insert ticket
-        result = await db.payroll_tickets.insert_one(ticket_dict)
+        result = db.payroll_tickets.insert_one(ticket_dict)
         
         return JSONResponse(
             content={

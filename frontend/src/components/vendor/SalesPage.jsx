@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const API_BASE = "https://ratilalsons-backend-api.onrender.com/api/customer-portal";
+const API_BASE = "http://127.0.0.1:8000/api/customer-portal";
 const PAGE_SIZE = 10;
 
 // Fallback demo data for when API is not available

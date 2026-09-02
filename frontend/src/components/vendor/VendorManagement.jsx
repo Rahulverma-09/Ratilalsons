@@ -1217,7 +1217,7 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               <ShoppingCart className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Create Purchase Request</h2>
+              <h2 className="text-2xl font-bold text-white">Create Purchase Order</h2>
               <p className="text-purple-100 text-sm">Select products from catalog or add manually</p>
             </div>
           </div>
@@ -1452,7 +1452,7 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   rows={4}
-                  placeholder="Additional notes for this purchase request..."
+                  placeholder="Additional notes for this purchase order..."
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                 />
               </div>
@@ -1515,7 +1515,7 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               {loading ? (
                 <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> Creating Order...</>
               ) : (
-                <><FileText className="w-4 h-4" /> Create Purchase Request</>
+                <><FileText className="w-4 h-4" /> Create Purchase Order</>
               )}
             </button>
           </div>
@@ -1623,8 +1623,8 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               <ShoppingCart className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Place Purchase Request</h2>
-              <p className="text-blue-100 text-sm">Select vendor, add items and generate request</p>
+              <h2 className="text-2xl font-bold text-white">Place Purchase Order</h2>
+              <p className="text-blue-100 text-sm">Select vendor, add items and generate order</p>
             </div>
           </div>
           <button onClick={onClose} className="text-white hover:text-red-300 w-9 h-9 rounded-full bg-white bg-opacity-20 flex items-center justify-center transition-colors">
@@ -1871,9 +1871,9 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all flex items-center gap-2"
             >
               {loading ? (
-                <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> Placing Request...</>
+                <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> Placing Order...</>
               ) : (
-                <><FileText className="w-4 h-4" /> Place Request &amp; Generate Invoice</>
+                <><FileText className="w-4 h-4" /> Place Purchase Order &amp; Generate Invoice</>
               )}
             </button>
           </div>
@@ -1953,7 +1953,7 @@ const InvoiceModal = ({ invoice, onClose }) => {
         </div>
         
         <div style="padding: 10px; border-bottom: 1px solid #000;">
-          <div style="text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 15px;">PURCHASE REQUEST</div>
+          <div style="text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 15px;">PURCHASE ORDER</div>
           <div style="display: flex; justify-content: space-between;">
             <div style="width: 60%;">
               <div class="bold" style="font-size: 13px;">${invoice.vendor_company || invoice.vendor_name}</div>
@@ -2064,7 +2064,7 @@ const InvoiceModal = ({ invoice, onClose }) => {
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       
       // Download the PDF
-      pdf.save(`Purchase_Request_${invoice.invoice_number}.pdf`);
+      pdf.save(`Purchase_Order_${invoice.invoice_number}.pdf`);
       
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -2082,7 +2082,7 @@ const InvoiceModal = ({ invoice, onClose }) => {
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Purchase Request</h2>
+              <h2 className="text-2xl font-bold text-white">Purchase Order</h2>
               <p className="text-purple-100 text-sm">{invoice.invoice_number} &mdash; {invoice.vendor_name}</p>
             </div>
           </div>
@@ -2365,7 +2365,7 @@ const VendorBillDetailModal = ({ bill, onClose }) => {
             </div>
             <div>
               <h2 className="text-xl font-bold">Vendor Bill Details</h2>
-              <p className="text-emerald-100 text-xs mt-0.5">{bill.sr_no || bill.bill_number} &mdash; {bill.vendor_name || "Vendor"}</p>
+              <p className="text-emerald-100 text-xs mt-0.5">{bill.grn_no || bill.grn_number || `GRN-${String(bill.sr_no || '001').padStart(3, '0')}`} | {bill.bill_number || bill.sr_no} &mdash; {bill.vendor_name || "Vendor"}</p>
             </div>
           </div>
           <button
@@ -2387,11 +2387,21 @@ const VendorBillDetailModal = ({ bill, onClose }) => {
                 {bill.vendor_company && <p className="text-sm text-gray-500 font-medium">{bill.vendor_company}</p>}
                 {bill.vendor_email && <p className="text-xs text-gray-400 mt-0.5">{bill.vendor_email} {bill.vendor_phone ? `| ${bill.vendor_phone}` : ""}</p>}
               </div>
-              <div className="sm:text-right">
-                <span className="text-xs text-gray-400 font-medium uppercase block">Bill Number</span>
-                <span className="inline-block px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-mono font-bold text-sm mt-1">
-                  {bill.sr_no || bill.bill_number}
-                </span>
+              <div className="sm:text-right flex flex-col sm:items-end gap-1">
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                  <div>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase block">GRN No.</span>
+                    <span className="inline-block px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 font-mono font-bold text-xs">
+                      {bill.grn_no || bill.grn_number || `GRN-${String(bill.sr_no || '001').padStart(3, '0')}`}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase block">Bill Number</span>
+                    <span className="inline-block px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 font-mono font-bold text-xs">
+                      {bill.bill_number || bill.sr_no}
+                    </span>
+                  </div>
+                </div>
                 <p className="text-xs text-gray-500 mt-1">
                   Date: {new Date(bill.created_at || bill.bill_date || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                 </p>
@@ -2759,9 +2769,12 @@ const VendorDetailCard = ({ vendor, onClose }) => {
                 {vendorBills.map((bill, bIdx) => (
                   <div key={bill.id || bill._id || bIdx} className="bg-white rounded-xl border border-emerald-100 shadow-sm p-4 hover:shadow-md transition-shadow">
                     <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-xs font-bold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">
+                          {bill.grn_no || bill.grn_number || `GRN-${String(bill.sr_no || '001').padStart(3, '0')}`}
+                        </span>
                         <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-                          {bill.sr_no || bill.bill_number}
+                          {bill.bill_number || bill.sr_no}
                         </span>
                         <span className="text-xs text-gray-500">
                           {new Date(bill.created_at || bill.bill_date || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
@@ -2913,7 +2926,8 @@ const VendorDetailCard = ({ vendor, onClose }) => {
 
 
 // Modal for Adding Vendor Bill
-const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
+const AddBillModal = ({ open, onClose, vendors = [], vendorBills = [], onBillAdded }) => {
+  const [grnNumber, setGrnNumber] = useState("");
   const [billNumber, setBillNumber] = useState("");
   const [vendorId, setVendorId] = useState("");
   const [materials, setMaterials] = useState([
@@ -2933,6 +2947,15 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
 
   useEffect(() => {
     if (open) {
+      // Auto-generate unique GRN number
+      const existingGrns = (vendorBills || []).map(b => b.grn_no || b.grn_number || "").filter(Boolean);
+      let nextNum = (vendorBills ? vendorBills.length : 0) + 1;
+      let candidate = `GRN-${String(nextNum).padStart(3, "0")}`;
+      while (existingGrns.includes(candidate)) {
+        nextNum += 1;
+        candidate = `GRN-${String(nextNum).padStart(3, "0")}`;
+      }
+      setGrnNumber(candidate);
       setBillNumber("");
       setVendorId(vendors.length > 0 ? (vendors[0].id || vendors[0]._id) : "");
       setMaterials([
@@ -2946,7 +2969,7 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
       setNotes("");
       setError("");
     }
-  }, [open, vendors]);
+  }, [open, vendors, vendorBills]);
 
   if (!open) return null;
 
@@ -3057,6 +3080,8 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
         .join("; ");
 
       const payload = {
+        grn_no: grnNumber || `GRN-${Date.now().toString().slice(-4)}`,
+        grn_number: grnNumber || `GRN-${Date.now().toString().slice(-4)}`,
         vendor_id: vendorId,
         vendor_name: selectedVendor ? selectedVendor.name : "",
         vendor_company: selectedVendor ? selectedVendor.company : "",
@@ -3132,7 +3157,23 @@ const AddBillModal = ({ open, onClose, vendors = [], onBillAdded }) => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* GRN No. (Auto-generated, Unique & Read-Only) */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5 flex items-center justify-between">
+                <span>GRN No. <span className="text-red-500">*</span></span>
+                <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">Auto-generated</span>
+              </label>
+              <input
+                type="text"
+                value={grnNumber}
+                readOnly
+                placeholder="GRN-001"
+                required
+                className="w-full px-4 py-3 bg-blue-50/70 border border-blue-200 rounded-xl font-mono text-sm text-blue-900 font-bold cursor-not-allowed select-none focus:outline-none focus:ring-0"
+              />
+            </div>
+
             {/* Bill Number (Manual Input - Numeric Only) */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 uppercase mb-1.5">
@@ -3530,30 +3571,40 @@ const VendorProfile = () => {
             avatar_url = API_BASE + avatar_url;
           }
 
-          const vIdStr = String(v.id || v._id || "");
-          const vNameLower = (v.name || "").toLowerCase();
+          const vIdStr = String(v.id || v._id || "").toLowerCase();
+          const vDbIdStr = String(v._id || "").toLowerCase();
+          const vNameLower = (v.name || "").trim().toLowerCase();
+          const vCompanyLower = (v.company || "").trim().toLowerCase();
 
           // Match bills for this vendor
-          const matchingBills = allBills.filter(
-            (b) =>
-              String(b.vendor_id) === vIdStr ||
-              String(b.vendor_id) === String(v._id) ||
-              (b.vendor_name && b.vendor_name.toLowerCase() === vNameLower)
-          );
+          const matchingBills = allBills.filter((b) => {
+            const bVendorId = String(b.vendor_id || "").toLowerCase();
+            const bVendorName = String(b.vendor_name || "").trim().toLowerCase();
+            const bVendorCompany = String(b.vendor_company || "").trim().toLowerCase();
+            return (
+              (bVendorId && (bVendorId === vIdStr || bVendorId === vDbIdStr)) ||
+              (bVendorName && (bVendorName === vNameLower || (vCompanyLower && bVendorName === vCompanyLower))) ||
+              (bVendorCompany && (bVendorCompany === vCompanyLower || bVendorCompany === vNameLower))
+            );
+          });
 
           // Match purchase orders for this vendor
-          const matchingPOs = allPOs.filter(
-            (po) =>
-              String(po.vendor_id) === vIdStr ||
-              String(po.vendor_id) === String(v._id) ||
-              (po.vendor_name && po.vendor_name.toLowerCase() === vNameLower)
-          );
+          const matchingPOs = allPOs.filter((po) => {
+            const poVendorId = String(po.vendor_id || "").toLowerCase();
+            const poVendorName = String(po.vendor_name || "").trim().toLowerCase();
+            const poVendorCompany = String(po.vendor_company || "").trim().toLowerCase();
+            return (
+              (poVendorId && (poVendorId === vIdStr || poVendorId === vDbIdStr)) ||
+              (poVendorName && (poVendorName === vNameLower || (vCompanyLower && poVendorName === vCompanyLower))) ||
+              (poVendorCompany && (poVendorCompany === vCompanyLower || poVendorCompany === vNameLower))
+            );
+          });
 
           const billsSpend = matchingBills.reduce((sum, b) => sum + (parseFloat(b.total_amount) || 0), 0);
-          const poSpend = matchingPOs.reduce((sum, po) => sum + (parseFloat(po.total_amount || po.totalAmount) || 0), 0);
+          const poSpend = matchingPOs.reduce((sum, po) => sum + (parseFloat(po.total_amount || po.totalAmount || po.grand_total || po.amount) || 0), 0);
 
-          const calculatedTotalSpend = (billsSpend + poSpend) > 0 ? (billsSpend + poSpend) : (v.total_spend || 0);
-          const calculatedOrdersCount = (matchingBills.length + matchingPOs.length) > 0 ? (matchingBills.length + matchingPOs.length) : (v.orders_count || 0);
+          const calculatedTotalSpend = (billsSpend + poSpend) > 0 ? (billsSpend + poSpend) : (parseFloat(v.total_spend) || 0);
+          const calculatedOrdersCount = (matchingBills.length + matchingPOs.length) > 0 ? (matchingBills.length + matchingPOs.length) : (parseInt(v.orders_count) || 0);
 
           return {
             ...v,
@@ -3568,7 +3619,7 @@ const VendorProfile = () => {
         : [];
 
       setVendors(processed);
-      setFilteredVendors(processed);
+      setFilteredVendors(filterVendorList(processed, searchTerm, allBills, allPOs));
       setVendorBills(allBills);
       setPurchaseOrders(allPOs);
     } catch (e) {
@@ -3647,12 +3698,11 @@ const VendorProfile = () => {
   }, []);
 
   useEffect(() => {
+    fetchVendors();
     if (activeTab === "bills") {
       fetchVendorBills();
     } else if (activeTab === "purchase-orders") {
       fetchPurchaseOrders();
-    } else if (activeTab === "vendors") {
-      fetchVendors();
     }
   }, [activeTab]);
 
@@ -3783,23 +3833,74 @@ const VendorProfile = () => {
     setEditModal(true);
   };
 
+  const filterVendorList = (list, term, bills = vendorBills, pos = purchaseOrders) => {
+    if (!term) return list;
+    const cleanTerm = term.toLowerCase().trim();
+    return list.filter(vendor => {
+      const vId = String(vendor.id || "").toLowerCase();
+      const vMongoId = String(vendor._id || "").toLowerCase();
+      const vName = (vendor.name || "").toLowerCase();
+      const vEmail = (vendor.email || "").toLowerCase();
+      const vCompany = (vendor.company || "").toLowerCase();
+      const vType = (vendor.vendor_type || "").toLowerCase();
+      const vPhone = (vendor.phone || "").toLowerCase();
+      const vGst = (vendor.registration_number || vendor.gstNumber || "").toLowerCase();
+      const vContact = (vendor.contact_person || "").toLowerCase();
+
+      // Direct vendor match (ID, Name, Email, Company, Phone, GST, etc.)
+      const directMatch =
+        vId.includes(cleanTerm) ||
+        `#${vId}`.includes(cleanTerm) ||
+        vMongoId.includes(cleanTerm) ||
+        vName.includes(cleanTerm) ||
+        vEmail.includes(cleanTerm) ||
+        vCompany.includes(cleanTerm) ||
+        vType.includes(cleanTerm) ||
+        vPhone.includes(cleanTerm) ||
+        vGst.includes(cleanTerm) ||
+        vContact.includes(cleanTerm);
+
+      if (directMatch) return true;
+
+      // Match vendor by their Bill Number (bill_number or sr_no)
+      const hasMatchingBill = (bills || []).some(b => {
+        const belongsToVendor =
+          String(b.vendor_id || "").toLowerCase() === vId ||
+          String(b.vendor_id || "").toLowerCase() === vMongoId ||
+          (b.vendor_name && b.vendor_name.toLowerCase() === vName);
+        if (!belongsToVendor) return false;
+
+        const bNo = String(b.bill_number || "").toLowerCase();
+        const bSr = String(b.sr_no || "").toLowerCase();
+        return bNo.includes(cleanTerm) || bSr.includes(cleanTerm);
+      });
+
+      if (hasMatchingBill) return true;
+
+      // Match vendor by their PO Number (order_number or invoice_number)
+      const hasMatchingPO = (pos || []).some(po => {
+        const belongsToVendor =
+          String(po.vendor_id || "").toLowerCase() === vId ||
+          String(po.vendor_id || "").toLowerCase() === vMongoId ||
+          (po.vendor_name && po.vendor_name.toLowerCase() === vName);
+        if (!belongsToVendor) return false;
+
+        const poNo = String(po.order_number || "").toLowerCase();
+        const poInv = String(po.invoice_number || "").toLowerCase();
+        return poNo.includes(cleanTerm) || poInv.includes(cleanTerm);
+      });
+
+      return hasMatchingPO;
+    });
+  };
+
   const handleSearch = (e) => {
-    const term = e.target.value.toLowerCase();
+    const term = e.target.value;
     setSearchTerm(term);
     setVendorPage(1);
     setPoPage(1);
     setBillsPage(1);
-    if (!term) {
-      setFilteredVendors(vendors);
-      return;
-    }
-    const filtered = vendors.filter(vendor =>
-      (vendor.name || "").toLowerCase().includes(term) ||
-      (vendor.email || "").toLowerCase().includes(term) ||
-      (vendor.company || "").toLowerCase().includes(term) ||
-      (vendor.vendor_type || "").toLowerCase().includes(term)
-    );
-    setFilteredVendors(filtered);
+    setFilteredVendors(filterVendorList(vendors, term, vendorBills, purchaseOrders));
   };
 
   const generatePurchaseOrderPDF = async (order) => {
@@ -4080,7 +4181,7 @@ const VendorProfile = () => {
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search vendors by name, email, company, or type..."
+              placeholder="Search by vendor name, vendor ID, bill number, PO number, company, email..."
               value={searchTerm}
               onChange={handleSearch}
               className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-gray-50 hover:bg-white transition-colors"
@@ -4091,13 +4192,13 @@ const VendorProfile = () => {
               onClick={() => setPurchaseOrderModal(true)}
               className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
             >
-              <ShoppingCart className="w-5 h-5" /> Purchase Request
+              <ShoppingCart className="w-5 h-5" /> Purchase Order
             </button>
             <button
               onClick={() => setAddBillModal(true)}
               className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
             >
-              <FileText className="w-5 h-5" /> Add Bill
+              <FileText className="w-5 h-5" /> Purchase Bill
             </button>
             <button
               onClick={() => setOrderModal(true)}
@@ -4324,12 +4425,23 @@ const VendorProfile = () => {
                 purchaseOrders
                   .filter(order => {
                     if (!searchTerm) return true;
-                    const term = searchTerm.toLowerCase();
+                    const term = searchTerm.toLowerCase().trim();
+                    const poNum = String(order.order_number || "").toLowerCase();
+                    const invNum = String(order.invoice_number || "").toLowerCase();
+                    const vId = String(order.vendor_id || "").toLowerCase();
+                    const vName = String(order.vendor_name || "").toLowerCase();
+                    const vCompany = String(order.vendor_company || "").toLowerCase();
+                    const hasItemMatch = order.items && Array.isArray(order.items) && order.items.some(it =>
+                      (it.name || it.description || "").toLowerCase().includes(term)
+                    );
                     return (
-                      (order.order_number && order.order_number.toLowerCase().includes(term)) ||
-                      (order.invoice_number && order.invoice_number.toLowerCase().includes(term)) ||
-                      (order.vendor_name && order.vendor_name.toLowerCase().includes(term)) ||
-                      (order.vendor_company && order.vendor_company.toLowerCase().includes(term))
+                      poNum.includes(term) ||
+                      invNum.includes(term) ||
+                      vId.includes(term) ||
+                      `#${vId}`.includes(term) ||
+                      vName.includes(term) ||
+                      vCompany.includes(term) ||
+                      hasItemMatch
                     );
                   })
                   .slice((poPage - 1) * PAGE_SIZE, poPage * PAGE_SIZE)
@@ -4399,12 +4511,23 @@ const VendorProfile = () => {
           total={
             purchaseOrders.filter(order => {
               if (!searchTerm) return true;
-              const term = searchTerm.toLowerCase();
+              const term = searchTerm.toLowerCase().trim();
+              const poNum = String(order.order_number || "").toLowerCase();
+              const invNum = String(order.invoice_number || "").toLowerCase();
+              const vId = String(order.vendor_id || "").toLowerCase();
+              const vName = String(order.vendor_name || "").toLowerCase();
+              const vCompany = String(order.vendor_company || "").toLowerCase();
+              const hasItemMatch = order.items && Array.isArray(order.items) && order.items.some(it =>
+                (it.name || it.description || "").toLowerCase().includes(term)
+              );
               return (
-                (order.order_number && order.order_number.toLowerCase().includes(term)) ||
-                (order.invoice_number && order.invoice_number.toLowerCase().includes(term)) ||
-                (order.vendor_name && order.vendor_name.toLowerCase().includes(term)) ||
-                (order.vendor_company && order.vendor_company.toLowerCase().includes(term))
+                poNum.includes(term) ||
+                invNum.includes(term) ||
+                vId.includes(term) ||
+                `#${vId}`.includes(term) ||
+                vName.includes(term) ||
+                vCompany.includes(term) ||
+                hasItemMatch
               );
             }).length
           }
@@ -4420,7 +4543,8 @@ const VendorProfile = () => {
           <table className="w-full">
             <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Sr. No.</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">GRN No.</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Bill Number</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Vendor</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Material Description</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">UOM</th>
@@ -4434,7 +4558,7 @@ const VendorProfile = () => {
             <tbody className="divide-y divide-gray-100">
               {vendorBillsLoading ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center">
+                  <td colSpan={10} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
                       <p className="text-gray-500 font-medium">Loading vendor bills...</p>
@@ -4443,13 +4567,13 @@ const VendorProfile = () => {
                 </tr>
               ) : vendorBills.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center">
+                  <td colSpan={10} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                         <FileText className="w-8 h-8 text-gray-400" />
                       </div>
                       <p className="text-gray-500 font-medium">No vendor bills found</p>
-                      <p className="text-gray-400 text-sm">Click "+ Add Bill" to record your first vendor bill</p>
+                      <p className="text-gray-400 text-sm">Click "Purchase Bill" to record your first vendor bill</p>
                     </div>
                   </td>
                 </tr>
@@ -4457,12 +4581,27 @@ const VendorProfile = () => {
                 vendorBills
                   .filter(bill => {
                     if (!searchTerm) return true;
-                    const term = searchTerm.toLowerCase();
+                    const term = searchTerm.toLowerCase().trim();
+                    const grnNo = String(bill.grn_no || bill.grn_number || "").toLowerCase();
+                    const srNo = String(bill.sr_no || "").toLowerCase();
+                    const billNum = String(bill.bill_number || "").toLowerCase();
+                    const vId = String(bill.vendor_id || "").toLowerCase();
+                    const vName = String(bill.vendor_name || "").toLowerCase();
+                    const vCompany = String(bill.vendor_company || "").toLowerCase();
+                    const matDesc = String(bill.material_description || "").toLowerCase();
+                    const hasItemMatch = bill.items && Array.isArray(bill.items) && bill.items.some(it =>
+                      (it.name || it.description || "").toLowerCase().includes(term)
+                    );
                     return (
-                      (bill.sr_no && bill.sr_no.toLowerCase().includes(term)) ||
-                      (bill.bill_number && bill.bill_number.toLowerCase().includes(term)) ||
-                      (bill.vendor_name && bill.vendor_name.toLowerCase().includes(term)) ||
-                      (bill.material_description && bill.material_description.toLowerCase().includes(term))
+                      grnNo.includes(term) ||
+                      srNo.includes(term) ||
+                      billNum.includes(term) ||
+                      vId.includes(term) ||
+                      `#${vId}`.includes(term) ||
+                      vName.includes(term) ||
+                      vCompany.includes(term) ||
+                      matDesc.includes(term) ||
+                      hasItemMatch
                     );
                   })
                   .slice((billsPage - 1) * PAGE_SIZE, billsPage * PAGE_SIZE)
@@ -4471,9 +4610,14 @@ const VendorProfile = () => {
                     const uomDisplay = getBillUomDisplay(bill);
                     return (
                       <tr key={bill.id || bill._id || bill.sr_no} className="hover:bg-emerald-50/40 transition-colors">
-                        <td className="px-6 py-4 font-mono font-bold text-xs text-emerald-800">
+                        <td className="px-6 py-4 font-mono font-bold text-xs text-blue-800 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200">
+                            {bill.grn_no || bill.grn_number || `GRN-${String(bill.sr_no || '001').padStart(3, '0')}`}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-mono font-bold text-xs text-emerald-800 whitespace-nowrap">
                           <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200">
-                            {bill.sr_no || bill.bill_number || "-"}
+                            {bill.bill_number || bill.sr_no || "-"}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -4552,6 +4696,7 @@ const VendorProfile = () => {
                                   });
                                   if (res.ok) {
                                     fetchVendorBills();
+                                    fetchVendors();
                                   } else {
                                     alert("Failed to delete bill");
                                   }
@@ -4580,12 +4725,27 @@ const VendorProfile = () => {
           total={
             vendorBills.filter(bill => {
               if (!searchTerm) return true;
-              const term = searchTerm.toLowerCase();
+              const term = searchTerm.toLowerCase().trim();
+              const grnNo = String(bill.grn_no || bill.grn_number || "").toLowerCase();
+              const srNo = String(bill.sr_no || "").toLowerCase();
+              const billNum = String(bill.bill_number || "").toLowerCase();
+              const vId = String(bill.vendor_id || "").toLowerCase();
+              const vName = String(bill.vendor_name || "").toLowerCase();
+              const vCompany = String(bill.vendor_company || "").toLowerCase();
+              const matDesc = String(bill.material_description || "").toLowerCase();
+              const hasItemMatch = bill.items && Array.isArray(bill.items) && bill.items.some(it =>
+                (it.name || it.description || "").toLowerCase().includes(term)
+              );
               return (
-                (bill.sr_no && bill.sr_no.toLowerCase().includes(term)) ||
-                (bill.bill_number && bill.bill_number.toLowerCase().includes(term)) ||
-                (bill.vendor_name && bill.vendor_name.toLowerCase().includes(term)) ||
-                (bill.material_description && bill.material_description.toLowerCase().includes(term))
+                grnNo.includes(term) ||
+                srNo.includes(term) ||
+                billNum.includes(term) ||
+                vId.includes(term) ||
+                `#${vId}`.includes(term) ||
+                vName.includes(term) ||
+                vCompany.includes(term) ||
+                matDesc.includes(term) ||
+                hasItemMatch
               );
             }).length
           }
@@ -4667,6 +4827,7 @@ const VendorProfile = () => {
         open={addBillModal}
         onClose={() => setAddBillModal(false)}
         vendors={vendors}
+        vendorBills={vendorBills}
         onBillAdded={(bill) => {
           setAddBillModal(false);
           alert("Bill added successfully!");

@@ -4,7 +4,7 @@ import PayrollAdmin from './AdminPayroll';
 import PayrollDashboard from './HrPayrollView';
 import EmployeePayroll from './EmployeePayroll'; // We'll create this
 
-const API_URL = 'https://ratilalsons-backend-api.onrender.com';
+const API_URL = 'http://127.0.0.1:8000';
 const PERMISSIONS_API = `${API_URL}/api/permissions/my`;
 
 // List the codes that allow payroll access

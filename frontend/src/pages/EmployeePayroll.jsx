@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaRupeeSign, FaDownload, FaPlus, FaEye } from 'react-icons/fa';
 
-const API_BASE_URL = 'https://ratilalsons-backend-api.onrender.com';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 const EmployeePayroll = () => {
   const [loading, setLoading] = useState(true);

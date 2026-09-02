@@ -50,6 +50,24 @@ async def create_vendor_bill(
 ):
     """Create new vendor bill (can be uploaded by vendor or admin)"""
     bill_dict = bill_data.dict()
+    if not bill_dict.get("grn_no") and not bill_dict.get("grn_number"):
+        try:
+            db = get_database()
+            total_bills_count = db["vendor_bills"].count_documents({})
+            generated_grn = f"GRN-{(total_bills_count + 1):03d}"
+            while db["vendor_bills"].find_one({"$or": [{"grn_no": generated_grn}, {"grn_number": generated_grn}]}):
+                total_bills_count += 1
+                generated_grn = f"GRN-{(total_bills_count + 1):03d}"
+            bill_dict["grn_no"] = generated_grn
+            bill_dict["grn_number"] = generated_grn
+        except Exception:
+            bill_dict["grn_no"] = f"GRN-{uuid.uuid4().hex[:5].upper()}"
+            bill_dict["grn_number"] = bill_dict["grn_no"]
+    else:
+        grn = bill_dict.get("grn_no") or bill_dict.get("grn_number")
+        bill_dict["grn_no"] = grn
+        bill_dict["grn_number"] = grn
+
     if not bill_dict.get("bill_number"):
         bill_dict["bill_number"] = bill_dict.get("sr_no") or f"BILL-{uuid.uuid4().hex[:6].upper()}"
     if not bill_dict.get("bill_date"):
@@ -284,9 +302,42 @@ async def delete_vendor_bill(
     current_user: dict = Depends(accounts_required)
 ):
     """Delete vendor bill (admin only - irreversible)"""
+    bill = repo.get_bill(bill_id)
     success = repo.delete_bill(bill_id)
     if not success:
         raise HTTPException(status_code=404, detail="Vendor bill not found")
+    
+    if bill and bill.get("vendor_id"):
+        try:
+            db = get_database()
+            vendors_collection = db["vendors"]
+            bills_collection = db["vendor_bills"]
+            v_id = str(bill["vendor_id"])
+
+            all_v_bills = list(bills_collection.find({
+                "$or": [
+                    {"vendor_id": v_id},
+                    {"vendor_name": bill.get("vendor_name")}
+                ]
+            }))
+            tot_spend = sum(float(b.get("total_amount", 0) or 0) for b in all_v_bills)
+            orders_cnt = len(all_v_bills)
+
+            from bson import ObjectId
+            query_conds = [{"id": v_id}]
+            if len(v_id) == 24:
+                try:
+                    query_conds.append({"_id": ObjectId(v_id)})
+                except:
+                    pass
+
+            vendors_collection.update_one(
+                {"$or": query_conds},
+                {"$set": {"total_spend": tot_spend, "orders_count": orders_cnt}}
+            )
+        except Exception as e:
+            print("Error updating vendor total spend & order count after bill deletion:", e)
+
     return None
 
 @vendor_bill_router.get("/", response_model=dict)
@@ -294,7 +345,7 @@ async def list_vendor_bills(
     vendor_id: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = Query(100, ge=1, le=2000),
     repo: VendorBillRepository = Depends(get_vendor_bill_repo),
     current_user: dict = Depends(get_current_user)
 ):

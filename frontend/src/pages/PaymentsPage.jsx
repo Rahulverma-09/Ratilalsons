@@ -67,7 +67,7 @@ const PdfDownloadButton = ({ leadId }) => {
   const handleDownload = async () => {
     try {
       const token = localStorage.getItem('access_token') || '';
-      const res = await fetch(`https://ratilalsons-backend-api.onrender.com/api/quotations/${leadId}/invoice`, {
+      const res = await fetch(`http://127.0.0.1:8000/api/quotations/${leadId}/invoice`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -146,7 +146,7 @@ const PaymentsPage = () => {
 
   const fetchLeads = async () => {
     try {
-      const res = await fetch('https://ratilalsons-backend-api.onrender.com/api/lead/leads?limit=1000', {
+      const res = await fetch('http://127.0.0.1:8000/api/lead/leads?limit=1000', {
         headers: { "Authorization": `Bearer ${localStorage.getItem('access_token') || ''}` },
       });
       const data = await res.json();
@@ -159,7 +159,7 @@ const PaymentsPage = () => {
 
   const fetchAllQuotations = async () => {
     try {
-      const res = await fetch('https://ratilalsons-backend-api.onrender.com/api/quotations/', {
+      const res = await fetch('http://127.0.0.1:8000/api/quotations/', {
         headers: { "Authorization": `Bearer ${localStorage.getItem('access_token') || ''}` }
       });
       const data = await res.json();
@@ -173,7 +173,7 @@ const PaymentsPage = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('access_token') || '';
-      const res = await fetch('https://ratilalsons-backend-api.onrender.com/api/quotations/', {
+      const res = await fetch('http://127.0.0.1:8000/api/quotations/', {
         headers: {
           "Authorization": `Bearer ${token}`
         },
@@ -323,7 +323,7 @@ const PaymentsPage = () => {
     }
     try {
       const token = localStorage.getItem('access_token') || '';
-      const res = await fetch(`https://ratilalsons-backend-api.onrender.com/api/quotations/${duePayInvoice.lead_id}/duepay`, {
+      const res = await fetch(`http://127.0.0.1:8000/api/quotations/${duePayInvoice.lead_id}/duepay`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -454,7 +454,7 @@ const PaymentsPage = () => {
         }))
       };
       const token = localStorage.getItem('access_token') || '';
-      const res = await fetch('https://ratilalsons-backend-api.onrender.com/api/quotations/', {
+      const res = await fetch('http://127.0.0.1:8000/api/quotations/', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -469,7 +469,7 @@ const PaymentsPage = () => {
       fetchData();
       const data = await res.json();
       setTimeout(() => {
-        window.open(`https://ratilalsons-backend-api.onrender.com/api/quotations/${data.lead_id}/invoice`, "_blank");
+        window.open(`http://127.0.0.1:8000/api/quotations/${data.lead_id}/invoice`, "_blank");
       }, 1200);
     } catch (e) {
       setNotification({ show: true, message: "Error creating invoice", type: "error" });
@@ -1028,7 +1028,7 @@ export default PaymentsPage;
 //   const handleDownload = async () => {
 //     setLoading(true);
 //     try {
-//       const res = await fetch(`https://ratilalsons-backend-api.onrender.com/api/quotations/${leadId}/invoice`, {
+//       const res = await fetch(`http://127.0.0.1:8000/api/quotations/${leadId}/invoice`, {
 //         method: "POST",
 //         headers: {
 //           Authorization: Bearer `${localStorage.getItem('access_token') || ''}`,
@@ -1163,7 +1163,7 @@ export default PaymentsPage;
 
 //   const fetchLeads = async () => {
 //     try {
-//       const res = await fetch('https://ratilalsons-backend-api.onrender.com/api/lead/leads?limit=1000', {
+//       const res = await fetch('http://127.0.0.1:8000/api/lead/leads?limit=1000', {
 //         headers: { Authorization: Bearer `${localStorage.getItem('access_token') || ''} `},
 //       });
 //       const data = await res.json();
@@ -1175,7 +1175,7 @@ export default PaymentsPage;
 
 //   const fetchAllQuotations = async () => {
 //     try {
-//       const res = await fetch('https://ratilalsons-backend-api.onrender.com/api/quotations/', {
+//       const res = await fetch('http://127.0.0.1:8000/api/quotations/', {
 //         headers: { Authorization: Bearer `${localStorage.getItem('access_token') || ''}` }
 //       });
 //       const data = await res.json();
@@ -1188,7 +1188,7 @@ export default PaymentsPage;
 //   const fetchData = async () => {
 //     setLoading(true);
 //     try {
-//       const res = await fetch('https://ratilalsons-backend-api.onrender.com/api/quotations/', {
+//       const res = await fetch('http://127.0.0.1:8000/api/quotations/', {
 //         headers: {
 //           Authorization: Bearer `${localStorage.getItem('access_token') || ''}`,
 //         },

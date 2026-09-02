@@ -703,6 +703,14 @@ async def get_all_vendors(
         },
         {
             "$lookup": {
+                "from": "vendor_bills",
+                "localField": "id",
+                "foreignField": "vendor_id",
+                "as": "bills"
+            }
+        },
+        {
+            "$lookup": {
                 "from": "vendor_transactions",
                 "localField": "id",
                 "foreignField": "vendor_id",
@@ -711,8 +719,25 @@ async def get_all_vendors(
         },
         {
             "$addFields": {
-                "orders_count": {"$size": "$orders"},
-                "total_spend": {
+                "bills_total": {
+                    "$sum": {
+                        "$map": {
+                            "input": "$bills",
+                            "as": "bill",
+                            "in": {"$ifNull": ["$$bill.total_amount", 0.0]}
+                        }
+                    }
+                },
+                "orders_total": {
+                    "$sum": {
+                        "$map": {
+                            "input": "$orders",
+                            "as": "order",
+                            "in": {"$ifNull": ["$$order.grand_total", {"$ifNull": ["$$order.amount", 0.0]}]}
+                        }
+                    }
+                },
+                "payments_total": {
                     "$sum": {
                         "$map": {
                             "input": {"$filter": {
@@ -720,9 +745,28 @@ async def get_all_vendors(
                                 "cond": {"$eq": ["$$this.transaction_type", "payment"]}
                             }},
                             "as": "transaction",
-                            "in": "$$transaction.amount"
+                            "in": {"$ifNull": ["$$transaction.amount", 0.0]}
                         }
                     }
+                },
+                "bills_count": {"$size": "$bills"},
+                "orders_count_raw": {"$size": "$orders"}
+            }
+        },
+        {
+            "$addFields": {
+                "total_spend": {
+                    "$max": [
+                        {"$add": ["$bills_total", "$orders_total"]},
+                        {"$ifNull": ["$total_spend", 0.0]},
+                        "$payments_total"
+                    ]
+                },
+                "orders_count": {
+                    "$max": [
+                        {"$add": ["$bills_count", "$orders_count_raw"]},
+                        {"$ifNull": ["$orders_count", 0]}
+                    ]
                 }
             }
         },
@@ -787,6 +831,22 @@ async def get_vendor_stats():
     spend_pipeline = [
         {
             "$lookup": {
+                "from": "vendor_bills",
+                "localField": "id",
+                "foreignField": "vendor_id",
+                "as": "bills"
+            }
+        },
+        {
+            "$lookup": {
+                "from": "vendor_orders",
+                "localField": "id",
+                "foreignField": "vendor_id",
+                "as": "orders"
+            }
+        },
+        {
+            "$lookup": {
                 "from": "vendor_transactions",
                 "localField": "id",
                 "foreignField": "vendor_id",
@@ -794,20 +854,40 @@ async def get_vendor_stats():
             }
         },
         {
-            "$unwind": {
-                "path": "$transactions",
-                "preserveNullAndEmptyArrays": True
-            }
-        },
-        {
-            "$match": {
-                "transactions.transaction_type": "payment"
+            "$project": {
+                "vendor_spend": {
+                    "$max": [
+                        {
+                            "$add": [
+                                {
+                                    "$sum": {
+                                        "$map": {
+                                            "input": "$bills",
+                                            "as": "b",
+                                            "in": {"$ifNull": ["$$b.total_amount", 0.0]}
+                                        }
+                                    }
+                                },
+                                {
+                                    "$sum": {
+                                        "$map": {
+                                            "input": "$orders",
+                                            "as": "o",
+                                            "in": {"$ifNull": ["$$o.grand_total", {"$ifNull": ["$$o.amount", 0.0]}]}
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        {"$ifNull": ["$total_spend", 0.0]}
+                    ]
+                }
             }
         },
         {
             "$group": {
                 "_id": None,
-                "total_spend": {"$sum": "$transactions.amount"}
+                "total_spend": {"$sum": "$vendor_spend"}
             }
         }
     ]

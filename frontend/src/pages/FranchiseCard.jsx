@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 
 // Helper functions
 async function fetchEnquiries() {
-  const res = await fetch("https://ratilalsons-backend-api.onrender.com/api/franchises/");
+  const res = await fetch("http://127.0.0.1:8000/api/franchises/");
   if (!res.ok) throw new Error("Failed to load franchise enquiries");
   return await res.json();
 }
 async function updateEnquiryStatus(id, status) {
   // You may need to adjust the endpoint/method based on your backend
   const res = await fetch(
-    `https://ratilalsons-backend-api.onrender.com/api/franchises/${id}`,
+    `http://127.0.0.1:8000/api/franchises/${id}`,
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -117,7 +117,7 @@ function AddNewFranchiseForm({ onCreated }) {
         notes: form.notes || undefined
       };
 
-      const response = await fetch("https://ratilalsons-backend-api.onrender.com/api/franchises", {
+      const response = await fetch("http://127.0.0.1:8000/api/franchises", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
