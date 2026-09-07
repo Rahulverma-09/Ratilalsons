@@ -1185,7 +1185,22 @@ function EditProductModal({ open, onClose, product, onUpdate }) {
 function ProductInventoryTable({
   products, search, page, setPage, hasPrev, hasNext, onAddProduct, onEditProduct, onDeleteProduct
 }) {
-  const filtered = products.filter(
+  const getProductTimestamp = (p) => {
+    if (p.date) {
+      const t = new Date(p.date).getTime();
+      if (!isNaN(t) && t > 0) return t;
+    }
+    const id = p.product_id || p.id || p._id;
+    if (id && typeof id === "string" && id.length === 24) {
+      const timestamp = parseInt(id.substring(0, 8), 16) * 1000;
+      if (!isNaN(timestamp)) return timestamp;
+    }
+    return 0;
+  };
+
+  const sorted = [...products].sort((a, b) => getProductTimestamp(b) - getProductTimestamp(a));
+
+  const filtered = sorted.filter(
     (p) =>
       (p.name && p.name.toLowerCase().includes(search.toLowerCase())) ||
       (p.sku && p.sku.toLowerCase().includes(search.toLowerCase()))
@@ -1572,7 +1587,16 @@ export default function InventoryManagement() {
     const token = localStorage.getItem("access_token");
     fetch(`${API_BASE}/products`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => res.json())
-      .then((data) => setProducts(Array.isArray(data) ? data : []))
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        // Ensure latest records appear first
+        list.sort((a, b) => {
+          const dateA = a.date ? new Date(a.date).getTime() : 0;
+          const dateB = b.date ? new Date(b.date).getTime() : 0;
+          return dateB - dateA;
+        });
+        setProducts(list);
+      })
       .finally(() => setLoadingProducts(false));
   };
   useEffect(() => {
@@ -1600,28 +1624,67 @@ export default function InventoryManagement() {
     const token = localStorage.getItem("access_token");
     fetch(`${API_BASE}/logs`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => res.json())
-      .then((data) => setLogs(data.logs || []))
+      .then((data) => {
+        const list = data.logs || [];
+        // Ensure latest logs appear first
+        list.sort((a, b) => {
+          const dateA = a.date ? new Date(a.date).getTime() : 0;
+          const dateB = b.date ? new Date(b.date).getTime() : 0;
+          return dateB - dateA;
+        });
+        setLogs(list);
+      })
       .finally(() => setLoadingLogs(false));
   }, []);
 
-  // Filtered products for search
-  const productsFiltered = products.filter(
-    (p) =>
-      (p.name && p.name.toLowerCase().includes(search.toLowerCase())) ||
-      (p.sku && p.sku.toLowerCase().includes(search.toLowerCase()))
-  );
+  const getProductTimestamp = (p) => {
+    if (p.date) {
+      const t = new Date(p.date).getTime();
+      if (!isNaN(t) && t > 0) return t;
+    }
+    const id = p.product_id || p.id || p._id;
+    if (id && typeof id === "string" && id.length === 24) {
+      const timestamp = parseInt(id.substring(0, 8), 16) * 1000;
+      if (!isNaN(timestamp)) return timestamp;
+    }
+    return 0;
+  };
 
-  // Filtered logs for search
-  const logsFiltered = logs.filter((log) =>
-    (log.product_name && log.product_name.toLowerCase().includes(search.toLowerCase())) ||
-    (log.type && log.type.toLowerCase().includes(search.toLowerCase())) ||
-    (log.location && log.location.toLowerCase().includes(search.toLowerCase())) ||
-    (log.customer_city && log.customer_city.toLowerCase().includes(search.toLowerCase())) ||
-    (log.by && log.by.toLowerCase().includes(search.toLowerCase())) ||
-    (log.customer_name && log.customer_name.toLowerCase().includes(search.toLowerCase())) ||
-    (log.remarks && log.remarks.toLowerCase().includes(search.toLowerCase())) ||
-    (log.customer_id && log.customer_id.toString().includes(search.toLowerCase()))
-  );
+  const getLogTimestamp = (log) => {
+    if (log.date) {
+      const t = new Date(log.date).getTime();
+      if (!isNaN(t) && t > 0) return t;
+    }
+    const id = log.log_id || log.id || log._id;
+    if (id && typeof id === "string" && id.length === 24) {
+      const timestamp = parseInt(id.substring(0, 8), 16) * 1000;
+      if (!isNaN(timestamp)) return timestamp;
+    }
+    return 0;
+  };
+
+  // Filtered products for search (sorted latest first)
+  const productsFiltered = [...products]
+    .sort((a, b) => getProductTimestamp(b) - getProductTimestamp(a))
+    .filter(
+      (p) =>
+        (p.name && p.name.toLowerCase().includes(search.toLowerCase())) ||
+        (p.sku && p.sku.toLowerCase().includes(search.toLowerCase()))
+    );
+
+  // Filtered logs for search (sorted latest first)
+  const logsFiltered = [...logs]
+    .sort((a, b) => getLogTimestamp(b) - getLogTimestamp(a))
+    .filter((log) =>
+      (log.product_name && log.product_name.toLowerCase().includes(search.toLowerCase())) ||
+      (log.type && log.type.toLowerCase().includes(search.toLowerCase())) ||
+      (log.location && log.location.toLowerCase().includes(search.toLowerCase())) ||
+      (log.customer_city && log.customer_city.toLowerCase().includes(search.toLowerCase())) ||
+      (log.by && log.by.toLowerCase().includes(search.toLowerCase())) ||
+      (log.customer_name && log.customer_name.toLowerCase().includes(search.toLowerCase())) ||
+      (log.remarks && log.remarks.toLowerCase().includes(search.toLowerCase())) ||
+      (log.customer_id && log.customer_id.toString().includes(search.toLowerCase()))
+    );
 
   // Pagination controls
   const alertsHasPrev = alertsPage > 1;
@@ -1646,25 +1709,44 @@ export default function InventoryManagement() {
     setLogsPage(1);
   }, [activeTab]);
 
-  useEffect(() => {
-    if (activeTab === "logs") {
-      setLoadingLogs(true);
-      const token = localStorage.getItem("access_token");
-      fetch(`${API_BASE}/logs`, { headers: { Authorization: `Bearer ${token}` } })
-        .then((res) => res.json())
-        .then((data) => setLogs(data.logs || []))
-        .finally(() => setLoadingLogs(false));
-    }
-  }, [activeTab]);
+  const fetchAlerts = () => {
+    setLoadingAlerts(true);
+    const token = localStorage.getItem("access_token");
+    fetch(`${API_BASE}/alerts`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.low_stock_alerts) {
+          const all = Object.values(data.low_stock_alerts).flat();
+          setAlerts(all);
+        } else {
+          setAlerts([]);
+        }
+      })
+      .finally(() => setLoadingAlerts(false));
+  };
 
   const fetchLogs = () => {
     setLoadingLogs(true);
     const token = localStorage.getItem("access_token");
     fetch(`${API_BASE}/logs`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => res.json())
-      .then((data) => setLogs(data.logs || []))
+      .then((data) => {
+        const list = data.logs || [];
+        list.sort((a, b) => getLogTimestamp(b) - getLogTimestamp(a));
+        setLogs(list);
+      })
       .finally(() => setLoadingLogs(false));
   };
+
+  useEffect(() => {
+    if (activeTab === "catalogue") {
+      fetchProducts();
+    } else if (activeTab === "logs") {
+      fetchLogs();
+    } else if (activeTab === "alerts") {
+      fetchAlerts();
+    }
+  }, [activeTab]);
 
   const handleEditProduct = (product) => {
     setEditingProduct(product);

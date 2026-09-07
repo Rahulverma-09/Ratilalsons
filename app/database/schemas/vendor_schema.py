@@ -42,6 +42,7 @@ class VendorModel(BaseModel):
     
     # Metadata
     tags: Optional[List[str]] = []
+    provides: Optional[List[str]] = []
     preferences: Optional[Dict[str, Any]] = {}
     
     # Financial Data
@@ -82,6 +83,7 @@ class VendorCreateModel(BaseModel):
     
     # Metadata
     tags: Optional[List[str]] = []
+    provides: Optional[List[str]] = []
     preferences: Optional[Dict[str, Any]] = {}
 
 class VendorUpdateModel(BaseModel):
@@ -107,6 +109,7 @@ class VendorUpdateModel(BaseModel):
     
     # Metadata
     tags: Optional[List[str]] = None
+    provides: Optional[List[str]] = None
     preferences: Optional[Dict[str, Any]] = None
 
 # For vendor orders and transactions

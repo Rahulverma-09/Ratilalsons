@@ -76,6 +76,7 @@ async def create_vendor(
     vendor_type: str = Form("regular"),
     status: str = Form("active"),
     tags: str = Form(""),
+    provides: str = Form(""),
     preferences: str = Form("{}"),
     profile_picture: UploadFile = File(None),
     business_license: UploadFile = File(None),
@@ -83,13 +84,14 @@ async def create_vendor(
 ):
     """Create a new vendor with comprehensive validation and file handling"""
     
-    # Parse tags and preferences
+    # Parse tags, provides, and preferences
     try:
         preferences_dict = json.loads(preferences) if preferences else {}
     except Exception:
         preferences_dict = {}
     
     tags_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+    provides_list = [p.strip() for p in provides.split(",") if p.strip()] if provides else []
     
     # Validate GST Number
     if registration_number:
@@ -172,6 +174,7 @@ async def create_vendor(
         "avatar_url": profile_picture_url,  # For frontend compatibility
         "business_license": business_license_url,
         "tags": tags_list,
+        "provides": provides_list,
         "preferences": preferences_dict,
         "total_spend": 0.0,
         "orders_count": 0,
@@ -418,6 +421,7 @@ async def get_vendor(vendor_id: str):
         "vendor_type": "regular",
         "status": "active",
         "tags": [],
+        "provides": [],
         "preferences": {},
         "total_spend": 0.0,
         "orders_count": 0
@@ -460,6 +464,7 @@ async def update_vendor(
     vendor_type: str = Form(None),
     status: str = Form(None),
     tags: str = Form(None),
+    provides: str = Form(None),
     preferences: str = Form(None),
     profile_picture: UploadFile = File(None),
     business_license: UploadFile = File(None),
@@ -526,9 +531,12 @@ async def update_vendor(
         if value is not None:
             update_doc[field] = value
     
-    # Handle tags and preferences
+    # Handle tags, provides and preferences
     if tags is not None:
         update_doc["tags"] = [t.strip() for t in tags.split(",") if t.strip()]
+    
+    if provides is not None:
+        update_doc["provides"] = [p.strip() for p in provides.split(",") if p.strip()]
     
     if preferences is not None:
         try:

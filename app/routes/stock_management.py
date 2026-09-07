@@ -327,7 +327,7 @@ async def get_stock_logs(
         query["product_id"] = product_id
     if location:
         query["location"] = location
-    logs = [obj_id_to_str(log) for log in stock_logs_collection.find(query)]
+    logs = [obj_id_to_str(log) for log in stock_logs_collection.find(query).sort([("date", -1), ("_id", -1)])]
     for log in logs:
         if isinstance(log.get("date"), datetime):
             log["date"] = log["date"].isoformat()
@@ -427,7 +427,8 @@ async def get_products(
     stock_collection=Depends(stock_collection)
 ):
     products = []
-    for prod in products_collection.find():
+    # Sort by _id descending to guarantee newest documents come first
+    for prod in products_collection.find().sort([("_id", -1)]):
         prod_id = str(prod.get("_id", prod.get("product_id")))
         low_stock_threshold = prod.get("low_stock_threshold", 10)
         stocks = list(stock_collection.find({"product_id": prod_id}))
@@ -440,6 +441,17 @@ async def get_products(
                 warehouse_qty += qty
             else:
                 depot_qty[loc] = qty
+        
+        prod_date = prod.get("date")
+        if isinstance(prod_date, datetime):
+            prod_date_str = prod_date.isoformat()
+        elif prod_date:
+            prod_date_str = str(prod_date)
+        elif ObjectId.is_valid(prod_id):
+            prod_date_str = ObjectId(prod_id).generation_time.isoformat()
+        else:
+            prod_date_str = None
+
         prod_out = {
             "product_id": prod_id,
             "name": prod.get("name"),
@@ -450,9 +462,23 @@ async def get_products(
             "category": prod.get("category"),
             "description": prod.get("description"),
             "price": prod.get("price", 0), 
-            "date": prod.get("date").isoformat() if prod.get("date") else None
+            "date": prod_date_str
         }
         products.append(prod_out)
+
+    def get_sort_key(p):
+        d = p.get("date")
+        if d:
+            try:
+                return datetime.fromisoformat(d.replace('Z', '+00:00')).timestamp()
+            except Exception:
+                pass
+        pid = p.get("product_id")
+        if pid and ObjectId.is_valid(str(pid)):
+            return ObjectId(str(pid)).generation_time.timestamp()
+        return 0
+
+    products.sort(key=get_sort_key, reverse=True)
     return products
 
 @stock_router.get("/total-products")

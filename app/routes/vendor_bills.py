@@ -42,6 +42,136 @@ async def vendor_bill_stats(
             total_paid_amount=0.0
         )
 
+def generate_product_sku(name: str, products_collection) -> str:
+    """Auto-generate SKU for new inventory product based on name (e.g. BU-001)"""
+    clean_name = ''.join([c for c in (name or "") if c.isalnum()]).upper()
+    if len(clean_name) >= 2:
+        prefix = clean_name[:2]
+    elif len(clean_name) == 1:
+        prefix = clean_name + "X"
+    else:
+        prefix = "PR"
+
+    regex = f"^{prefix}-\\d+$"
+    matching_products = list(products_collection.find({"sku": {"$regex": regex}}, {"sku": 1}))
+    max_num = 0
+    for p in matching_products:
+        sku = p.get("sku", "")
+        try:
+            parts = sku.split("-")
+            if len(parts) >= 2:
+                num = int(parts[1])
+                if num > max_num:
+                    max_num = num
+        except Exception:
+            pass
+    return f"{prefix}-{(max_num + 1):03d}"
+
+
+def sync_vendor_bill_items_to_inventory(bill_dict: dict, current_user: dict, db):
+    """
+    Automatically creates inventory products for materials/items added in a vendor bill.
+    Mapping:
+    - Material name/description -> Product name & description
+    - Unit price -> Price
+    - Quantity -> Warehouse quantity & stock record
+    - Category -> "" (empty)
+    - SKU -> Auto-generated (e.g., BU-001)
+    """
+    try:
+        products_collection = db["products"]
+        stock_collection = db["stock"]
+        stock_logs_collection = db["stock_logs"]
+
+        items = bill_dict.get("items") or []
+
+        # If items list is empty, but material_description exists, treat as single item
+        if not items and bill_dict.get("material_description"):
+            mat_desc = bill_dict.get("material_description", "").strip()
+            if mat_desc:
+                items = [{
+                    "name": mat_desc,
+                    "description": mat_desc,
+                    "quantity": 1,
+                    "unit_price": bill_dict.get("subtotal") or bill_dict.get("total_amount") or 0.0
+                }]
+
+        user_by = (
+            (current_user.get("name") or current_user.get("username") or current_user.get("user_id"))
+            if current_user else "system"
+        )
+        bill_num = bill_dict.get("bill_number", "")
+        grn_num = bill_dict.get("grn_no") or bill_dict.get("grn_number") or ""
+        vendor_id = str(bill_dict.get("vendor_id", ""))
+        vendor_name = str(bill_dict.get("vendor_name", ""))
+
+        for item in items:
+            item_name = (item.get("description") or item.get("name") or "").strip()
+            if not item_name:
+                continue
+
+            item_qty = float(item.get("quantity", 0) or 0)
+            int_qty = int(round(item_qty)) if item_qty > 0 else 1
+            unit_price = float(item.get("unit_price", 0) or 0)
+            description = item.get("description") or item_name
+            now = datetime.now()
+
+            # Auto-generate SKU
+            sku = generate_product_sku(item_name, products_collection)
+
+            # Create product in inventory
+            product_doc = {
+                "name": item_name,
+                "sku": sku,
+                "category": "",
+                "price": unit_price,
+                "description": description,
+                "warehouse_qty": int_qty,
+                "depot_qty": {},
+                "low_stock_threshold": 10,
+                "date": now,
+                "created_via": "vendor_bill",
+                "bill_number": bill_num,
+                "grn_no": grn_num,
+                "vendor_id": vendor_id,
+                "vendor_name": vendor_name
+            }
+
+            result = products_collection.insert_one(product_doc)
+            prod_id = str(result.inserted_id)
+
+            # Create stock record at Warehouse
+            stock_collection.insert_one({
+                "product_id": prod_id,
+                "product_name": item_name,
+                "location": "Warehouse",
+                "quantity": int_qty,
+                "type": "in",
+                "by": user_by,
+                "date": now
+            })
+
+            # Create stock log entry
+            stock_logs_collection.insert_one({
+                "product_id": prod_id,
+                "product_name": item_name,
+                "type": "in",
+                "quantity": int_qty,
+                "before_quantity": 0,
+                "after_quantity": int_qty,
+                "location": "Warehouse",
+                "by": user_by,
+                "date": now,
+                "status": "in",
+                "stock_head": "Vendor",
+                "reference_id": vendor_id,
+                "reference_name": vendor_name,
+                "remarks": f"Stock added from Vendor Bill {bill_num} (GRN: {grn_num})"
+            })
+    except Exception as e:
+        print("Error syncing vendor bill items to inventory products:", e)
+
+
 @vendor_bill_router.post("/", response_model=VendorBillModel, status_code=status.HTTP_201_CREATED)
 async def create_vendor_bill(
     bill_data: VendorBillCreate,
@@ -103,6 +233,13 @@ async def create_vendor_bill(
             pass
     
     bill = repo.create_bill(bill_dict, uploaded_by=current_user.get("user_id"))
+
+    # Auto-add bill items into inventory products & stock
+    try:
+        db = get_database()
+        sync_vendor_bill_items_to_inventory(bill_dict, current_user, db)
+    except Exception as e:
+        print("Error in auto-syncing bill items to inventory:", e)
 
     # Recalculate and update vendor's total_spend and orders_count in database
     if bill_dict.get("vendor_id"):
@@ -195,6 +332,14 @@ async def upload_vendor_bill_file(
     }
     
     bill = repo.create_bill(bill_data, uploaded_by=current_user.get("user_id"))
+
+    # Auto-add bill items into inventory products & stock
+    try:
+        db = get_database()
+        sync_vendor_bill_items_to_inventory(bill_data, current_user, db)
+    except Exception as e:
+        print("Error in auto-syncing uploaded bill items to inventory:", e)
+
     return bill
 
 @vendor_bill_router.get("/{bill_id}", response_model=VendorBillModel)

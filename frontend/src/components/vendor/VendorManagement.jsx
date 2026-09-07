@@ -1,11 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { User2, Star, TrendingUp, ChevronUp, Mail, Phone, MapPin, Calendar, Search, Edit, Trash2, Plus, ShoppingCart, FileText, X, Eye, Printer, Download } from "lucide-react";
+import { User2, Building2, Star, TrendingUp, ChevronUp, Mail, Phone, MapPin, Calendar, Search, Edit, Trash2, Plus, ShoppingCart, FileText, X, Eye, Printer, Download } from "lucide-react";
 import CreatableSelect from 'react-select/creatable';
 import { API_URL } from '../../config';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 const PAGE_SIZE = 10;
+
+const PROVIDES_PRESETS = [
+  "Cement",
+  "Steel / TMT Bars",
+  "Aggregates (10mm / 20mm)",
+  "Sand / M-Sand",
+  "RMC (Ready Mix Concrete)",
+  "Bricks & AAC Blocks",
+  "Admixtures & Chemicals",
+  "Transport & Logistics",
+  "Fuel & Lubricants",
+  "Electrical & Cabling",
+  "Plumbing & Pipes",
+  "Hardware & Tools",
+  "Safety PPE Equipment",
+  "Machinery & Spare Parts",
+  "Labor Contractor",
+  "Scaffolding & Shuttering",
+  "Civil Construction",
+  "Consultancy / Services",
+];
 
 const PaginationControl = ({ page, setPage, total, colorTheme = "green" }) => {
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -115,6 +136,7 @@ const AddVendorModal = ({ open, onClose, onAdd, loading, vendors, editMode = fal
     vendor_type: "regular", // regular, preferred, strategic
     status: "active",
     tags: [],
+    provides: [],
     preferences: {},
     role: ""
   });
@@ -129,6 +151,18 @@ const AddVendorModal = ({ open, onClose, onAdd, loading, vendors, editMode = fal
     if (open) {
       fetchVendorsForSelection();
       if (editMode && existingVendor) {
+        let providesList = [];
+        if (Array.isArray(existingVendor.provides)) {
+          providesList = existingVendor.provides;
+        } else if (typeof existingVendor.provides === "string" && existingVendor.provides.trim()) {
+          try {
+            const parsed = JSON.parse(existingVendor.provides);
+            providesList = Array.isArray(parsed) ? parsed : existingVendor.provides.split(",").map(s => s.trim()).filter(Boolean);
+          } catch (_) {
+            providesList = existingVendor.provides.split(",").map(s => s.trim()).filter(Boolean);
+          }
+        }
+
         setForm({
           name: existingVendor.name || "",
           email: existingVendor.email || "",
@@ -149,6 +183,7 @@ const AddVendorModal = ({ open, onClose, onAdd, loading, vendors, editMode = fal
           vendor_type: existingVendor.vendor_type || "regular",
           status: existingVendor.status || "active",
           tags: existingVendor.tags || [],
+          provides: providesList,
           preferences: existingVendor.preferences || {},
           role: ""
         });
@@ -174,6 +209,7 @@ const AddVendorModal = ({ open, onClose, onAdd, loading, vendors, editMode = fal
           vendor_type: "regular",
           status: "active",
           tags: [],
+          provides: [],
           preferences: {},
           role: ""
         });
@@ -523,7 +559,8 @@ const AddVendorModal = ({ open, onClose, onAdd, loading, vendors, editMode = fal
       contact_designation: form.contact_designation || '',
       vendor_type: form.vendor_type,
       status: form.status,
-      tags: Array.isArray(form.tags) ? form.tags.join(",") : form.tags,
+      tags: Array.isArray(form.tags) ? form.tags.join(",") : (form.tags || ''),
+      provides: Array.isArray(form.provides) ? form.provides.join(",") : (form.provides || ''),
       preferences: typeof form.preferences === "string" ? form.preferences : JSON.stringify(form.preferences || {}),
       profile_picture: form.profile_picture, // This will be the File object or null
       businessLicenseFile: form.businessLicenseFile // This will be the File object or null
@@ -548,16 +585,16 @@ const AddVendorModal = ({ open, onClose, onAdd, loading, vendors, editMode = fal
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4 overflow-y-auto">
       {loading && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-          <div className="bg-white rounded-lg p-6 flex flex-col items-center gap-3">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+          <div className="bg-white rounded-2xl p-6 flex flex-col items-center gap-3 shadow-2xl">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
             <p className="text-gray-700 font-medium">{editMode ? "Updating vendor..." : "Adding vendor..."}</p>
           </div>
         </div>
       )}
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[100vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl max-h-[92vh] overflow-hidden flex flex-col my-auto">
         <div className="bg-gradient-to-r from-green-600 via-green-700 to-emerald-600 px-8 py-6 relative">
           <button
             className="absolute top-4 right-4 text-white hover:text-red-300 text-2xl transition-colors w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center backdrop-blur-sm"
@@ -966,6 +1003,76 @@ const AddVendorModal = ({ open, onClose, onAdd, loading, vendors, editMode = fal
                     <option value="blocked">Blocked</option>
                   </select>
                 </div>
+
+                {/* Provides / Supplies / Services Field */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 font-semibold text-gray-800">
+                      <span>Provides (Products / Materials / Services)</span>
+                      <span className="text-xs font-normal text-gray-500">(Multiselect &amp; Creatable)</span>
+                    </span>
+                    {form.provides && form.provides.length > 0 && (
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                        {form.provides.length} item{form.provides.length > 1 ? "s" : ""} selected
+                      </span>
+                    )}
+                  </label>
+                  <CreatableSelect
+                    isMulti
+                    isClearable
+                    isSearchable
+                    placeholder="Select options or type custom material/service name (e.g. Cement, Steel, Transport) & press Enter..."
+                    value={(form.provides || []).map(item => (typeof item === 'string' ? { value: item, label: item } : item))}
+                    onChange={(selectedOptions) => {
+                      const values = (selectedOptions || []).map(opt => opt.value || opt.label);
+                      setForm(prev => ({ ...prev, provides: values }));
+                    }}
+                    options={PROVIDES_PRESETS.map(opt => ({ value: opt, label: opt }))}
+                    formatCreateLabel={(inputValue) => `Add "${inputValue}" as custom option`}
+                    noOptionsMessage={() => "Type to add new option"}
+                    className="text-sm"
+                    styles={{
+                      control: (provided, state) => ({
+                        ...provided,
+                        minHeight: '48px',
+                        border: state.isFocused ? '2px solid #10b981' : '1px solid #d1d5db',
+                        borderRadius: '10px',
+                        backgroundColor: '#ffffff',
+                        boxShadow: state.isFocused ? '0 0 0 2px rgba(16, 185, 129, 0.15)' : 'none',
+                        '&:hover': {
+                          border: '1px solid #10b981'
+                        }
+                      }),
+                      multiValue: (provided) => ({
+                        ...provided,
+                        backgroundColor: '#ecfdf5',
+                        border: '1px solid #a7f3d0',
+                        borderRadius: '9999px',
+                        padding: '2px 8px',
+                        margin: '3px'
+                      }),
+                      multiValueLabel: (provided) => ({
+                        ...provided,
+                        color: '#065f46',
+                        fontWeight: '600',
+                        fontSize: '12px'
+                      }),
+                      multiValueRemove: (provided) => ({
+                        ...provided,
+                        color: '#047857',
+                        borderRadius: '9999px',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: '#fecaca',
+                          color: '#dc2626'
+                        }
+                      })
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1.5">
+                    Select from standard presets or type custom material/service names. These will be displayed as pill badges in the table.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -1217,7 +1324,7 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               <ShoppingCart className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Create Purchase Order</h2>
+              <h2 className="text-2xl font-bold text-white">Create Purchase Request</h2>
               <p className="text-purple-100 text-sm">Select products from catalog or add manually</p>
             </div>
           </div>
@@ -1452,7 +1559,7 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   rows={4}
-                  placeholder="Additional notes for this purchase order..."
+                  placeholder="Additional notes for this purchase request..."
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                 />
               </div>
@@ -1513,9 +1620,9 @@ const PurchaseOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 text-white font-semibold hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all flex items-center gap-2"
             >
               {loading ? (
-                <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> Creating Order...</>
+                <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> Creating Request...</>
               ) : (
-                <><FileText className="w-4 h-4" /> Create Purchase Order</>
+                <><FileText className="w-4 h-4" /> Create Purchase Request</>
               )}
             </button>
           </div>
@@ -1615,7 +1722,7 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-5 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -1623,8 +1730,8 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               <ShoppingCart className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Place Purchase Order</h2>
-              <p className="text-blue-100 text-sm">Select vendor, add items and generate order</p>
+              <h2 className="text-2xl font-bold text-white">Purchase Order</h2>
+              <p className="text-blue-100 text-sm">Select vendor, add items and generate purchase order</p>
             </div>
           </div>
           <button onClick={onClose} className="text-white hover:text-red-300 w-9 h-9 rounded-full bg-white bg-opacity-20 flex items-center justify-center transition-colors">
@@ -1664,7 +1771,7 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
                 <button
                   type="button"
                   onClick={addItem}
-                  className="flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
                 >
                   <Plus className="w-4 h-4" /> Add Item
                 </button>
@@ -1754,7 +1861,7 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   rows={4}
-                  placeholder="Additional notes for this request..."
+                  placeholder="Additional notes for this purchase order..."
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
               </div>
@@ -1815,42 +1922,6 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               </div>
             </div>
 
-              <div className="mt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-semibold text-gray-700">Terms & Conditions</label>
-                  <button
-                    type="button"
-                    onClick={() => setTerms([...terms, `${terms.length + 1}. `])}
-                    className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
-                  >
-                    + Add Term
-                  </button>
-                </div>
-                <div className="space-y-2 max-h-40 overflow-y-auto pr-2">
-                  {terms.map((term, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={term}
-                        onChange={e => {
-                          const newTerms = [...terms];
-                          newTerms[idx] = e.target.value;
-                          setTerms(newTerms);
-                        }}
-                        className="flex-1 border border-gray-300 rounded px-2 py-1 text-xs"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setTerms(terms.filter((_, i) => i !== idx))}
-                        className="text-red-400 hover:text-red-600"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
             {error && (
               <p className="text-red-600 text-sm mt-4 bg-red-50 px-4 py-3 rounded-xl border border-red-200">{error}</p>
             )}
@@ -1871,9 +1942,9 @@ const PlaceOrderModal = ({ open, onClose, vendors, onOrderPlaced }) => {
               className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg transition-all flex items-center gap-2"
             >
               {loading ? (
-                <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> Placing Order...</>
+                <><div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> Generating Purchase Order...</>
               ) : (
-                <><FileText className="w-4 h-4" /> Place Purchase Order &amp; Generate Invoice</>
+                <><FileText className="w-4 h-4" /> Purchase Order &amp; Generate Invoice</>
               )}
             </button>
           </div>
@@ -2226,17 +2297,7 @@ const InvoiceModal = ({ invoice, onClose }) => {
 };
 
 
-// Helper function to extract and format attachment file URL
-const getAttachmentUrl = (bill) => {
-  if (!bill) return null;
-  const file = bill.attachment || bill.uploaded_file_path || bill.file_path || bill.file || bill.document;
-  if (!file) return null;
-  if (file.startsWith("data:") || file.startsWith("http://") || file.startsWith("https://")) {
-    return file;
-  }
-  const API_BASE = API_URL.replace("/api", "");
-  return file.startsWith("/") ? `${API_BASE}${file}` : `${API_BASE}/${file}`;
-};
+
 
 // Helper to extract first material name and extra items count badge
 const getBillMaterialDisplay = (bill) => {
@@ -2268,52 +2329,181 @@ const getBillUomDisplay = (bill) => {
   return { firstUom: bill.uom || "-", extraCount: 0 };
 };
 
-// Modal component for viewing image/PDF file attachments directly
+// Global Helper to extract clean attachment URL
+const getAttachmentUrl = (item) => {
+  if (!item) return null;
+  if (typeof item === "string") {
+    if (item.startsWith("http://") || item.startsWith("https://") || item.startsWith("data:") || item.startsWith("blob:")) return item;
+    const base = API_URL.replace("/api", "");
+    return item.startsWith("/") ? `${base}${item}` : `${base}/${item}`;
+  }
+  let url = item.attachment || item.attachment_url || item.uploaded_file_path || item.file_url || item.document_url || item.invoice_url || item.bill_file;
+  if (!url || typeof url !== "string") return null;
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:") || url.startsWith("blob:")) return url;
+  const base = API_URL.replace("/api", "");
+  return url.startsWith("/") ? `${base}${url}` : `${base}/${url}`;
+};
+
+// Modal component for viewing image/PDF file attachments directly (Flawless Blob & Data URL support)
 const AttachmentPreviewModal = ({ url, onClose }) => {
+  const [blobUrl, setBlobUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!url) return;
+    let createdUrl = null;
+
+    try {
+      if (typeof url === "string" && url.startsWith("data:")) {
+        const parts = url.split(";base64,");
+        const contentType = parts[0].replace("data:", "") || "application/pdf";
+        const b64Data = parts[1];
+        if (b64Data) {
+          const byteCharacters = atob(b64Data);
+          const byteArrays = [];
+          for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+            const slice = byteCharacters.slice(offset, offset + 512);
+            const byteNumbers = new Array(slice.length);
+            for (let i = 0; i < slice.length; i++) {
+              byteNumbers[i] = slice.charCodeAt(i);
+            }
+            byteArrays.push(new Uint8Array(byteNumbers));
+          }
+          const blob = new Blob(byteArrays, { type: contentType });
+          createdUrl = URL.createObjectURL(blob);
+          setBlobUrl(createdUrl);
+        } else {
+          setBlobUrl(url);
+        }
+      } else {
+        setBlobUrl(url);
+      }
+    } catch (err) {
+      console.warn("Could not parse data URL to blob:", err);
+      setBlobUrl(url);
+    } finally {
+      setLoading(false);
+    }
+
+    return () => {
+      if (createdUrl) {
+        URL.revokeObjectURL(createdUrl);
+      }
+    };
+  }, [url]);
+
   if (!url) return null;
-  const isImage = url.startsWith("data:image/") || /\.(jpg|jpeg|png|gif|webp|svg)($|\?)/i.test(url);
+
+  const rawUrl = blobUrl || url;
+  const isImage = (typeof url === "string") && (
+    url.startsWith("data:image/") ||
+    /\.(jpg|jpeg|png|gif|webp|svg)($|\?)/i.test(url)
+  );
+
+  const handleDownload = () => {
+    try {
+      const link = document.createElement("a");
+      link.href = rawUrl;
+      link.download = isImage ? "attachment_image.png" : "bill_attachment.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      window.open(rawUrl, "_blank");
+    }
+  };
+
+  const handleOpenNewTab = () => {
+    if (rawUrl) {
+      window.open(rawUrl, "_blank", "noopener,noreferrer");
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-gray-100">
         {/* Header */}
-        <div className="bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-4 text-white flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-emerald-400" />
-            <span className="font-bold text-sm">Attachment File Preview</span>
+        <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 px-6 py-4 text-white flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+              <FileText className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-sm block">Attachment File Preview</span>
+              <span className="text-[11px] text-gray-400">{isImage ? "Image Document" : "PDF / File Document"}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1 shadow-sm"
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDownload}
+              className="px-3.5 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              title="Download File"
             >
-              Open in New Tab
-            </a>
+              <Download className="w-3.5 h-3.5" /> Download
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenNewTab}
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              title="Open in New Window"
+            >
+              <Eye className="w-3.5 h-3.5" /> Open in New Tab
+            </button>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors text-white cursor-pointer ml-1"
+              aria-label="Close"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Content Preview */}
-        <div className="p-6 flex-1 overflow-auto flex items-center justify-center bg-gray-100 min-h-[450px]">
-          {isImage ? (
-            <img
-              src={url}
-              alt="Attachment File"
-              className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-lg border border-gray-200"
-            />
+        {/* Content Preview Area */}
+        <div className="p-4 sm:p-6 flex-1 overflow-auto flex items-center justify-center bg-gray-100/90 min-h-[480px]">
+          {loading ? (
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs text-gray-500 font-medium">Preparing document preview...</span>
+            </div>
+          ) : isImage ? (
+            <div className="flex items-center justify-center w-full h-full max-h-[75vh]">
+              <img
+                src={rawUrl}
+                alt="Attachment File"
+                className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-lg border border-gray-200 bg-white"
+              />
+            </div>
           ) : (
-            <iframe
-              src={url}
-              title="Attachment Document"
-              className="w-full h-[75vh] rounded-xl border border-gray-300 bg-white"
-            />
+            <div className="w-full h-[75vh] bg-white rounded-2xl overflow-hidden shadow-inner border border-gray-300">
+              <object
+                data={rawUrl}
+                type="application/pdf"
+                className="w-full h-full rounded-2xl"
+              >
+                <iframe
+                  src={rawUrl}
+                  title="PDF Document"
+                  className="w-full h-full rounded-2xl border-0"
+                >
+                  <div className="p-10 text-center flex flex-col items-center justify-center gap-3 h-full">
+                    <FileText className="w-12 h-12 text-gray-400" />
+                    <p className="text-sm font-semibold text-gray-700">PDF document ready</p>
+                    <p className="text-xs text-gray-500">If preview does not render in your browser, click below to open or download:</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <button
+                        type="button"
+                        onClick={handleDownload}
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md hover:bg-emerald-700 cursor-pointer"
+                      >
+                        Download PDF File
+                      </button>
+                    </div>
+                  </div>
+                </iframe>
+              </object>
+            </div>
           )}
         </div>
       </div>
@@ -2327,36 +2517,36 @@ const VendorBillDetailModal = ({ bill, onClose }) => {
   const [previewAttachment, setPreviewAttachment] = useState(null);
   if (!bill) return null;
 
-  const handleDownloadPDF = async () => {
-    try {
-      const container = document.getElementById("vendor-bill-modal-content");
-      if (!container) return;
-      const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const pdf = new jsPDF("p", "mm", "a4");
-      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, imgWidth, imgHeight);
-      pdf.save(`Vendor_Bill_${bill.sr_no || bill.bill_number}.pdf`);
-    } catch (e) {
-      console.error("Failed to generate PDF", e);
-      alert("Error generating PDF");
-    }
-  };
-
   const billItems = bill.items && bill.items.length > 0 ? bill.items : [
     {
       description: bill.material_description || "Material",
       uom: bill.uom || "MT",
-      quantity: "-",
+      unitPrice: bill.unit_price || bill.rate || "-",
+      quantity: bill.quantity || "-",
       amount: bill.total_amount || 0
     }
   ];
 
   const attachmentUrl = getAttachmentUrl(bill);
 
+  const handleDownloadAttachmentFile = () => {
+    if (!attachmentUrl) return;
+    try {
+      const isImg = attachmentUrl.startsWith("data:image/") || /\.(jpg|jpeg|png|gif|webp|svg)($|\?)/i.test(attachmentUrl);
+      const link = document.createElement("a");
+      link.href = attachmentUrl;
+      link.download = isImg ? `Bill_Attachment_${bill.bill_number || 'file'}.png` : `Bill_Attachment_${bill.bill_number || 'file'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      setPreviewAttachment(attachmentUrl);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden max-h-[92vh] flex flex-col">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden max-h-[92vh] flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -2370,13 +2560,14 @@ const VendorBillDetailModal = ({ bill, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer"
+            aria-label="Close"
           >
             <X className="w-5 h-5 text-white" />
           </button>
         </div>
 
-        {/* Modal Content / Printable Area */}
+        {/* Modal Content */}
         <div id="vendor-bill-modal-content" className="p-8 space-y-6 overflow-y-auto flex-1 bg-gray-50">
           {/* Header Info Card */}
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
@@ -2514,49 +2705,31 @@ const VendorBillDetailModal = ({ bill, onClose }) => {
                   <button
                     type="button"
                     onClick={() => setPreviewAttachment(attachmentUrl)}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                   >
                     <Eye className="w-4 h-4" /> View File
                   </button>
-                  <a
-                    href={attachmentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3.5 py-2 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors"
+                  <button
+                    type="button"
+                    onClick={handleDownloadAttachmentFile}
+                    className="px-3.5 py-2 bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 rounded-xl text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" /> Download
-                  </a>
+                  </button>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 border-t border-gray-200 bg-white flex items-center justify-between flex-shrink-0 gap-3">
+        {/* Clean Minimal Footer: Only Close button */}
+        <div className="p-4 border-t border-gray-200 bg-white flex items-center justify-end flex-shrink-0">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 border border-gray-300 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+            className="px-7 py-2.5 border border-gray-300 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             Close
           </button>
-          <div className="flex items-center gap-3">
-            {attachmentUrl && (
-              <button
-                type="button"
-                onClick={() => setPreviewAttachment(attachmentUrl)}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
-              >
-                <Eye className="w-4 h-4" /> View File
-              </button>
-            )}
-            <button
-              onClick={handleDownloadPDF}
-              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
-            >
-              <Download className="w-4 h-4" /> Download PDF
-            </button>
-          </div>
         </div>
       </div>
 
@@ -2571,355 +2744,602 @@ const VendorBillDetailModal = ({ bill, onClose }) => {
 };
 
 
-// Vendor Detail Card
+// Professional Vendor Avatar Component with Monogram / Icon Fallback
+const VendorAvatar = ({ name, company, avatarUrl, size = "md", status = null }) => {
+  const [imgError, setImgError] = useState(false);
+
+  const displayName = (name || company || "Vendor").trim();
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase() || "V";
+
+  const sizeClasses = {
+    sm: "w-9 h-9 text-xs rounded-xl",
+    md: "w-12 h-12 text-sm rounded-full",
+    lg: "w-16 h-16 text-lg rounded-2xl",
+    xl: "w-20 h-20 text-2xl rounded-3xl",
+  }[size] || "w-12 h-12 text-sm rounded-full";
+
+  const statusBadge = {
+    sm: "w-3 h-3 -bottom-0.5 -right-0.5 border",
+    md: "w-3.5 h-3.5 -bottom-0.5 -right-0.5 border-2",
+    lg: "w-4 h-4 -bottom-1 -right-1 border-2",
+    xl: "w-5 h-5 -bottom-1 -right-1 border-2",
+  }[size] || "w-3.5 h-3.5 -bottom-0.5 -right-0.5 border-2";
+
+  const isValidUrl =
+    avatarUrl &&
+    typeof avatarUrl === "string" &&
+    avatarUrl.trim() !== "" &&
+    !avatarUrl.includes("default-avatar") &&
+    !imgError;
+
+  return (
+    <div className="relative flex-shrink-0">
+      {isValidUrl ? (
+        <img
+          src={avatarUrl}
+          alt={displayName}
+          onError={() => setImgError(true)}
+          className={`${sizeClasses} object-cover ring-2 ring-white/60 shadow-sm bg-white`}
+        />
+      ) : (
+        <div
+          className={`${sizeClasses} bg-gradient-to-br from-emerald-600 via-teal-700 to-emerald-800 text-white font-black flex items-center justify-center shadow-md select-none tracking-wider ring-2 ring-white/60`}
+          title={displayName}
+        >
+          {initials}
+        </div>
+      )}
+      {status && (
+        <div
+          className={`absolute ${statusBadge} rounded-full border-white ${
+            status === "active"
+              ? "bg-emerald-400"
+              : status === "inactive"
+              ? "bg-amber-400"
+              : "bg-rose-400"
+          }`}
+        />
+      )}
+    </div>
+  );
+};
+
+// Vendor Detail Card (Clean, Minimal, Professional, Wider max-w-5xl, Perfectly Aligned with Linked Bills/Invoices & Attachments)
 const VendorDetailCard = ({ vendor, onClose }) => {
   const [vendorBills, setVendorBills] = useState([]);
-  const [loadingBills, setLoadingBills] = useState(false);
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [loadingRecords, setLoadingRecords] = useState(true);
+  const [activeSubTab, setActiveSubTab] = useState("all"); // 'all', 'bills', 'orders', 'attachments'
   const [selectedBill, setSelectedBill] = useState(null);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [previewAttachmentCard, setPreviewAttachmentCard] = useState(null);
 
   useEffect(() => {
     if (vendor) {
-      fetchVendorBills();
+      fetchVendorRecords();
     }
   }, [vendor]);
 
-  const fetchVendorBills = async () => {
-    setLoadingBills(true);
+  const fetchVendorRecords = async () => {
+    setLoadingRecords(true);
     try {
       const token = localStorage.getItem("access_token");
-      const res = await fetch(`${API_URL}/api/vendor-bills/?limit=100`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const allBills = data.bills || [];
-        const filtered = allBills.filter(
-          b => String(b.vendor_id) === String(vendor.id) ||
-               String(b.vendor_id) === String(vendor._id) ||
-               (b.vendor_name && b.vendor_name.toLowerCase() === vendor.name.toLowerCase())
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const [billsRes, poRes] = await Promise.all([
+        fetch(`${API_URL}/api/vendor-bills/?limit=1000`, { headers }).catch(() => null),
+        fetch(`${API_URL}/api/vendors/purchase-orders/all`, { headers }).catch(() => null),
+      ]);
+
+      const vIdStr = String(vendor.id || vendor._id || "").toLowerCase();
+      const vDbIdStr = String(vendor._id || "").toLowerCase();
+      const vNameLower = (vendor.name || "").trim().toLowerCase();
+      const vCompanyLower = (vendor.company || "").trim().toLowerCase();
+
+      const isMatchingVendor = (item) => {
+        const iVendorId = String(item.vendor_id || item.vendorId || "").toLowerCase();
+        const iVendorName = String(item.vendor_name || item.vendorName || "").trim().toLowerCase();
+        const iVendorCompany = String(item.vendor_company || item.vendorCompany || "").trim().toLowerCase();
+
+        return (
+          (iVendorId && (iVendorId === vIdStr || iVendorId === vDbIdStr || iVendorId.replace('#', '') === vIdStr.replace('#', ''))) ||
+          (iVendorName && (iVendorName === vNameLower || (vCompanyLower && iVendorName === vCompanyLower))) ||
+          (iVendorCompany && (iVendorCompany === vCompanyLower || iVendorCompany === vNameLower))
         );
-        setVendorBills(filtered);
+      };
+
+      if (billsRes && billsRes.ok) {
+        const data = await billsRes.json();
+        const allBills = data.bills || (Array.isArray(data) ? data : []);
+        setVendorBills(allBills.filter(isMatchingVendor));
+      }
+
+      if (poRes && poRes.ok) {
+        const data = await poRes.json();
+        const allPOs = Array.isArray(data) ? data : (data.purchase_orders || []);
+        setPurchaseOrders(allPOs.filter(isMatchingVendor));
       }
     } catch (e) {
-      console.error("Error fetching bills for vendor:", e);
+      console.error("Error loading vendor records:", e);
     } finally {
-      setLoadingBills(false);
+      setLoadingRecords(false);
     }
   };
 
   if (!vendor) return null;
 
+  const providesList = (() => {
+    const raw = vendor.provides;
+    if (Array.isArray(raw)) return raw.filter(Boolean);
+    if (typeof raw === "string" && raw.trim()) {
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.filter(Boolean) : raw.split(",").map(s => s.trim()).filter(Boolean);
+      } catch (_) {
+        return raw.split(",").map(s => s.trim()).filter(Boolean);
+      }
+    }
+    return [];
+  })();
+
+  const fullAddress = [vendor.address, vendor.city, vendor.state, vendor.country, vendor.zip]
+    .filter(Boolean)
+    .join(", ");
+
+  const joinedDate = vendor.created_at || vendor.joined_at || vendor.createdAt;
+
+  // Helper to extract clean attachment URL
+  const extractAttachmentUrl = (item) => {
+    let url = item.attachment || item.attachment_url || item.file_url || item.document_url || item.invoice_url || item.bill_file;
+    if (!url || typeof url !== "string") return null;
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
+    const base = API_URL.replace("/api", "");
+    return url.startsWith("/") ? `${base}${url}` : `${base}/${url}`;
+  };
+
+  // Combine bills and POs for record list
+  const combinedRecords = [
+    ...vendorBills.map(b => ({
+      type: 'bill',
+      id: b.id || b._id,
+      number: b.bill_number || b.sr_no || `BILL-${b.id || ''}`,
+      secondaryNumber: b.grn_no || b.grn_number,
+      date: b.bill_date || b.created_at || b.createdAt,
+      amount: parseFloat(b.total_amount) || 0,
+      description: b.material_description || (b.items && b.items[0]?.description) || "Vendor Bill",
+      itemsCount: b.items ? b.items.length : 1,
+      attachmentUrl: extractAttachmentUrl(b),
+      rawData: b,
+    })),
+    ...purchaseOrders.map(po => ({
+      type: 'order',
+      id: po.id || po._id,
+      number: po.order_number || po.invoice_number || `PO-${po.id || ''}`,
+      secondaryNumber: po.quotation_number,
+      date: po.invoice_date || po.order_date || po.created_at || po.createdAt,
+      amount: parseFloat(po.total_amount || po.totalAmount || po.grand_total || po.amount) || 0,
+      description: (po.items && po.items[0]?.name) || po.description || "Purchase Order",
+      itemsCount: po.items ? po.items.length : 1,
+      attachmentUrl: extractAttachmentUrl(po),
+      rawData: po,
+    }))
+  ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+  const filteredRecords = combinedRecords.filter(rec => {
+    if (activeSubTab === "bills") return rec.type === "bill";
+    if (activeSubTab === "orders") return rec.type === "order";
+    if (activeSubTab === "attachments") return Boolean(rec.attachmentUrl);
+    return true;
+  });
+
+  const attachmentsCount = combinedRecords.filter(r => Boolean(r.attachmentUrl)).length;
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
-        {/* Header with Gradient */}
-        <div className="bg-gradient-to-r from-green-600 via-green-700 to-emerald-600 px-8 py-6 relative">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[92vh] overflow-hidden flex flex-col my-auto border border-gray-100">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 px-8 py-5 text-white flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-5">
+            <VendorAvatar
+              name={vendor.name}
+              company={vendor.company}
+              avatarUrl={vendor.avatar_url}
+              size="lg"
+              status={vendor.status}
+            />
+            <div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h2 className="text-2xl font-bold text-white tracking-tight">{vendor.name}</h2>
+                <span className="bg-white/20 text-white font-mono text-xs font-bold px-2.5 py-0.5 rounded-lg backdrop-blur-xs">
+                  #{vendor.id || vendor._id}
+                </span>
+              </div>
+              {vendor.company && (
+                <p className="text-xs text-emerald-100 font-medium mt-1">{vendor.company}</p>
+              )}
+              <div className="flex items-center gap-2 mt-2">
+                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white capitalize">
+                  {vendor.vendor_type || "Regular"}
+                </span>
+                <span
+                  className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-bold capitalize ${
+                    vendor.status === "active"
+                      ? "bg-emerald-500/90 text-white"
+                      : "bg-amber-500/90 text-white"
+                  }`}
+                >
+                  {vendor.status || "Active"}
+                </span>
+              </div>
+            </div>
+          </div>
           <button
-            className="absolute top-4 right-4 text-white hover:text-red-300 text-2xl transition-colors z-10 w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center backdrop-blur-sm"
             onClick={onClose}
+            className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer"
             aria-label="Close"
           >
-            ✕
+            <X className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <img
-                src={vendor.avatar_url || "/default-avatar.png"}
-                alt={vendor.name}
-                className="w-24 h-24 rounded-2xl object-cover ring-4 ring-white ring-opacity-30"
-              />
-              <div className={`absolute -bottom-2 -right-2 w-6 h-6 rounded-full border-4 border-white ${vendor.status === 'active' ? 'bg-green-400' :
-                vendor.status === 'inactive' ? 'bg-yellow-400' : 'bg-red-400'
-                }`}></div>
-            </div>
-            <div className="text-white">
-              <h2 className="text-3xl font-bold mb-2">{vendor.name}</h2>
-              <div className="flex items-center gap-4 text-green-100">
-                <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm">ID: {vendor.id}</span>
-                <span className="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm capitalize">{vendor.vendor_type}</span>
-                <span className={`px-3 py-1 rounded-full text-sm capitalize ${vendor.status === 'active' ? 'bg-green-400 text-green-900' :
-                  vendor.status === 'inactive' ? 'bg-yellow-400 text-yellow-900' :
-                    'bg-red-400 text-red-900'
-                  }`}>{vendor.status}</span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Content */}
-        <div className="max-h-[calc(90vh-200px)] overflow-y-auto p-8">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200">
-              <div className="text-3xl font-bold text-blue-600 mb-1">₹{vendor.total_spend?.toFixed(2) || "0.00"}</div>
-              <div className="text-blue-600 font-medium">Total Spend</div>
-            </div>
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border border-purple-200">
-              <div className="text-3xl font-bold text-purple-600 mb-1">{vendor.orders_count || 0}</div>
-              <div className="text-purple-600 font-medium">Orders Count</div>
-            </div>
-          </div>
+        {/* Content Body */}
+        <div className="p-6 sm:p-8 space-y-6 overflow-y-auto flex-1 bg-gray-50/60">
+          {/* Top Row Grid: Company Details & Contact Details */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Company & Professional Information */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                    Company &amp; Business Details
+                  </h3>
+                </div>
 
-          {/* Information Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Contact Information */}
-            <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-                  <Mail className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800">Contact Information</h3>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Mail className="w-4 h-4 text-gray-400 mt-1" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-xs">
                   <div>
-                    <div className="text-sm text-gray-500">Email</div>
-                    <div className="font-medium text-gray-900">{vendor.email || "N/A"}</div>
+                    <span className="text-gray-400 font-medium block mb-0.5">Company Name</span>
+                    <span className="text-gray-900 font-semibold text-sm leading-snug">{vendor.company || "N/A"}</span>
                   </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Phone className="w-4 h-4 text-gray-400 mt-1" />
                   <div>
-                    <div className="text-sm text-gray-500">Phone</div>
-                    <div className="font-medium text-gray-900">{vendor.phone || "N/A"}</div>
+                    <span className="text-gray-400 font-medium block mb-0.5">Contact Person</span>
+                    <span className="text-gray-900 font-semibold text-sm leading-snug">{vendor.contact_person || vendor.name || "N/A"}</span>
                   </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 text-gray-400 mt-1" />
                   <div>
-                    <div className="text-sm text-gray-500">Address</div>
-                    <div className="font-medium text-gray-900">{vendor.address || "N/A"}</div>
-                    {(vendor.city || vendor.state || vendor.country) && (
-                      <div className="text-sm text-gray-600">
-                        {[vendor.city, vendor.state, vendor.country].filter(Boolean).join(", ")}
-                      </div>
-                    )}
+                    <span className="text-gray-400 font-medium block mb-0.5">Designation</span>
+                    <span className="text-gray-800 font-medium">{vendor.contact_designation || "N/A"}</span>
                   </div>
+                  <div>
+                    <span className="text-gray-400 font-medium block mb-0.5">GSTIN / Registration No.</span>
+                    <span className="inline-block px-2.5 py-1 bg-gray-100 text-gray-800 font-mono font-bold rounded-lg border border-gray-200">
+                      {vendor.registration_number || vendor.gstNumber || "N/A"}
+                    </span>
+                  </div>
+                  {vendor.tax_id && (
+                    <div>
+                      <span className="text-gray-400 font-medium block mb-0.5">Tax ID / PAN</span>
+                      <span className="text-gray-800 font-mono font-semibold">{vendor.tax_id}</span>
+                    </div>
+                  )}
+                  {joinedDate && (
+                    <div>
+                      <span className="text-gray-400 font-medium block mb-0.5">Registration / Joined Date</span>
+                      <span className="text-gray-800 font-medium">
+                        {new Date(joinedDate).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Professional Information */}
-            <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <User2 className="w-5 h-5 text-white" />
+            {/* Contact & Location Details */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-xs flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                    Contact &amp; Location Details
+                  </h3>
                 </div>
-                <h3 className="text-xl font-bold text-gray-800">Professional Details</h3>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <div className="text-sm text-gray-500">Company</div>
-                  <div className="font-medium text-gray-900">{vendor.company || "N/A"}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Contact Person</div>
-                  <div className="font-medium text-gray-900">{vendor.contact_person || "N/A"}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Designation</div>
-                  <div className="font-medium text-gray-900">{vendor.contact_designation || "N/A"}</div>
-                </div>
-                {vendor.tags && vendor.tags.length > 0 && (
-                  <div>
-                    <div className="text-sm text-gray-500 mb-2">Tags</div>
-                    <div className="flex flex-wrap gap-2">
-                      {vendor.tags.map((tag, index) => (
-                        <span key={index} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                          {tag}
-                        </span>
-                      ))}
+
+                <div className="space-y-4 text-xs">
+                  <div className="flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Mail className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-gray-400 font-medium block text-[11px]">Email Address</span>
+                      {vendor.email ? (
+                        <a
+                          href={`mailto:${vendor.email}`}
+                          className="text-emerald-700 hover:text-emerald-900 font-semibold text-sm break-all hover:underline"
+                        >
+                          {vendor.email}
+                        </a>
+                      ) : (
+                        <span className="text-gray-500 font-medium">N/A</span>
+                      )}
                     </div>
                   </div>
-                )}
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Phone className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-gray-400 font-medium block text-[11px]">Phone Number</span>
+                      {vendor.phone ? (
+                        <a
+                          href={`tel:${vendor.phone}`}
+                          className="text-gray-900 font-semibold text-sm hover:text-emerald-700"
+                        >
+                          {vendor.phone}
+                        </a>
+                      ) : (
+                        <span className="text-gray-500 font-medium">N/A</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 pt-2 border-t border-gray-100">
+                    <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <MapPin className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-gray-400 font-medium block text-[11px]">Full Address</span>
+                      <span className="text-gray-800 font-medium text-xs leading-relaxed block">
+                        {fullAddress || "N/A"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Vendor Bills Section */}
-          <div className="mt-8 bg-gradient-to-br from-emerald-50/50 to-teal-50/30 rounded-2xl p-6 border border-emerald-200">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-xl flex items-center justify-center">
-                  <FileText className="w-5 h-5 text-white" />
+          {/* Full Width Row: Provides Section (Pill Badges) */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-xs space-y-3">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center font-bold">
+                  <Star className="w-4 h-4" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-800">Vendor Bills & Invoices</h3>
-                  <p className="text-xs text-gray-500">Complete itemized bills recorded for {vendor.name}</p>
-                </div>
+                <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                  Provides (Products, Materials &amp; Services)
+                </h3>
               </div>
-              <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
-                {vendorBills.length} Bill{vendorBills.length === 1 ? "" : "s"}
-              </span>
+              {providesList.length > 0 && (
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  {providesList.length} item{providesList.length > 1 ? "s" : ""}
+                </span>
+              )}
             </div>
 
-            {loadingBills ? (
-              <div className="py-8 text-center text-sm text-gray-500 flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-                Loading vendor bills...
-              </div>
-            ) : vendorBills.length === 0 ? (
-              <div className="py-8 text-center text-sm text-gray-400 bg-white/60 rounded-xl border border-gray-200">
-                No bills created for this vendor yet.
+            {providesList.length > 0 ? (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {providesList.map((item, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs"
+                  >
+                    {item}
+                  </span>
+                ))}
               </div>
             ) : (
-              <div className="space-y-4">
-                {vendorBills.map((bill, bIdx) => (
-                  <div key={bill.id || bill._id || bIdx} className="bg-white rounded-xl border border-emerald-100 shadow-sm p-4 hover:shadow-md transition-shadow">
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs font-bold text-blue-800 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">
-                          {bill.grn_no || bill.grn_number || `GRN-${String(bill.sr_no || '001').padStart(3, '0')}`}
-                        </span>
-                        <span className="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-                          {bill.bill_number || bill.sr_no}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(bill.created_at || bill.bill_date || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                        </span>
+              <p className="text-xs text-gray-400 italic py-1">No provided materials or services listed.</p>
+            )}
+
+            {/* Tags if available */}
+            {vendor.tags && vendor.tags.length > 0 && (
+              <div className="pt-3 border-t border-gray-100 flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-gray-500 uppercase">Tags:</span>
+                {(Array.isArray(vendor.tags) ? vendor.tags : String(vendor.tags).split(",")).map(
+                  (tag, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200"
+                    >
+                      {tag.trim()}
+                    </span>
+                  )
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Related Invoices, Bills & Attachments Section */}
+          <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                    Related Invoices, Bills &amp; Attachments
+                  </h3>
+                  <p className="text-[11px] text-gray-500">All linked purchase orders, bills and uploaded files for this vendor</p>
+                </div>
+              </div>
+
+              {/* Subtabs Filter */}
+              <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl text-xs font-semibold">
+                <button
+                  onClick={() => setActiveSubTab("all")}
+                  className={`px-3 py-1 rounded-lg transition-all ${
+                    activeSubTab === "all" ? "bg-white text-gray-900 shadow-xs" : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  All ({combinedRecords.length})
+                </button>
+                <button
+                  onClick={() => setActiveSubTab("bills")}
+                  className={`px-3 py-1 rounded-lg transition-all ${
+                    activeSubTab === "bills" ? "bg-white text-emerald-700 shadow-xs" : "text-gray-600 hover:text-emerald-700"
+                  }`}
+                >
+                  Bills ({vendorBills.length})
+                </button>
+                <button
+                  onClick={() => setActiveSubTab("orders")}
+                  className={`px-3 py-1 rounded-lg transition-all ${
+                    activeSubTab === "orders" ? "bg-white text-blue-700 shadow-xs" : "text-gray-600 hover:text-blue-700"
+                  }`}
+                >
+                  POs ({purchaseOrders.length})
+                </button>
+                <button
+                  onClick={() => setActiveSubTab("attachments")}
+                  className={`px-3 py-1 rounded-lg transition-all ${
+                    activeSubTab === "attachments" ? "bg-white text-purple-700 shadow-xs" : "text-gray-600 hover:text-purple-700"
+                  }`}
+                >
+                  Files ({attachmentsCount})
+                </button>
+              </div>
+            </div>
+
+            {loadingRecords ? (
+              <div className="py-10 text-center flex flex-col items-center justify-center gap-2">
+                <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs text-gray-500 font-medium">Loading linked bills and invoices...</span>
+              </div>
+            ) : filteredRecords.length === 0 ? (
+              <div className="py-10 text-center rounded-xl bg-gray-50/70 border border-gray-200/60 p-6">
+                <FileText className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-gray-600">No records found</p>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {activeSubTab === "attachments"
+                    ? "No bill attachments uploaded for this vendor yet."
+                    : "No linked bills or purchase orders recorded for this vendor."}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredRecords.map((record, idx) => (
+                  <div
+                    key={record.id || idx}
+                    className="p-4 rounded-xl border border-gray-200/80 bg-white hover:border-emerald-300 hover:shadow-sm transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider flex-shrink-0 ${
+                          record.type === "bill"
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                            : "bg-blue-50 text-blue-800 border border-blue-200"
+                        }`}
+                      >
+                        {record.type === "bill" ? "Bill" : "Purchase Order"}
+                      </span>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-xs font-bold text-gray-900">
+                            {record.number}
+                          </span>
+                          {record.secondaryNumber && (
+                            <span className="font-mono text-[11px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                              {record.secondaryNumber}
+                            </span>
+                          )}
+                          <span className="text-[11px] text-gray-400">
+                            {record.date ? new Date(record.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : ""}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 truncate mt-0.5 font-medium">
+                          {record.description} ({record.itemsCount} item{record.itemsCount > 1 ? "s" : ""})
+                        </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-emerald-700">₹{bill.total_amount ? bill.total_amount.toFixed(2) : "0.00"}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                      <span className="font-bold text-sm text-gray-900">
+                        ₹{record.amount.toFixed(2)}
+                      </span>
+
+                      <div className="flex items-center gap-2">
+                        {record.attachmentUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewAttachmentCard(record.attachmentUrl)}
+                            className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                            title="Preview Attachment File"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> File
+                          </button>
+                        )}
+
                         <button
-                          onClick={() => setSelectedBill(bill)}
-                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                          type="button"
+                          onClick={() => {
+                            if (record.type === "bill") {
+                              setSelectedBill(record.rawData);
+                            } else {
+                              setSelectedInvoice(record.rawData);
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                          title="View Complete Itemized Record"
                         >
-                          <Eye className="w-3.5 h-3.5" /> Complete Details
+                          <FileText className="w-3.5 h-3.5" /> View Details
                         </button>
                       </div>
                     </div>
-
-                    {/* Itemized list for this bill */}
-                    <div className="mt-3 overflow-x-auto">
-                      <table className="w-full text-xs">
-                        <thead>
-                          <tr className="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
-                            <th className="py-2 px-3 text-left">#</th>
-                            <th className="py-2 px-3 text-left">Material Description</th>
-                            <th className="py-2 px-3 text-center">UOM</th>
-                            <th className="py-2 px-3 text-right">Quantity</th>
-                            <th className="py-2 px-3 text-right">Amount (₹)</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {bill.items && bill.items.length > 0 ? (
-                            bill.items.map((item, iIdx) => (
-                              <tr key={iIdx} className="hover:bg-gray-50/50">
-                                <td className="py-2 px-3 font-medium text-gray-500">{iIdx + 1}</td>
-                                <td className="py-2 px-3 font-medium text-gray-800">{item.description || item.name || "-"}</td>
-                                <td className="py-2 px-3 text-center">
-                                  <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-[11px] font-medium">
-                                    {item.uom || bill.uom || "-"}
-                                  </span>
-                                </td>
-                                <td className="py-2 px-3 text-right font-medium text-gray-800">{item.quantity ?? "-"}</td>
-                                <td className="py-2 px-3 text-right font-semibold text-gray-900">₹{(item.amount || item.unit_price || 0).toFixed(2)}</td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td className="py-2 px-3 font-medium text-gray-500">1</td>
-                              <td className="py-2 px-3 font-medium text-gray-800">{bill.material_description || "-"}</td>
-                              <td className="py-2 px-3 text-center">
-                                <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-[11px] font-medium">
-                                  {bill.uom || "-"}
-                                </span>
-                              </td>
-                              <td className="py-2 px-3 text-right font-medium text-gray-800">-</td>
-                              <td className="py-2 px-3 text-right font-semibold text-gray-900">₹{(bill.total_amount || 0).toFixed(2)}</td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {bill.notes && (
-                      <p className="mt-2 text-xs text-gray-500 italic bg-gray-50 p-2 rounded-lg border border-gray-100">
-                        Note: {bill.notes}
-                      </p>
-                    )}
-
-                    {(() => {
-                      const attUrl = getAttachmentUrl(bill);
-                      if (!attUrl) return null;
-                      return (
-                        <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between text-xs">
-                          <span className="font-semibold text-gray-700 flex items-center gap-1">
-                            <FileText className="w-3.5 h-3.5 text-emerald-600" /> Attachment File Available
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setPreviewAttachmentCard(attUrl)}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-bold text-xs flex items-center gap-1 transition-colors shadow-sm"
-                            >
-                              <Eye className="w-3 h-3" /> View File
-                            </button>
-                            <a
-                              href={attUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md font-medium text-xs transition-colors"
-                            >
-                              Open
-                            </a>
-                          </div>
-                        </div>
-                      );
-                    })()}
                   </div>
                 ))}
               </div>
             )}
           </div>
-
-          {/* Additional Info */}
-          <div className="mt-8 bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-800">Additional Information</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500">Member Since</div>
-                <div className="font-medium text-gray-900">
-                  {new Date(vendor.created_at || vendor.joined_at || vendor.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </div>
-              </div>
-              {vendor.preferences && Object.keys(vendor.preferences).length > 0 && (
-                <div>
-                  <div className="text-sm text-gray-500">Preferences</div>
-                  <div className="font-medium text-gray-900 text-sm">
-                    {JSON.stringify(vendor.preferences, null, 2)}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
-        {selectedBill && (
-          <VendorBillDetailModal
-            bill={selectedBill}
-            onClose={() => setSelectedBill(null)}
-          />
-        )}
-
-        {previewAttachmentCard && (
-          <AttachmentPreviewModal
-            url={previewAttachmentCard}
-            onClose={() => setPreviewAttachmentCard(null)}
-          />
-        )}
+        {/* Footer */}
+        <div className="px-8 py-4 bg-white border-t border-gray-200 flex items-center justify-end flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="px-7 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-100 text-sm font-semibold transition-colors cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
       </div>
+
+      {/* Linked Modals */}
+      {selectedBill && (
+        <VendorBillDetailModal
+          bill={selectedBill}
+          onClose={() => setSelectedBill(null)}
+        />
+      )}
+
+      {selectedInvoice && (
+        <InvoiceModal
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+        />
+      )}
+
+      {previewAttachmentCard && (
+        <AttachmentPreviewModal
+          url={previewAttachmentCard}
+          onClose={() => setPreviewAttachmentCard(null)}
+        />
+      )}
     </div>
   );
 };
@@ -3129,7 +3549,7 @@ const AddBillModal = ({ open, onClose, vendors = [], vendorBills = [], onBillAdd
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden my-6 transform transition-all max-h-[85vh] flex flex-col">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl overflow-hidden my-6 transform transition-all max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 text-white flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -3486,6 +3906,7 @@ const VendorProfile = () => {
   const [addBillModal, setAddBillModal] = useState(false);
   const [currentInvoice, setCurrentInvoice] = useState(null);
   const [selectedBillModal, setSelectedBillModal] = useState(null);
+  const [previewAttachmentModal, setPreviewAttachmentModal] = useState(null);
   const [invoiceLoading, setInvoiceLoading] = useState(null); // vendor id being loaded
   const [activeTab, setActiveTab] = useState("vendors"); // "vendors" or "purchase-orders"
   const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -3836,6 +4257,8 @@ const VendorProfile = () => {
   const filterVendorList = (list, term, bills = vendorBills, pos = purchaseOrders) => {
     if (!term) return list;
     const cleanTerm = term.toLowerCase().trim();
+    const searchTokens = cleanTerm.split(/\s+/).filter(Boolean);
+
     return list.filter(vendor => {
       const vId = String(vendor.id || "").toLowerCase();
       const vMongoId = String(vendor._id || "").toLowerCase();
@@ -3844,11 +4267,46 @@ const VendorProfile = () => {
       const vCompany = (vendor.company || "").toLowerCase();
       const vType = (vendor.vendor_type || "").toLowerCase();
       const vPhone = (vendor.phone || "").toLowerCase();
-      const vGst = (vendor.registration_number || vendor.gstNumber || "").toLowerCase();
+      const vGst = (vendor.registration_number || vendor.gstNumber || vendor.tax_id || "").toLowerCase();
       const vContact = (vendor.contact_person || "").toLowerCase();
+      const vCity = (vendor.city || "").toLowerCase();
+      const vState = (vendor.state || "").toLowerCase();
+      const vAddress = (vendor.address || "").toLowerCase();
+      const vCategory = (vendor.category || "").toLowerCase();
 
-      // Direct vendor match (ID, Name, Email, Company, Phone, GST, etc.)
+      // Deeply extract all provides terms (handles JSON arrays, arrays of objects, strings, csv)
+      let providesArray = [];
+      const rawProvides = vendor.provides;
+      if (Array.isArray(rawProvides)) {
+        providesArray = rawProvides.map(p => (p && typeof p === "object" ? (p.label || p.value || p.name || "") : String(p)));
+      } else if (typeof rawProvides === "string" && rawProvides.trim()) {
+        try {
+          const parsed = JSON.parse(rawProvides);
+          if (Array.isArray(parsed)) {
+            providesArray = parsed.map(p => (p && typeof p === "object" ? (p.label || p.value || p.name || "") : String(p)));
+          } else {
+            providesArray = rawProvides.split(/[,;\n]/).map(s => s.trim());
+          }
+        } catch (_) {
+          providesArray = rawProvides.split(/[,;\n]/).map(s => s.trim());
+        }
+      }
+      const vProvidesText = providesArray.join(" ").toLowerCase();
+
+      // Tags text
+      const vTagsText = Array.isArray(vendor.tags)
+        ? vendor.tags.join(" ").toLowerCase()
+        : String(vendor.tags || "").toLowerCase();
+
+      // Check if provides or tags match full search term or search tokens
+      const providesMatch =
+        vProvidesText.includes(cleanTerm) ||
+        providesArray.some(p => p.toLowerCase().includes(cleanTerm)) ||
+        searchTokens.every(tok => vProvidesText.includes(tok));
+
+      // Direct vendor match (ID, Name, Email, Company, Phone, GST, Provides, Tags, City, Address)
       const directMatch =
+        providesMatch ||
         vId.includes(cleanTerm) ||
         `#${vId}`.includes(cleanTerm) ||
         vMongoId.includes(cleanTerm) ||
@@ -3856,13 +4314,24 @@ const VendorProfile = () => {
         vEmail.includes(cleanTerm) ||
         vCompany.includes(cleanTerm) ||
         vType.includes(cleanTerm) ||
+        vCategory.includes(cleanTerm) ||
         vPhone.includes(cleanTerm) ||
         vGst.includes(cleanTerm) ||
-        vContact.includes(cleanTerm);
+        vContact.includes(cleanTerm) ||
+        vTagsText.includes(cleanTerm) ||
+        vCity.includes(cleanTerm) ||
+        vState.includes(cleanTerm) ||
+        vAddress.includes(cleanTerm) ||
+        searchTokens.every(tok => (
+          vName.includes(tok) ||
+          vCompany.includes(tok) ||
+          vProvidesText.includes(tok) ||
+          vId.includes(tok)
+        ));
 
       if (directMatch) return true;
 
-      // Match vendor by their Bill Number (bill_number or sr_no)
+      // Match vendor by their Bill Number or bill Material Descriptions
       const hasMatchingBill = (bills || []).some(b => {
         const belongsToVendor =
           String(b.vendor_id || "").toLowerCase() === vId ||
@@ -3872,12 +4341,18 @@ const VendorProfile = () => {
 
         const bNo = String(b.bill_number || "").toLowerCase();
         const bSr = String(b.sr_no || "").toLowerCase();
-        return bNo.includes(cleanTerm) || bSr.includes(cleanTerm);
+        const bGrn = String(b.grn_no || b.grn_number || "").toLowerCase();
+        const bMat = String(b.material_description || "").toLowerCase();
+        const bItemsMatch = b.items && Array.isArray(b.items) && b.items.some(it =>
+          (it.name || it.description || "").toLowerCase().includes(cleanTerm)
+        );
+
+        return bNo.includes(cleanTerm) || bSr.includes(cleanTerm) || bGrn.includes(cleanTerm) || bMat.includes(cleanTerm) || bItemsMatch;
       });
 
       if (hasMatchingBill) return true;
 
-      // Match vendor by their PO Number (order_number or invoice_number)
+      // Match vendor by their PO Number or PO Item Descriptions
       const hasMatchingPO = (pos || []).some(po => {
         const belongsToVendor =
           String(po.vendor_id || "").toLowerCase() === vId ||
@@ -3887,7 +4362,11 @@ const VendorProfile = () => {
 
         const poNo = String(po.order_number || "").toLowerCase();
         const poInv = String(po.invoice_number || "").toLowerCase();
-        return poNo.includes(cleanTerm) || poInv.includes(cleanTerm);
+        const poItemsMatch = po.items && Array.isArray(po.items) && po.items.some(it =>
+          (it.name || it.description || "").toLowerCase().includes(cleanTerm)
+        );
+
+        return poNo.includes(cleanTerm) || poInv.includes(cleanTerm) || poItemsMatch;
       });
 
       return hasMatchingPO;
@@ -4141,94 +4620,94 @@ const VendorProfile = () => {
       </div>
 
       {/* Search and Actions Section */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+      <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 sm:p-5 mb-6">
         {/* Tabs */}
-        <div className="flex items-center gap-4 mb-6 border-b border-gray-200">
+        <div className="flex items-center gap-2 mb-4 border-b border-gray-200">
           <button
             onClick={() => setActiveTab("vendors")}
-            className={`px-6 py-3 font-semibold transition-all ${
+            className={`px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "vendors"
-                ? "text-green-600 border-b-2 border-green-600"
-                : "text-gray-500 hover:text-gray-700"
+                ? "text-emerald-700 border-b-2 border-emerald-600 font-bold"
+                : "text-gray-500 hover:text-gray-800"
             }`}
           >
             Vendors
           </button>
           <button
             onClick={() => setActiveTab("purchase-orders")}
-            className={`px-6 py-3 font-semibold transition-all ${
+            className={`px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "purchase-orders"
-                ? "text-purple-600 border-b-2 border-purple-600"
-                : "text-gray-500 hover:text-gray-700"
+                ? "text-purple-700 border-b-2 border-purple-600 font-bold"
+                : "text-gray-500 hover:text-gray-800"
             }`}
           >
             Purchase Requests
           </button>
           <button
             onClick={() => setActiveTab("bills")}
-            className={`px-6 py-3 font-semibold transition-all ${
+            className={`px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "bills"
-                ? "text-emerald-600 border-b-2 border-emerald-600"
-                : "text-gray-500 hover:text-gray-700"
+                ? "text-emerald-700 border-b-2 border-emerald-600 font-bold"
+                : "text-gray-500 hover:text-gray-800"
             }`}
           >
             Vendor Bills
           </button>
         </div>
 
-        <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
-          <div className="relative flex-1 max-w-lg">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <div className="flex flex-col lg:flex-row justify-between items-center gap-3">
+          <div className="relative flex-1 w-full max-w-md">
+            <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search by vendor name, vendor ID, bill number, PO number, company, email..."
+              placeholder="Search by vendor, provides / materials, ID, bill no., PO no...."
               value={searchTerm}
               onChange={handleSearch}
-              className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent bg-gray-50 hover:bg-white transition-colors"
+              className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-gray-50 hover:bg-white transition-colors"
             />
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap w-full lg:w-auto justify-start lg:justify-end">
             <button
               onClick={() => setPurchaseOrderModal(true)}
-              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs font-semibold shadow-md transform hover:scale-[1.02] transition-all cursor-pointer"
             >
-              <ShoppingCart className="w-5 h-5" /> Purchase Order
+              <ShoppingCart className="w-4 h-4" /> Purchase Request
             </button>
             <button
               onClick={() => setAddBillModal(true)}
-              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs font-semibold shadow-md transform hover:scale-[1.02] transition-all cursor-pointer"
             >
-              <FileText className="w-5 h-5" /> Purchase Bill
+              <FileText className="w-4 h-4" /> Purchase Bill
             </button>
             <button
               onClick={() => setOrderModal(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs font-semibold shadow-md transform hover:scale-[1.02] transition-all cursor-pointer"
             >
-              <ShoppingCart className="w-5 h-5" /> Place Request
+              <ShoppingCart className="w-4 h-4" /> Purchase Order
             </button>
             <button
               onClick={() => {
                 setEditingVendor(null);
                 setAddModal(true);
               }}
-              className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-8 py-4 rounded-xl flex items-center gap-3 font-semibold shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white px-4 py-2.5 rounded-xl flex items-center gap-2 text-xs font-semibold shadow-md transform hover:scale-[1.02] transition-all cursor-pointer"
             >
-              <Plus className="w-5 h-5" /> Add New Vendor
+              <Plus className="w-4 h-4" /> Add New Vendor
             </button>
           </div>
         </div>
 
         {/* Quick Stats */}
-        <div className="mt-6 pt-6 border-t border-gray-100">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Showing {filteredVendors.length} of {totalVendors} vendors</span>
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-2 text-green-600">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+        <div className="mt-3.5 pt-3.5 border-t border-gray-100">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-500 font-medium">Showing {filteredVendors.length} of {totalVendors} vendors</span>
+            <div className="flex items-center gap-3.5 font-semibold">
+              <span className="flex items-center gap-1.5 text-emerald-700">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
                 Active: {activeVendors}
               </span>
-              <span className="flex items-center gap-2 text-purple-600">
-                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+              <span className="flex items-center gap-1.5 text-purple-700">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                 Preferred: {preferredVendors}
               </span>
             </div>
@@ -4241,37 +4720,38 @@ const VendorProfile = () => {
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+            <thead className="bg-gray-50/90 text-gray-600 border-b border-gray-200 text-xs">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">ID</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Vendor</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Type</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Status</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Total Spend</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Orders</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Joined</th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Actions</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">ID</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Vendor</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Provides</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Type</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Status</th>
+                <th className="px-4 py-3 text-right font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Total Spend</th>
+                <th className="px-4 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Orders</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Joined</th>
+                <th className="px-4 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-                      <p className="text-gray-500 font-medium">Loading vendors...</p>
+                  <td colSpan={9} className="px-4 py-10 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                      <p className="text-gray-500 font-medium text-xs">Loading vendors...</p>
                     </div>
                   </td>
                 </tr>
               ) : filteredVendors.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                        <User2 className="w-8 h-8 text-gray-400" />
+                  <td colSpan={9} className="px-4 py-10 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <User2 className="w-6 h-6 text-gray-400" />
                       </div>
-                      <p className="text-gray-500 font-medium">No vendors found</p>
-                      <p className="text-gray-400 text-sm">Try adjusting your search criteria</p>
+                      <p className="text-gray-600 font-semibold text-sm">No vendors found</p>
+                      <p className="text-gray-400 text-xs">Try adjusting your search query</p>
                     </div>
                   </td>
                 </tr>
@@ -4279,99 +4759,170 @@ const VendorProfile = () => {
                 filteredVendors
                   .slice((vendorPage - 1) * PAGE_SIZE, vendorPage * PAGE_SIZE)
                   .map((vendor) => (
-                  <tr key={vendor.id} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-green-50 transition-all duration-200">
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  <tr key={vendor.id} className="hover:bg-emerald-50/30 transition-colors">
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 border border-gray-200">
                         #{vendor.id}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <img
-                            src={vendor.avatar_url || "/default-avatar.png"}
-                            alt={vendor.name}
-                            className="w-12 h-12 rounded-full object-cover ring-2 ring-gray-200"
-                          />
-                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${vendor.status === 'active' ? 'bg-green-500' :
-                            vendor.status === 'inactive' ? 'bg-yellow-500' : 'bg-red-500'
-                            }`}></div>
-                        </div>
-                        <div>
-                          <div className="font-semibold text-gray-900">{vendor.name}</div>
-                          <div className="text-sm text-gray-500">{vendor.email}</div>
-                          {vendor.company && <div className="text-xs text-gray-400">{vendor.company}</div>}
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <div className="flex items-center gap-2.5">
+                        <VendorAvatar
+                          name={vendor.name}
+                          company={vendor.company}
+                          avatarUrl={vendor.avatar_url}
+                          size="sm"
+                          status={vendor.status}
+                        />
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span
+                            className="font-semibold text-gray-900 text-xs truncate max-w-[170px] hover:text-emerald-700 cursor-pointer"
+                            onClick={() => setDetailViewVendor(vendor)}
+                            title={vendor.name}
+                          >
+                            {vendor.name}
+                          </span>
+                          {vendor.company && (
+                            <span className="text-[11px] text-gray-400 font-normal truncate max-w-[130px]" title={vendor.company}>
+                              &bull; {vendor.company}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium capitalize ${vendor.vendor_type === 'preferred' ? 'bg-purple-100 text-purple-800' :
-                        vendor.vendor_type === 'strategic' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      {(() => {
+                        const raw = vendor.provides;
+                        let list = [];
+                        if (Array.isArray(raw)) {
+                          list = raw.filter(Boolean);
+                        } else if (typeof raw === "string" && raw.trim()) {
+                          try {
+                            const parsed = JSON.parse(raw);
+                            list = Array.isArray(parsed) ? parsed.filter(Boolean) : raw.split(",").map(s => s.trim()).filter(Boolean);
+                          } catch (_) {
+                            list = raw.split(",").map(s => s.trim()).filter(Boolean);
+                          }
+                        }
+                        if (list.length === 0) {
+                          return <span className="text-[11px] text-gray-400 italic">None</span>;
+                        }
+                        const firstTwo = list.slice(0, 2);
+                        const remainder = list.length - firstTwo.length;
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            {firstTwo.map((item, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs whitespace-nowrap"
+                              >
+                                {item}
+                              </span>
+                            ))}
+                            {remainder > 0 && (
+                              <div className="relative inline-block group/tooltip">
+                                <button
+                                  type="button"
+                                  onClick={() => setDetailViewVendor(vendor)}
+                                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 hover:bg-emerald-100 text-gray-700 hover:text-emerald-800 border border-gray-300 hover:border-emerald-300 transition-colors cursor-pointer shadow-2xs"
+                                  title="Click to view all provides on vendor card"
+                                >
+                                  +{remainder} more
+                                </button>
+                                
+                                {/* Hover Popover positioned downwards to avoid header/overflow clipping */}
+                                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 hidden group-hover/tooltip:flex flex-col z-[100] p-3 bg-gray-900/95 text-white text-xs rounded-xl shadow-2xl min-w-[220px] max-w-[300px] pointer-events-none backdrop-blur-md border border-gray-700">
+                                  <span className="font-bold text-[10px] text-emerald-400 uppercase tracking-wider mb-1.5 pb-1 border-b border-gray-700/80">
+                                    All Provided Items ({list.length}):
+                                  </span>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {list.map((it, iIdx) => (
+                                      <span key={iIdx} className="bg-emerald-600 text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-full shadow-xs">
+                                        {it}
+                                      </span>
+                                    ))}
+                                  </div>
+                                  <div className="w-2.5 h-2.5 bg-gray-900 border-l border-t border-gray-700 rotate-45 absolute -top-1.25 left-1/2 -translate-x-1/2" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold capitalize ${
+                        vendor.vendor_type === 'preferred' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
+                        vendor.vendor_type === 'strategic' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                          'bg-gray-100 text-gray-700 border border-gray-200'
                         }`}>
-                        {vendor.vendor_type}
+                        {vendor.vendor_type || 'Regular'}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium capitalize ${vendor.status === 'active' ? 'bg-green-100 text-green-800' :
-                        vendor.status === 'inactive' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold capitalize ${
+                        vendor.status === 'active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        vendor.status === 'inactive' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                          'bg-rose-50 text-rose-700 border border-rose-200'
                         }`}>
-                        {vendor.status}
+                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                          vendor.status === 'active' ? 'bg-emerald-500' :
+                          vendor.status === 'inactive' ? 'bg-amber-500' : 'bg-rose-500'
+                        }`} />
+                        {vendor.status || 'Active'}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-gray-900">₹{vendor.total_spend?.toFixed(2) || "0.00"}</div>
+                    <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                      <span className="font-semibold text-gray-900 text-xs">₹{(vendor.total_spend || 0).toFixed(2)}</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-900">{vendor.orders_count || 0}</span>
-                        <span className="text-xs text-gray-500">orders</span>
-                      </div>
+                    <td className="px-4 py-2.5 text-center whitespace-nowrap">
+                      <span className="inline-flex items-center justify-center font-bold text-xs text-gray-800 bg-gray-100 px-2 py-0.5 rounded-md">
+                        {vendor.orders_count || 0}
+                      </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {new Date(vendor.created_at || vendor.joined_at || vendor.createdAt).toLocaleDateString('en-US', {
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <span className="text-xs text-gray-500 font-medium">
+                        {new Date(vendor.created_at || vendor.joined_at || vendor.createdAt || Date.now()).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric'
                         })}
-                      </div>
+                      </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => setDetailViewVendor(vendor)}
-                          title="View Details"
-                          className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="View Vendor Profile & Details"
+                          className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                         >
-                          <User2 size={16} />
+                          <Eye size={15} />
                         </button>
                         <button
                           onClick={() => handleViewVendorInvoice(vendor)}
-                          title="View Invoice"
+                          title="View Invoices / Bills"
                           disabled={invoiceLoading === vendor.id}
-                          className="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50"
+                          className="p-1.5 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                         >
                           {invoiceLoading === vendor.id ? (
-                            <div className="w-4 h-4 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                            <div className="w-3.5 h-3.5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
                           ) : (
-                            <Eye size={16} />
+                            <FileText size={15} />
                           )}
                         </button>
                         <button
                           onClick={() => openEditModal(vendor)}
                           title="Edit Vendor"
-                          className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors"
+                          className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
                         >
-                          <Edit size={16} />
+                          <Edit size={15} />
                         </button>
                         <button
                           onClick={() => handleDeleteVendor(vendor.id)}
                           title="Delete Vendor"
-                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -4390,34 +4941,34 @@ const VendorProfile = () => {
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+            <thead className="bg-gray-50/90 text-gray-600 border-b border-gray-200 text-xs">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">PO Number</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Vendor</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Items</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Date</th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Actions</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">PO Number</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Vendor</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Items</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Date</th>
+                <th className="px-4 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 text-xs">
               {purchaseOrdersLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-                      <p className="text-gray-500 font-medium">Loading purchase orders...</p>
+                  <td colSpan={5} className="px-4 py-10 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                      <p className="text-gray-500 font-medium text-xs">Loading purchase orders...</p>
                     </div>
                   </td>
                 </tr>
               ) : purchaseOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                        <FileText className="w-8 h-8 text-gray-400" />
+                  <td colSpan={5} className="px-4 py-10 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-gray-400" />
                       </div>
-                      <p className="text-gray-500 font-medium">No purchase orders found</p>
-                      <p className="text-gray-400 text-sm">Create your first purchase order to get started</p>
+                      <p className="text-gray-600 font-semibold text-sm">No purchase orders found</p>
+                      <p className="text-gray-400 text-xs">Create your first purchase order to get started</p>
                     </div>
                   </td>
                 </tr>
@@ -4446,56 +4997,59 @@ const VendorProfile = () => {
                   })
                   .slice((poPage - 1) * PAGE_SIZE, poPage * PAGE_SIZE)
                   .map((order) => (
-                  <tr key={order.order_number || order.invoice_number} className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-200">
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  <tr key={order.order_number || order.invoice_number} className="hover:bg-purple-50/30 transition-colors">
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md font-mono text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200">
                         {order.order_number || order.invoice_number}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="font-semibold text-gray-900">{order.vendor_name}</div>
-                        <div className="text-sm text-gray-500">{order.vendor_company}</div>
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-semibold text-gray-900 text-xs truncate max-w-[170px]">{order.vendor_name}</span>
+                        {order.vendor_company && <span className="text-[11px] text-gray-400 font-normal truncate max-w-[130px]">&bull; {order.vendor_company}</span>}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{order.items?.length || 0} items</div>
-                      <div className="text-xs text-gray-500">
-                        {order.items?.slice(0, 2).map(item => item.name).join(', ')}
-                        {order.items?.length > 2 && '...'}
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-800 border border-gray-200">
+                          {order.items?.length || 0} items
+                        </span>
+                        <span className="text-[11px] text-gray-500 truncate max-w-[150px]">
+                          {order.items?.slice(0, 2).map(item => item.name).join(', ')}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <span className="text-xs text-gray-500 font-medium">
                         {new Date(order.invoice_date || order.created_at).toLocaleDateString('en-US', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric'
                         })}
-                      </div>
+                      </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-2">
+                    <td className="px-4 py-2.5 whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => setCurrentInvoice(order)}
                           title="View Details"
-                          className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors"
+                          className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
                         >
-                          <Eye size={16} />
+                          <Eye size={15} />
                         </button>
                         <button
                           onClick={() => generatePurchaseOrderPDF(order)}
                           title="Download PDF"
-                          className="p-2 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors"
+                          className="p-1.5 text-purple-600 hover:text-purple-800 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
                         >
-                          <Download size={16} />
+                          <Download size={15} />
                         </button>
                         <button
                           onClick={() => deletePurchaseOrder(order.order_number || order.invoice_number)}
                           title="Delete"
-                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -4541,39 +5095,39 @@ const VendorProfile = () => {
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+            <thead className="bg-gray-50/90 text-gray-600 border-b border-gray-200 text-xs">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">GRN No.</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Bill Number</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Vendor</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Material Description</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">UOM</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Quantity</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Total Amount</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Date</th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Attachment</th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Actions</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">GRN No.</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Bill Number</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Vendor</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Material Description</th>
+                <th className="px-4 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">UOM</th>
+                <th className="px-4 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Qty</th>
+                <th className="px-4 py-3 text-right font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Total Amount</th>
+                <th className="px-4 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Date</th>
+                <th className="px-4 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Attachment</th>
+                <th className="px-4 py-3 text-center font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 text-xs">
               {vendorBillsLoading ? (
                 <tr>
-                  <td colSpan={10} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-                      <p className="text-gray-500 font-medium">Loading vendor bills...</p>
+                  <td colSpan={10} className="px-4 py-10 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                      <p className="text-gray-500 font-medium text-xs">Loading vendor bills...</p>
                     </div>
                   </td>
                 </tr>
               ) : vendorBills.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                        <FileText className="w-8 h-8 text-gray-400" />
+                  <td colSpan={10} className="px-4 py-10 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-gray-400" />
                       </div>
-                      <p className="text-gray-500 font-medium">No vendor bills found</p>
-                      <p className="text-gray-400 text-sm">Click "Purchase Bill" to record your first vendor bill</p>
+                      <p className="text-gray-600 font-semibold text-sm">No vendor bills found</p>
+                      <p className="text-gray-400 text-xs">Click "Purchase Bill" to record your first vendor bill</p>
                     </div>
                   </td>
                 </tr>
@@ -4609,112 +5163,113 @@ const VendorProfile = () => {
                     const matDisplay = getBillMaterialDisplay(bill);
                     const uomDisplay = getBillUomDisplay(bill);
                     return (
-                      <tr key={bill.id || bill._id || bill.sr_no} className="hover:bg-emerald-50/40 transition-colors">
-                        <td className="px-6 py-4 font-mono font-bold text-xs text-blue-800 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-blue-50 border border-blue-200">
+                      <tr key={bill.id || bill._id || bill.sr_no} className="hover:bg-emerald-50/30 transition-colors">
+                        <td className="px-4 py-2.5 font-mono font-bold text-xs text-blue-800 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200">
                             {bill.grn_no || bill.grn_number || `GRN-${String(bill.sr_no || '001').padStart(3, '0')}`}
                           </span>
                         </td>
-                        <td className="px-6 py-4 font-mono font-bold text-xs text-emerald-800 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200">
+                        <td className="px-4 py-2.5 font-mono font-bold text-xs text-emerald-800 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200">
                             {bill.bill_number || bill.sr_no || "-"}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="font-semibold text-gray-900">{bill.vendor_name || "Vendor"}</div>
-                          {bill.vendor_company && <div className="text-xs text-gray-400">{bill.vendor_company}</div>}
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-semibold text-gray-900 text-xs truncate max-w-[170px]">{bill.vendor_name || "Vendor"}</span>
+                            {bill.vendor_company && <span className="text-[11px] text-gray-400 font-normal truncate max-w-[130px]">&bull; {bill.vendor_company}</span>}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700 max-w-xs" title={bill.material_description || (bill.items && bill.items.map(i => i.description || i.name).join(", "))}>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-900 border border-purple-200 max-w-[180px] truncate">
+                        <td className="px-4 py-2.5 whitespace-nowrap" title={bill.material_description || (bill.items && bill.items.map(i => i.description || i.name).join(", "))}>
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-900 border border-purple-200 max-w-[170px] truncate">
                               {matDisplay.firstMat}
                             </span>
                             {matDisplay.extraCount > 0 && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-purple-600 text-white border border-purple-700 shadow-xs" title={`+${matDisplay.extraCount} more items`}>
+                              <span className="inline-flex items-center px-1.5 py-0.2 text-[10px] font-bold bg-purple-600 text-white rounded-full" title={`+${matDisplay.extraCount} more items`}>
                                 +{matDisplay.extraCount}
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1.5">
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-900 border border-emerald-200">
+                        <td className="px-4 py-2.5 text-center whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-900 border border-emerald-200">
                               {uomDisplay.firstUom}
                             </span>
                             {uomDisplay.extraCount > 0 && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white border border-emerald-700 shadow-xs" title={`+${uomDisplay.extraCount} more UOMs`}>
+                              <span className="inline-flex items-center px-1.5 py-0.2 text-[10px] font-bold bg-emerald-600 text-white rounded-full">
                                 +{uomDisplay.extraCount}
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                        <td className="px-4 py-2.5 text-center whitespace-nowrap font-medium text-gray-900">
                           {bill.items && bill.items.length > 0 && bill.items[0].quantity !== undefined ? bill.items[0].quantity : (bill.quantity || "-")}
                         </td>
-                        <td className="px-6 py-4 font-semibold text-gray-900 text-sm">
+                        <td className="px-4 py-2.5 text-right whitespace-nowrap font-bold text-gray-900 text-xs">
                           ₹{bill.total_amount ? bill.total_amount.toFixed(2) : "0.00"}
                         </td>
-                      <td className="px-6 py-4 text-xs text-gray-500">
-                        {bill.created_at || bill.bill_date ? new Date(bill.created_at || bill.bill_date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        }) : "-"}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {bill.attachment || bill.uploaded_file_path ? (
-                          <a
-                            href={bill.attachment || bill.uploaded_file_path}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors shadow-sm"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                            View Attachment
-                          </a>
-                        ) : (
-                          <span className="text-gray-400 font-mono text-xs">-</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => setSelectedBillModal(bill)}
-                            title="View Complete Bill Details"
-                            className="p-2 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-colors"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={async () => {
-                              if (window.confirm("Are you sure you want to delete this bill?")) {
-                                try {
-                                  const token = localStorage.getItem("access_token");
-                                  const res = await fetch(`${API_URL}/api/vendor-bills/${bill.id}`, {
-                                    method: "DELETE",
-                                    headers: { Authorization: `Bearer ${token}` }
-                                  });
-                                  if (res.ok) {
-                                    fetchVendorBills();
-                                    fetchVendors();
-                                  } else {
-                                    alert("Failed to delete bill");
+                        <td className="px-4 py-2.5 whitespace-nowrap text-xs text-gray-500 font-medium">
+                          {bill.created_at || bill.bill_date ? new Date(bill.created_at || bill.bill_date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          }) : "-"}
+                        </td>
+                        <td className="px-4 py-2.5 text-center whitespace-nowrap">
+                          {bill.attachment || bill.uploaded_file_path ? (
+                            <button
+                              type="button"
+                              onClick={() => setPreviewAttachmentModal(bill.attachment || bill.uploaded_file_path)}
+                              className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer"
+                            >
+                              <FileText className="w-3 h-3" />
+                              View Attachment
+                            </button>
+                          ) : (
+                            <span className="text-gray-400 font-mono text-xs">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => setSelectedBillModal(bill)}
+                              title="View Complete Bill Details"
+                              className="p-1.5 text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Eye size={15} />
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (window.confirm("Are you sure you want to delete this bill?")) {
+                                  try {
+                                    const token = localStorage.getItem("access_token");
+                                    const res = await fetch(`${API_URL}/api/vendor-bills/${bill.id}`, {
+                                      method: "DELETE",
+                                      headers: { Authorization: `Bearer ${token}` }
+                                    });
+                                    if (res.ok) {
+                                      fetchVendorBills();
+                                      fetchVendors();
+                                    } else {
+                                      alert("Failed to delete bill");
+                                    }
+                                  } catch (e) {
+                                    alert("Error deleting bill");
                                   }
-                                } catch (e) {
-                                  alert("Error deleting bill");
                                 }
-                              }
-                            }}
-                            title="Delete Bill"
-                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+                              }}
+                              title="Delete Bill"
+                              className="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
               )}
             </tbody>
           </table>
@@ -4834,6 +5389,13 @@ const VendorProfile = () => {
           fetchVendors();
         }}
       />
+
+      {previewAttachmentModal && (
+        <AttachmentPreviewModal
+          url={previewAttachmentModal}
+          onClose={() => setPreviewAttachmentModal(null)}
+        />
+      )}
     </div>
   );
 };
